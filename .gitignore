@@ -25,3 +25,12 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Non-project files
+/_non-project
+
+# AI tool configs
+/.agents
+/.claude
+/.planning
+skills-lock.json
