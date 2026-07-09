@@ -69,7 +69,7 @@
                                 <a href="{{ route('assets.show', $asset) }}" class="btn btn-ghost btn-sm">View</a>
                                 @if($canWrite)
                                 <a href="{{ route('assets.edit', $asset) }}" class="btn btn-ghost btn-sm">Edit</a>
-                                <form action="{{ route('assets.destroy', $asset) }}" method="POST" onsubmit="return confirm('Decommission this asset?')">
+                                <form action="{{ route('assets.destroy', $asset) }}" method="POST" data-confirm="Decommission this asset?">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Remove</button>
                                 </form>

@@ -1044,6 +1044,65 @@
             .kpi-bar { gap: 6px; }
             .kpi-chip { padding: 6px 10px; }
         }
+
+        /* ============================================
+           CONFIRM MODAL
+           ============================================ */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(26, 31, 28, 0.55);
+            backdrop-filter: blur(2px);
+            animation: fadeIn 0.15s ease;
+        }
+        .confirm-overlay.open { display: flex; }
+        .confirm-dialog {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            padding: 24px;
+            transform: translateY(4px);
+            animation: confirmPop 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes confirmPop { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .confirm-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 14px;
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+        .confirm-title {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .confirm-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 22px;
+            line-height: 1.55;
+        }
+        .confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -1112,7 +1171,7 @@
             <ul class="sidebar-nav">
                 @if($ma::allows($u,'inventory'))<li><a href="{{ route('inventory-items.index') }}" class="{{ request()->routeIs('inventory-items.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Inventory</span></a></li>@endif
                 @if($ma::allows($u,'harvest'))<li><a href="{{ route('harvest-batches.index') }}" class="{{ request()->routeIs('harvest-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="harvest" /></span><span class="nav-label">Harvest</span></a></li>@endif
-                @if($ma::allows($u,'packhouse'))<li><a href="{{ route('packhouse-lots.index') }}" class="{{ request()->routeIs('packhouse-lots.*') ? 'active' : '' }}"><span class="icon"><x-icon name="packhouse" /></span><span class="nav-label">Packhouse</span></a></li>@endif
+                @if($ma::allows($u,'packhouse'))<li><a href="{{ route('packhouse-lots.index') }}" class="{{ request()->routeIs('packhouse-lots.*') || request()->routeIs('trace.lookup') ? 'active' : '' }}"><span class="icon"><x-icon name="packhouse" /></span><span class="nav-label">Packhouse</span></a></li>@endif
                 @if($ma::allows($u,'quality'))<li><a href="{{ route('quality-checks.index') }}" class="{{ request()->routeIs('quality-checks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="quality" /></span><span class="nav-label">Quality</span></a></li>@endif
             </ul>
         </div>
@@ -1250,6 +1309,20 @@
 
         @yield('content')
     </main>
+
+    {{-- ---- Global Confirm Modal (replaces native window.confirm) ---- --}}
+    <div class="confirm-overlay" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+        <div class="confirm-dialog">
+            <div class="confirm-icon">!</div>
+            <div class="confirm-title" id="confirm-modal-title">Please confirm</div>
+            <div class="confirm-message" id="confirm-modal-message"></div>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-ghost" id="confirm-modal-cancel">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-modal-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     {{-- ---- Sidebar Tooltip Positioning ---- --}}
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -1277,6 +1350,54 @@
                 if (e.key === 'Escape') {
                     userMenu.classList.remove('open');
                 }
+            });
+        }
+
+        // In-app confirm modal — intercepts any form with a data-confirm attribute
+        // and replaces the native browser confirm() dialog with a styled modal.
+        var confirmModal   = document.getElementById('confirm-modal');
+        var confirmMessage = document.getElementById('confirm-modal-message');
+        var confirmOk      = document.getElementById('confirm-modal-ok');
+        var confirmCancel  = document.getElementById('confirm-modal-cancel');
+        var pendingForm    = null;
+
+        function closeConfirm() {
+            confirmModal.classList.remove('open');
+            pendingForm = null;
+        }
+
+        if (confirmModal) {
+            document.addEventListener('submit', function(e) {
+                var form = e.target;
+                if (!form.matches('[data-confirm]') || form.dataset.confirmed === 'true') {
+                    return; // no confirmation needed, or already confirmed
+                }
+                e.preventDefault();
+                pendingForm = form;
+                confirmMessage.textContent = form.getAttribute('data-confirm');
+                confirmOk.textContent = form.getAttribute('data-confirm-ok') || 'Confirm';
+                confirmModal.classList.add('open');
+                confirmOk.focus();
+            });
+
+            confirmOk.addEventListener('click', function() {
+                if (!pendingForm) return;
+                var form = pendingForm;
+                form.dataset.confirmed = 'true'; // let the next submit pass through
+                closeConfirm();
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
+            });
+
+            confirmCancel.addEventListener('click', closeConfirm);
+            confirmModal.addEventListener('click', function(e) {
+                if (e.target === confirmModal) closeConfirm();
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && confirmModal.classList.contains('open')) closeConfirm();
             });
         }
     });

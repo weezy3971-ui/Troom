@@ -35,7 +35,11 @@ class DispatchController extends Controller
         $validated = $this->validateDispatch($request);
 
         $dispatch = Dispatch::create($validated);
-        $dispatch->salesOrder->update(['status' => 'dispatched']);
+        $dispatch->load('salesOrder');
+
+        if ($dispatch->salesOrder) {
+            $dispatch->salesOrder->update(['status' => 'dispatched']);
+        }
 
         return redirect()->route('dispatches.index')
             ->with('success', 'Dispatch scheduled.');

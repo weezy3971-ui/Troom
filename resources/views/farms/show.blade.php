@@ -15,7 +15,7 @@
     @if($canWrite)
     <div class="actions">
         <a href="{{ route('farms.edit', $farm) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('farms.destroy', $farm) }}" method="POST" onsubmit="return confirm('Delete this farm and all its blocks?')">
+        <form action="{{ route('farms.destroy', $farm) }}" method="POST" data-confirm="Delete this farm and all its blocks?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>

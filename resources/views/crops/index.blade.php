@@ -65,7 +65,7 @@
                                 <a href="{{ route('crops.show', $crop) }}" class="btn btn-ghost btn-sm">View</a>
                                 @if($canWrite)
                                 <a href="{{ route('crops.edit', $crop) }}" class="btn btn-ghost btn-sm">Edit</a>
-                                <form action="{{ route('crops.destroy', $crop) }}" method="POST" onsubmit="return confirm('Delete this crop?')">
+                                <form action="{{ route('crops.destroy', $crop) }}" method="POST" data-confirm="Delete this crop?">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>

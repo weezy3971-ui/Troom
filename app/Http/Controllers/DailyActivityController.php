@@ -41,6 +41,16 @@ class DailyActivityController extends Controller
 
         $validated['logged_by'] = $request->user()?->id;
 
+        // Offline deduplication: if a client_uuid is provided and already exists,
+        // the sync queue is replaying a previously submitted record — skip creation.
+        if (! empty($validated['client_uuid'])) {
+            $existing = DailyActivity::where('client_uuid', $validated['client_uuid'])->first();
+            if ($existing) {
+                return redirect()->route('daily-activities.index')
+                    ->with('success', 'Activity already recorded (duplicate sync skipped).');
+            }
+        }
+
         DailyActivity::create($validated);
 
         return redirect()->route('daily-activities.index')
@@ -88,15 +98,16 @@ class DailyActivityController extends Controller
         $isCompliance = in_array($request->input('activity_type'), DailyActivity::COMPLIANCE_TYPES, true);
 
         return $request->validate([
-            'block_id' => 'required|exists:blocks,id',
+            'block_id'      => 'required|exists:blocks,id',
             'crop_cycle_id' => 'nullable|exists:crop_cycles,id',
             'activity_type' => ['required', Rule::in(DailyActivity::TYPES)],
             'activity_date' => 'required|date',
-            'description' => 'nullable|string',
-            'photo_path' => [$isCompliance ? 'required' : 'nullable', 'string', 'max:255'],
-            'gps_location' => [$isCompliance ? 'required' : 'nullable', 'string', 'max:255'],
+            'description'   => 'nullable|string',
+            'photo_path'    => [$isCompliance ? 'required' : 'nullable', 'string', 'max:255'],
+            'gps_location'  => [$isCompliance ? 'required' : 'nullable', 'string', 'max:255'],
+            'client_uuid'   => 'nullable|uuid',
         ], [
-            'photo_path.required' => 'A photo is required for compliance activities such as spraying.',
+            'photo_path.required'  => 'A photo is required for compliance activities such as spraying.',
             'gps_location.required' => 'GPS location is required for compliance activities such as spraying.',
         ]);
     }

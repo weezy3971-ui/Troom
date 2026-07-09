@@ -92,6 +92,19 @@ class InventoryItemController extends Controller
         $validated['farm_id'] = $inventoryItem->farm_id;
         $validated['cost'] = $validated['cost'] ?? 0;
 
+        // Business rule: issue transactions cannot drive stock below zero.
+        if ($validated['type'] === 'issue') {
+            $inventoryItem->load('transactions');
+            $currentStock = $inventoryItem->currentStock();
+            if ((float) $validated['quantity'] > $currentStock) {
+                return back()->withInput()->with(
+                    'error',
+                    "Cannot issue {$validated['quantity']} {$inventoryItem->unit}: only "
+                    . number_format($currentStock, 2) . " {$inventoryItem->unit} in stock."
+                );
+            }
+        }
+
         $transaction = InventoryTransaction::create($validated);
 
         if ($transaction->type === 'issue' && $transaction->crop_cycle_id) {

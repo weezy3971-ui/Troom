@@ -1,0 +1,214 @@
+TROOMS HOUSE LIMITED
+Trooms Horticulture ERP (THE)
+QA & User Acceptance Testing Checklist
+Version 1.0
+To be completed post-development, before production go-live
+July 2026
+Table of Contents
+This checklist is used by the QA team (and, for the sign-off section, by each role owner) to verify THE is functioning correctly before go-live. It is organized by module, followed by cross-cutting checks that span multiple modules — notifications, offline sync, security, data integrity, and performance — and closes with a per-role sign-off.
+Use one copy of this checklist per QA cycle. Mark each item Pass / Fail / N-A, and log any Fail against a ticket before re-testing.
+1. Pre-QA Setup
+☐  
+Staging environment mirrors production configuration, using sandbox/test credentials for WhatsApp and SMS providers only.
+☐  
+Test accounts created for all 10 roles, each scoped to a test farm so production data is never touched during QA.
+☐  
+Seed data loaded: at least 2 farms, 4 blocks, 3 crop cycles (one active, one planned, one closed) to exercise status-dependent logic.
+☐  
+Queue workers (Horizon) and scheduled jobs are running in staging so alert and notification jobs actually fire during testing.
+2. Module-by-Module Functional Checks
+1. Master Data
+☐  
+Creating a Farm, Block, Crop, and Asset saves correctly and appears in all downstream dropdowns/selectors.
+☐  
+A Block cannot be deleted or archived while linked to an active Crop Cycle.
+☐  
+Asset status changes are recorded in an audit trail, not overwritten.
+☐  
+Only Horticulture Manager/MD roles can create or edit master data; other roles are read-only.
+2. Crop Planning & Seasonal Budgets
+☐  
+A Block cannot have two active Crop Cycles at the same time.
+☐  
+A Crop Cycle cannot move to active status until its Seasonal Budget is set.
+☐  
+Budget-vs-actual figures update live as Cost Allocation rows are created, not on a delay.
+☐  
+MD approval is required before a Crop Cycle activates.
+3. Nursery Management
+☐  
+Batch status progresses correctly: sown → growing → ready → transplanted.
+☐  
+Transplanted quantity cannot exceed the batch's remaining quantity.
+☐  
+Transplanting a batch auto-creates the correct Planting record linked to the right Crop Cycle.
+4. Daily Farm Operations
+☐  
+The mobile app queues activity logs while offline and syncs correctly on reconnect, with no duplicate records.
+☐  
+Photo and GPS capture is enforced for activity types that require it (e.g. spraying).
+☐  
+Activity type is restricted to the controlled list — free text is not accepted.
+5. Irrigation Management
+☐  
+A missed_irrigation alert fires when no log is recorded for a scheduled block within the expected window.
+☐  
+An irrigation log cannot be created against a pump asset that is not in operational status.
+☐  
+Logged hours and water volume calculations are correct.
+6. Fertigation & Nutrition
+☐  
+Every fertigation log automatically generates a matching Cost Allocation row.
+☐  
+Inventory correctly deducts for tracked nutrients when a fertigation log is saved.
+7. Pest & Disease Management
+☐  
+An overdue_spray alert fires when a scheduled spray is not logged in time.
+☐  
+A Harvest Batch cannot be saved while an active pre-harvest interval (PHI) window applies to the block — test the exact boundary at PHI expiry.
+☐  
+A disease_detected alert routes to the Agronomist and Horticulture Manager as configured.
+8. Labour & Attendance
+☐  
+Cost is computed correctly as hours worked × rate.
+☐  
+Every attendance entry automatically generates a matching Cost Allocation row.
+9. Machinery & Fleet
+☐  
+A pump asset moving to “down” status triggers a pump_failure alert only when linked to an active irrigation schedule.
+☐  
+The truck-utilisation KPI computes correctly from linked Dispatch records.
+10. Inventory & Stores
+☐  
+A low_inventory alert fires when stock falls below an item's reorder level.
+☐  
+Receipt, issue, and adjustment transactions all update the stock balance correctly.
+☐  
+An issue linked to a Crop Cycle reference correctly generates a Cost Allocation row.
+11. Harvest Management
+☐  
+A harvest entry is correctly blocked while an active PHI window applies to the block.
+☐  
+Rejects are tracked separately from quantity harvested and reflect correctly in the quality-rejection KPI.
+☐  
+Yield-vs-budget figures compute correctly against the Crop Cycle's Seasonal Budget.
+12. Packhouse & Traceability
+☐  
+A traceability code is generated at lot creation and cannot subsequently be changed.
+☐  
+Quantity packed cannot exceed the harvest batch's quantity minus recorded rejects.
+☐  
+Scanning/looking up a traceability code correctly resolves the full chain: lot → harvest batch → block → crop cycle → spray/fertigation history.
+13. Quality Assurance
+☐  
+A lot with a failed Quality Check cannot be added to a Sales Order Line until re-graded or written off.
+☐  
+Quality check parameters save and display correctly.
+14. Sales & Customer Contracts
+☐  
+An order_at_risk alert fires when a delivery date approaches without sufficient quality-passed lot quantity allocated.
+☐  
+Sales Order Lines correctly reference the specific Packhouse Lot allocated, preserving traceability.
+15. Logistics & Dispatch
+☐  
+A truck_underutilized alert computes correctly overnight based on dispatched volume vs vehicle capacity.
+☐  
+Dispatch status updates correctly through to delivered.
+16. Finance (Native Ledger)
+☐  
+Every transaction posts a balanced debit/credit pair — run a trial balance and confirm it nets to zero.
+☐  
+A budget_exceeded alert fires at the correct threshold against a Crop Cycle's Seasonal Budget.
+☐  
+Auto-generated ledger entries match their source Cost Allocation, harvest valuation, or sales event exactly — no duplication or drift.
+17. Executive Dashboards & Analytics
+☐  
+Each KPI on the dashboard matches a manual spot-check calculation from the underlying raw data.
+☐  
+The dashboard reads from precomputed snapshots, not a live aggregation, on page load.
+☐  
+The nightly snapshot refresh job runs on schedule and fails loudly (not silently) if it errors.
+3. Proactive Notification Engine (WhatsApp & SMS)
+☐  
+Daily report sends at the configured time in Africa/Nairobi timezone (not UTC) to the Horticulture Manager and MD.
+☐  
+On a day with no logged activity and no alerts, a “no activity to report” message still sends — confirm it is never silently skipped.
+☐  
+Each of the 9 alert types routes to the correct roles and channel per the alert routing table (Developer Implementation Guide, Section 6.4).
+☐  
+Critical alerts (pump_failure, disease_detected) send on WhatsApp and SMS simultaneously and bypass quiet hours.
+☐  
+Standard/High alerts triggered during quiet hours are queued and deliver at the end of the quiet-hours window, not immediately.
+☐  
+A simulated WhatsApp delivery failure correctly triggers an SMS fallback within 5 minutes for High/Critical alerts.
+☐  
+Delivery webhooks from both providers correctly update notification_logs.status (sent / delivered / failed).
+☐  
+A permanent failure (e.g. invalid number) is flagged for correction and is not endlessly retried; a transient failure retries 3 times with backoff.
+☐  
+All WhatsApp templates are approved and render correctly with variables substituted — no literal {{placeholder}} text reaches a user.
+☐  
+A user can narrow their notification preferences; MD and Horticulture Manager cannot opt out of Critical alerts.
+4. Offline & Mobile Sync
+☐  
+Field app correctly queues daily activity, irrigation, spray, fertigation, and labour entries while offline.
+☐  
+Queued entries sync correctly on reconnect with no duplicates (client-generated UUIDs deduplicate correctly).
+☐  
+Photos are compressed client-side before upload; large photo batches do not fail or time out the sync.
+5. Security & Access Control
+☐  
+Each of the 10 roles can access only the modules and actions defined for that role — spot-check at least 3 restricted actions per role.
+☐  
+API endpoints reject requests without a valid token, and reject tokens scoped to the wrong farm.
+☐  
+Phone number and WhatsApp contact fields are visible only to Finance Officer, MD, and system admin roles.
+☐  
+Provider credentials (WhatsApp token, SMS API key) never appear in logs, error messages, or API responses.
+6. Data Integrity & Cross-Module Traceability
+☐  
+End-to-end cost trace: a single labour, fertigation, and spray log each correctly appear as a Cost Allocation row and then as a Ledger Entry.
+☐  
+End-to-end product trace: a sold Sales Order Line traces back correctly through its Packhouse Lot, Harvest Batch, Block, Crop Cycle, and the spray/fertigation history for that cycle.
+☐  
+Attempting to delete or archive a record that is referenced elsewhere (e.g. a Block with an active Crop Cycle) is correctly blocked with a clear error.
+7. Performance
+☐  
+Executive dashboard loads within an acceptable time (target: under 2 seconds) against a realistically sized staging dataset.
+☐  
+Simulating a high-alert day (e.g. 20+ alerts in an hour) does not back up the notification queue or delay Critical alert delivery.
+8. Per-Role User Acceptance Sign-Off
+Each role owner completes their primary daily workflow end-to-end in staging and signs off below.
+Role
+Scenario to complete
+Signed
+Date
+Managing Director
+Reviews executive dashboard and receives daily WhatsApp summary
+Horticulture Manager
+Approves a crop cycle; reviews daily report before it sends
+Farm Supervisor
+Logs a full day of field activity, irrigation, and labour via mobile app, including one offline entry
+Agronomist
+Sets a nutrition/spray program and logs a disease observation that triggers an alert
+Storekeeper
+Logs a stock receipt and issue; confirms a low-inventory alert fires correctly
+Packhouse Supervisor
+Creates a packhouse lot from a harvest batch and confirms the traceability code
+Quality Officer
+Performs a quality check and confirms a failed lot is blocked from sale
+Driver
+Executes a dispatch and confirms status updates on delivery
+Finance Officer
+Confirms ledger entries post correctly and trial balance nets to zero
+Sales Officer
+Creates a customer order, allocates a lot, and confirms order_at_risk logic
+9. Go-Live Approval
+All sections above must show no open Fail items (or all Fails are logged against a ticket with an agreed fix date) before production go-live is approved.
+Approved by
+Role
+Signature
+Date
+Managing Director
+Horticulture Manager
+Lead Developer

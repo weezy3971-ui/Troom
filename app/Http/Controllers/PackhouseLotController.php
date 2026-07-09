@@ -88,10 +88,44 @@ class PackhouseLotController extends Controller
 
     public function destroy(PackhouseLot $packhouseLot)
     {
+        // Business rule: cannot delete a lot that is already allocated to a sales order.
+        $lineCount = $packhouseLot->salesOrderLines()->count();
+        if ($lineCount > 0) {
+            return redirect()->route('packhouse-lots.index')
+                ->with('error', "Cannot delete lot \"{$packhouseLot->lot_number}\": it is allocated to {$lineCount} sales order line(s). Remove the order lines first.");
+        }
+
         $packhouseLot->delete();
 
         return redirect()->route('packhouse-lots.index')
             ->with('success', 'Packhouse lot deleted.');
+    }
+
+    /**
+     * Traceability lookup: resolve the full provenance chain for a lot
+     * by its traceability code.
+     */
+    public function trace(Request $request)
+    {
+        $code = $request->input('code');
+        $lot  = null;
+
+        if ($code) {
+            $lot = PackhouseLot::where('traceability_code', $code)
+                ->with([
+                    'harvestBatch.cropCycle.block.farm',
+                    'harvestBatch.cropCycle.crop',
+                    'harvestBatch.cropCycle.sprayLogs.applicator',
+                    'harvestBatch.cropCycle.fertigationLogs',
+                    'harvestBatch.block',
+                    'harvestBatch.harvestedBy',
+                    'qualityChecks.inspector',
+                    'salesOrderLines.salesOrder.customer',
+                ])
+                ->first();
+        }
+
+        return view('packhouse-lots.trace', compact('code', 'lot'));
     }
 
     /**

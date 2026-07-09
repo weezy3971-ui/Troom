@@ -39,6 +39,11 @@ class Asset extends Model
         return $this->hasMany(IrrigationLog::class, 'pump_asset_id');
     }
 
+    public function dispatches(): HasMany
+    {
+        return $this->hasMany(Dispatch::class, 'vehicle_asset_id');
+    }
+
     public function isOperational(): bool
     {
         return $this->status === 'operational';

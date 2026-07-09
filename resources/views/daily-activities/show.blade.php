@@ -13,7 +13,7 @@
     </div>
     <div class="actions">
         <a href="{{ route('daily-activities.edit', $dailyActivity) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('daily-activities.destroy', $dailyActivity) }}" method="POST" onsubmit="return confirm('Delete this activity?');">
+        <form action="{{ route('daily-activities.destroy', $dailyActivity) }}" method="POST" data-confirm="Delete this activity?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>

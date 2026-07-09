@@ -86,13 +86,17 @@ class IrrigationLogController extends Controller
     private function validateLog(Request $request): array
     {
         return $request->validate([
-            'block_id' => 'required|exists:blocks,id',
-            'pump_asset_id' => 'nullable|exists:assets,id',
-            'log_date' => 'required|date',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after:start_time',
-            'hours' => 'required|numeric|min:0',
-            'water_volume' => 'nullable|numeric|min:0',
+            'block_id'       => 'required|exists:blocks,id',
+            'pump_asset_id'  => 'nullable|exists:assets,id',
+            'log_date'       => 'required|date',
+            'start_time'     => 'nullable|date_format:H:i',
+            // end_time must be after start_time only when start_time is also supplied.
+            'end_time'       => 'nullable|date_format:H:i|required_with:start_time|after:start_time',
+            'hours'          => 'required|numeric|min:0',
+            'water_volume'   => 'nullable|numeric|min:0',
+        ], [
+            'end_time.required_with' => 'End time is required when a start time is provided.',
+            'end_time.after'         => 'End time must be after start time.',
         ]);
     }
 

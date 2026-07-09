@@ -63,7 +63,7 @@
                                 <a href="{{ route('blocks.show', $block) }}" class="btn btn-ghost btn-sm">View</a>
                                 @if($canWrite)
                                 <a href="{{ route('blocks.edit', $block) }}" class="btn btn-ghost btn-sm">Edit</a>
-                                <form action="{{ route('blocks.destroy', $block) }}" method="POST" onsubmit="return confirm('Delete this block?')">
+                                <form action="{{ route('blocks.destroy', $block) }}" method="POST" data-confirm="Delete this block?">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>

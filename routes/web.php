@@ -71,6 +71,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware(ModuleAccess::middleware('nursery'))->group(function () {
         Route::resource('nursery-batches', NurseryBatchController::class);
         Route::post('nursery-batches/{nurseryBatch}/transplant', [NurseryBatchController::class, 'transplant'])->name('nursery-batches.transplant');
+        Route::get('nursery-batches/{nurseryBatch}/plantings/{planting}/edit', [NurseryBatchController::class, 'editPlanting'])->name('nursery-batches.plantings.edit');
+        Route::put('nursery-batches/{nurseryBatch}/plantings/{planting}', [NurseryBatchController::class, 'updatePlanting'])->name('nursery-batches.plantings.update');
+        Route::delete('nursery-batches/{nurseryBatch}/plantings/{planting}', [NurseryBatchController::class, 'destroyPlanting'])->name('nursery-batches.plantings.destroy');
     });
 
     // Module 4: Daily Farm Operations
@@ -103,6 +106,7 @@ Route::middleware('auth')->group(function () {
 
     // Module 12: Packhouse & Traceability
     Route::resource('packhouse-lots', PackhouseLotController::class)->middleware(ModuleAccess::middleware('packhouse'));
+    Route::get('trace', [PackhouseLotController::class, 'trace'])->name('trace.lookup')->middleware(ModuleAccess::middleware('packhouse'));
 
     // Module 13: Quality Assurance
     Route::resource('quality-checks', QualityCheckController::class)->middleware(ModuleAccess::middleware('quality'));

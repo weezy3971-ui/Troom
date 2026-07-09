@@ -7,7 +7,10 @@
         <h1 class="page-title">Packhouse &amp; Traceability</h1>
         <p class="page-subtitle">Graded, packed lots with traceable codes</p>
     </div>
-    <a href="{{ route('packhouse-lots.create') }}" class="btn btn-primary">+ New Lot</a>
+    <div class="actions">
+        <a href="{{ route('trace.lookup') }}" class="btn btn-secondary">🔍 Trace Lookup</a>
+        <a href="{{ route('packhouse-lots.create') }}" class="btn btn-primary">+ New Lot</a>
+    </div>
 </div>
 
 <x-search-bar

@@ -27,12 +27,17 @@
             </form>
         @endif
         @if(in_array($cropCycle->status, ['planned', 'active']))
-            <form action="{{ route('crop-cycles.cancel', $cropCycle) }}" method="POST" onsubmit="return confirm('Cancel this crop cycle?')">
+            <form action="{{ route('crop-cycles.cancel', $cropCycle) }}" method="POST" data-confirm="Cancel this crop cycle?">
                 @csrf
                 <button type="submit" class="btn btn-danger">Cancel Cycle</button>
             </form>
         @endif
         <a href="{{ route('crop-cycles.edit', $cropCycle) }}" class="btn btn-secondary">Edit</a>
+        <form action="{{ route('crop-cycles.destroy', $cropCycle) }}" method="POST" data-confirm="Permanently delete this crop cycle? This cannot be undone.">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
     </div>
     @endif
 </div>
@@ -123,4 +128,36 @@
     </div>
     @endif
 </div>
+
+{{-- Budget vs. Actual --}}
+@if($cropCycle->seasonalBudget)
+@php
+    $totalBudget  = (float) $cropCycle->seasonalBudget->total_budget;
+    $actualCost   = $cropCycle->actualCost();
+    $remaining    = $totalBudget - $actualCost;
+    $pct          = $totalBudget > 0 ? min(round(($actualCost / $totalBudget) * 100, 1), 100) : 0;
+    $overBudget   = $actualCost > $totalBudget;
+@endphp
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Budget vs. Actual</h3>
+        @if($overBudget)
+            <span class="badge badge-down" style="margin-left: 10px;">⚠ Over Budget</span>
+        @endif
+    </div>
+    <div style="padding: 16px 0 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+            <span>Spent: <strong style="color: {{ $overBudget ? 'var(--red, #ef4444)' : 'var(--text)' }};">KES {{ number_format($actualCost) }}</strong></span>
+            <span>Budget: <strong>KES {{ number_format($totalBudget) }}</strong></span>
+        </div>
+        <div style="background: var(--border); border-radius: 6px; height: 10px; overflow: hidden;">
+            <div style="height: 100%; width: {{ $pct }}%; background: {{ $overBudget ? '#ef4444' : 'var(--accent, #6366f1)' }}; border-radius: 6px; transition: width 0.4s ease;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+            <span>{{ $pct }}% used</span>
+            <span>{{ $overBudget ? 'Over by KES ' . number_format(abs($remaining)) : 'KES ' . number_format($remaining) . ' remaining' }}</span>
+        </div>
+    </div>
+</div>
+@endif
 @endsection

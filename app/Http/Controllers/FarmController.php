@@ -72,6 +72,13 @@ class FarmController extends Controller
 
     public function destroy(Farm $farm)
     {
+        // Business rule: cannot delete a farm that still has blocks linked to it.
+        $blockCount = $farm->blocks()->count();
+        if ($blockCount > 0) {
+            return redirect()->route('farms.index')
+                ->with('error', "Cannot delete \"{$farm->name}\": {$blockCount} block(s) are still linked to it. Remove or reassign them first.");
+        }
+
         $farm->delete();
 
         return redirect()->route('farms.index')

@@ -63,7 +63,7 @@
                                 <a href="{{ route('farms.show', $farm) }}" class="btn btn-ghost btn-sm">View</a>
                                 @if($canWrite)
                                 <a href="{{ route('farms.edit', $farm) }}" class="btn btn-ghost btn-sm">Edit</a>
-                                <form action="{{ route('farms.destroy', $farm) }}" method="POST" onsubmit="return confirm('Delete this farm?')">
+                                <form action="{{ route('farms.destroy', $farm) }}" method="POST" data-confirm="Delete this farm?">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>

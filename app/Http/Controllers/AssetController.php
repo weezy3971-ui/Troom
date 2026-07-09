@@ -89,6 +89,19 @@ class AssetController extends Controller
 
     public function destroy(Asset $asset)
     {
+        // Business rule: cannot delete an asset that is referenced in logs or dispatches.
+        $irrigationCount = $asset->irrigationLogs()->count();
+        $dispatchCount   = $asset->dispatches()->count();
+
+        if ($irrigationCount > 0 || $dispatchCount > 0) {
+            $refs = [];
+            if ($irrigationCount > 0) $refs[] = "{$irrigationCount} irrigation log(s)";
+            if ($dispatchCount   > 0) $refs[] = "{$dispatchCount} dispatch record(s)";
+            $detail = implode(' and ', $refs);
+            return redirect()->route('assets.index')
+                ->with('error', "Cannot delete \"{$asset->name}\": it is referenced by {$detail}.");
+        }
+
         $asset->delete();
 
         return redirect()->route('assets.index')

@@ -13,7 +13,7 @@
     </div>
     <div class="actions">
         <a href="{{ route('harvest-batches.edit', $harvestBatch) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('harvest-batches.destroy', $harvestBatch) }}" method="POST" onsubmit="return confirm('Delete this harvest batch?');">
+        <form action="{{ route('harvest-batches.destroy', $harvestBatch) }}" method="POST" data-confirm="Delete this harvest batch?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>
@@ -47,6 +47,41 @@
     </div>
 </div>
 
+{{-- Yield vs. Expected --}}
+@php
+    $crop          = $harvestBatch->cropCycle->crop;
+    $block         = $harvestBatch->cropCycle->block ?? $harvestBatch->block;
+    $expectedYield = ($crop?->expected_yield_per_acre ?? 0) * ($block?->size_acres ?? 0);
+    $actualYield   = $harvestBatch->cropCycle->harvestBatches->sum('quantity_kg');
+    $yieldPct      = $expectedYield > 0 ? min(round(($actualYield / $expectedYield) * 100, 1), 999) : null;
+    $yieldShort    = $expectedYield > 0 && $actualYield < $expectedYield;
+@endphp
+@if($expectedYield > 0)
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Yield vs. Budget</h3>
+        @if($yieldShort)
+            <span class="badge badge-down" style="margin-left: 10px;">Below Target</span>
+        @else
+            <span class="badge badge-active" style="margin-left: 10px;">On Target</span>
+        @endif
+    </div>
+    <div style="padding: 16px 0 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+            <span>Harvested (cycle total): <strong>{{ number_format($actualYield, 2) }} kg</strong></span>
+            <span>Expected: <strong>{{ number_format($expectedYield, 2) }} kg</strong></span>
+        </div>
+        <div style="background: var(--border); border-radius: 6px; height: 10px; overflow: hidden;">
+            <div style="height: 100%; width: {{ min($yieldPct, 100) }}%; background: {{ $yieldShort ? '#f59e0b' : 'var(--accent, #6366f1)' }}; border-radius: 6px; transition: width 0.4s ease;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+            <span>{{ $yieldPct }}% of target achieved</span>
+            <span>{{ $crop?->name }} · {{ $block?->size_acres }} acres expected @ {{ number_format($crop?->expected_yield_per_acre ?? 0, 1) }} kg/acre</span>
+        </div>
+    </div>
+</div>
+@endif
+
 <div class="card" style="padding: 0;">
     <div class="card-header" style="padding: 18px 22px 0;">
         <h3 class="card-title">Packhouse Lots</h3>
@@ -73,3 +108,4 @@
     </div>
 </div>
 @endsection
+
