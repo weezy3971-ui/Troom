@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Asset;
 use App\Models\Block;
 use App\Models\ChartOfAccount;
+use App\Models\CostAllocation;
 use App\Models\Crop;
 use App\Models\CropCycle;
 use App\Models\Customer;
@@ -147,7 +148,9 @@ class DatabaseSeeder extends Seeder
         $cartons = InventoryItem::create(['farm_id' => $naivasha->id, 'name' => '4kg Export Carton', 'category' => 'packaging', 'unit' => 'unit', 'reorder_level' => 500]);
 
         InventoryTransaction::create(['inventory_item_id' => $npk->id, 'farm_id' => $naivasha->id, 'type' => 'receipt', 'quantity' => 500, 'transaction_date' => '2026-06-01', 'reference' => 'GRN-1001', 'cost' => 45000]);
-        InventoryTransaction::create(['inventory_item_id' => $npk->id, 'farm_id' => $naivasha->id, 'crop_cycle_id' => $cycle1->id, 'type' => 'issue', 'quantity' => 120, 'transaction_date' => '2026-06-10', 'reference' => 'ISS-2001', 'cost' => 10800]);
+        $npkIssue = InventoryTransaction::create(['inventory_item_id' => $npk->id, 'farm_id' => $naivasha->id, 'crop_cycle_id' => $cycle1->id, 'type' => 'issue', 'quantity' => 120, 'transaction_date' => '2026-06-10', 'reference' => 'ISS-2001', 'cost' => 10800]);
+        // Issues linked to a crop cycle automatically feed Cost Allocation.
+        CostAllocation::create(['crop_cycle_id' => $cycle1->id, 'source_type' => 'inventory', 'source_id' => $npkIssue->id, 'amount' => 10800, 'allocation_date' => '2026-06-10', 'description' => 'Inventory issue: NPK 17-17-17 (120 kg)']);
         InventoryTransaction::create(['inventory_item_id' => $fungicide->id, 'farm_id' => $naivasha->id, 'type' => 'receipt', 'quantity' => 30, 'transaction_date' => '2026-06-01', 'reference' => 'GRN-1002', 'cost' => 18000]);
         // Cartons deliberately left below reorder level to demonstrate the low_inventory alert.
         InventoryTransaction::create(['inventory_item_id' => $cartons->id, 'farm_id' => $naivasha->id, 'type' => 'receipt', 'quantity' => 300, 'transaction_date' => '2026-06-05', 'reference' => 'GRN-1003', 'cost' => 9000]);
