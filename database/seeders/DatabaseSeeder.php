@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
         $users = [
             ['name' => 'Brian Kam',        'email' => 'admin@trooms.co.ke',       'role' => 'owner',                  'password' => Hash::make('password')],
             ['name' => 'Grace Wanjiru',    'email' => 'grace@trooms.co.ke',       'role' => 'horticulture_manager',  'password' => Hash::make('password')],
+            ['name' => 'James Mwangi',     'email' => 'james@trooms.co.ke',       'role' => 'md',                     'password' => Hash::make('password')],
             ['name' => 'Peter Ochieng',    'email' => 'peter@trooms.co.ke',       'role' => 'agronomist',            'password' => Hash::make('password')],
             ['name' => 'Alice Njeri',      'email' => 'alice@trooms.co.ke',       'role' => 'farm_supervisor',       'password' => Hash::make('password')],
             ['name' => 'David Kipchoge',   'email' => 'david@trooms.co.ke',       'role' => 'finance_officer',       'password' => Hash::make('password')],

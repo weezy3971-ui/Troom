@@ -495,6 +495,27 @@
         }
         .icon-btn:hover { background: var(--bg-card); color: var(--text-primary); border-color: var(--border-strong); }
 
+        /* ---- Notifications bell ---- */
+        .notif-btn { position: relative; }
+        .notif-btn.active { background: var(--olive-bg); color: var(--olive); border-color: rgba(107, 127, 58, 0.25); }
+        .notif-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            border-radius: 8px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 9.5px;
+            font-weight: 700;
+            line-height: 16px;
+            text-align: center;
+            box-shadow: 0 0 0 2px var(--bg-primary);
+            font-family: var(--font-mono);
+        }
+
         /* ============================================
            MAIN CONTENT
            ============================================ */
@@ -1034,17 +1055,21 @@
 
         <div class="sidebar-divider"></div>
 
+        @php $u = auth()->user(); $ma = \App\Support\ModuleAccess::class; @endphp
+
         {{-- Overview --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
                 <li><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><span class="icon"><x-icon name="dashboard" /></span><span class="nav-label">Dashboard</span></a></li>
+                @if($ma::allows($u, 'analytics'))
                 <li><a href="{{ route('analytics.index') }}" class="{{ request()->routeIs('analytics.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">Executive Dashboard</span></a></li>
+                @endif
             </ul>
         </div>
 
         <div class="sidebar-divider"></div>
 
-        {{-- Master Data --}}
+        {{-- Master Data (readable by all roles) --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
                 <li><a href="{{ route('farms.index') }}" class="{{ request()->routeIs('farms.*') ? 'active' : '' }}"><span class="icon"><x-icon name="farm" /></span><span class="nav-label">Farms</span></a></li>
@@ -1056,56 +1081,61 @@
 
         <div class="sidebar-divider"></div>
 
-        {{-- Planning --}}
+        {{-- Planning (crop cycles readable by all roles) --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
                 <li><a href="{{ route('crop-cycles.index') }}" class="{{ request()->routeIs('crop-cycles.*') ? 'active' : '' }}"><span class="icon"><x-icon name="cycles" /></span><span class="nav-label">Crop Cycles</span></a></li>
             </ul>
         </div>
 
+        @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour'); @endphp
+        @if($fieldOps)
         <div class="sidebar-divider"></div>
-
         {{-- Field Operations --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
-                <li><a href="{{ route('nursery-batches.index') }}" class="{{ request()->routeIs('nursery-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="nursery" /></span><span class="nav-label">Nursery</span></a></li>
-                <li><a href="{{ route('daily-activities.index') }}" class="{{ request()->routeIs('daily-activities.*') ? 'active' : '' }}"><span class="icon"><x-icon name="operations" /></span><span class="nav-label">Daily Operations</span></a></li>
-                <li><a href="{{ route('irrigation-logs.index') }}" class="{{ request()->routeIs('irrigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="irrigation" /></span><span class="nav-label">Irrigation</span></a></li>
-                <li><a href="{{ route('fertigation-logs.index') }}" class="{{ request()->routeIs('fertigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="fertigation" /></span><span class="nav-label">Fertigation</span></a></li>
-                <li><a href="{{ route('spray-logs.index') }}" class="{{ request()->routeIs('spray-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="pest" /></span><span class="nav-label">Pest &amp; Disease</span></a></li>
-                <li><a href="{{ route('labour-attendances.index') }}" class="{{ request()->routeIs('labour-attendances.*') ? 'active' : '' }}"><span class="icon"><x-icon name="labour" /></span><span class="nav-label">Labour</span></a></li>
+                @if($ma::allows($u,'nursery'))<li><a href="{{ route('nursery-batches.index') }}" class="{{ request()->routeIs('nursery-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="nursery" /></span><span class="nav-label">Nursery</span></a></li>@endif
+                @if($ma::allows($u,'daily_ops'))<li><a href="{{ route('daily-activities.index') }}" class="{{ request()->routeIs('daily-activities.*') ? 'active' : '' }}"><span class="icon"><x-icon name="operations" /></span><span class="nav-label">Daily Operations</span></a></li>@endif
+                @if($ma::allows($u,'irrigation'))<li><a href="{{ route('irrigation-logs.index') }}" class="{{ request()->routeIs('irrigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="irrigation" /></span><span class="nav-label">Irrigation</span></a></li>@endif
+                @if($ma::allows($u,'fertigation'))<li><a href="{{ route('fertigation-logs.index') }}" class="{{ request()->routeIs('fertigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="fertigation" /></span><span class="nav-label">Fertigation</span></a></li>@endif
+                @if($ma::allows($u,'pest'))<li><a href="{{ route('spray-logs.index') }}" class="{{ request()->routeIs('spray-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="pest" /></span><span class="nav-label">Pest &amp; Disease</span></a></li>@endif
+                @if($ma::allows($u,'labour'))<li><a href="{{ route('labour-attendances.index') }}" class="{{ request()->routeIs('labour-attendances.*') ? 'active' : '' }}"><span class="icon"><x-icon name="labour" /></span><span class="nav-label">Labour</span></a></li>@endif
             </ul>
         </div>
+        @endif
 
+        @php $postHarvest = $ma::allows($u,'inventory') || $ma::allows($u,'harvest') || $ma::allows($u,'packhouse') || $ma::allows($u,'quality'); @endphp
+        @if($postHarvest)
         <div class="sidebar-divider"></div>
-
         {{-- Post-Harvest --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
-                <li><a href="{{ route('inventory-items.index') }}" class="{{ request()->routeIs('inventory-items.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Inventory</span></a></li>
-                <li><a href="{{ route('harvest-batches.index') }}" class="{{ request()->routeIs('harvest-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="harvest" /></span><span class="nav-label">Harvest</span></a></li>
-                <li><a href="{{ route('packhouse-lots.index') }}" class="{{ request()->routeIs('packhouse-lots.*') ? 'active' : '' }}"><span class="icon"><x-icon name="packhouse" /></span><span class="nav-label">Packhouse</span></a></li>
-                <li><a href="{{ route('quality-checks.index') }}" class="{{ request()->routeIs('quality-checks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="quality" /></span><span class="nav-label">Quality</span></a></li>
+                @if($ma::allows($u,'inventory'))<li><a href="{{ route('inventory-items.index') }}" class="{{ request()->routeIs('inventory-items.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Inventory</span></a></li>@endif
+                @if($ma::allows($u,'harvest'))<li><a href="{{ route('harvest-batches.index') }}" class="{{ request()->routeIs('harvest-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="harvest" /></span><span class="nav-label">Harvest</span></a></li>@endif
+                @if($ma::allows($u,'packhouse'))<li><a href="{{ route('packhouse-lots.index') }}" class="{{ request()->routeIs('packhouse-lots.*') ? 'active' : '' }}"><span class="icon"><x-icon name="packhouse" /></span><span class="nav-label">Packhouse</span></a></li>@endif
+                @if($ma::allows($u,'quality'))<li><a href="{{ route('quality-checks.index') }}" class="{{ request()->routeIs('quality-checks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="quality" /></span><span class="nav-label">Quality</span></a></li>@endif
             </ul>
         </div>
+        @endif
 
+        @php $commercial = $ma::allows($u,'sales') || $ma::allows($u,'logistics') || $ma::allows($u,'finance'); @endphp
+        @if($commercial)
         <div class="sidebar-divider"></div>
-
         {{-- Commercial --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
-                <li><a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') || request()->routeIs('sales-orders.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Sales</span></a></li>
-                <li><a href="{{ route('dispatches.index') }}" class="{{ request()->routeIs('dispatches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="logistics" /></span><span class="nav-label">Logistics</span></a></li>
-                <li><a href="{{ route('finance.index') }}" class="{{ request()->routeIs('finance.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Finance</span></a></li>
+                @if($ma::allows($u,'sales'))<li><a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') || request()->routeIs('sales-orders.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Sales</span></a></li>@endif
+                @if($ma::allows($u,'logistics'))<li><a href="{{ route('dispatches.index') }}" class="{{ request()->routeIs('dispatches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="logistics" /></span><span class="nav-label">Logistics</span></a></li>@endif
+                @if($ma::allows($u,'finance'))<li><a href="{{ route('finance.index') }}" class="{{ request()->routeIs('finance.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Finance</span></a></li>@endif
             </ul>
         </div>
+        @endif
 
         {{-- Footer icons --}}
         <div class="sidebar-footer">
             <div class="sidebar-divider"></div>
             <ul class="sidebar-nav">
-                <li><a href="#"><span class="icon"><x-icon name="notifications" /></span><span class="nav-label">Notifications</span></a></li>
-                <li><a href="#"><span class="icon"><x-icon name="settings" /></span><span class="nav-label">Settings</span></a></li>
+                <li><a href="{{ route('settings.index') }}" class="{{ request()->routeIs('settings.*') ? 'active' : '' }}"><span class="icon"><x-icon name="settings" /></span><span class="nav-label">Settings</span></a></li>
                 @auth
                 <li>
                     <a href="#" onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();">
@@ -1129,7 +1159,16 @@
                 @php
                     $user = auth()->user();
                     $roleLabel = $user->role === 'owner' ? 'Horticulture Manager' : ucwords(str_replace('_', ' ', $user->role));
+                    $alertCount = app(\App\Services\AlertService::class)->count();
                 @endphp
+
+                {{-- Notifications bell --}}
+                <a href="{{ route('notifications.index') }}" class="icon-btn notif-btn {{ request()->routeIs('notifications.*') ? 'active' : '' }}" aria-label="Notifications" title="Notifications">
+                    <x-icon name="notifications" size="18" />
+                    @if($alertCount > 0)
+                        <span class="notif-badge">{{ $alertCount > 9 ? '9+' : $alertCount }}</span>
+                    @endif
+                </a>
                 <div class="user-menu" id="user-menu-toggle" onclick="this.classList.toggle('open')">
                     <div class="user-avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
                     <span>{{ $user->name }}</span>
@@ -1169,7 +1208,12 @@
 
                         {{-- Account actions --}}
                         <div class="user-dropdown-section">
-                            <a href="#" class="user-dropdown-item">
+                            <a href="{{ route('notifications.index') }}" class="user-dropdown-item">
+                                <span class="udd-icon"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
+                                Notifications
+                                @if($alertCount > 0)<span class="badge badge-down" style="margin-left:auto; font-size:10px;">{{ $alertCount }}</span>@endif
+                            </a>
+                            <a href="{{ route('settings.index') }}" class="user-dropdown-item">
                                 <span class="udd-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
                                 Settings
                             </a>

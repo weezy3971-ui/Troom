@@ -2,6 +2,7 @@
 @section('title', $cropCycle->season_name)
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'crop_cycles'); @endphp
 <div class="breadcrumbs">
     <a href="{{ route('crop-cycles.index') }}">Crop Cycles</a> <span>/</span> <span>{{ $cropCycle->season_name }}</span>
 </div>
@@ -11,6 +12,7 @@
         <h1 class="page-title">{{ $cropCycle->season_name }}</h1>
         <p class="page-subtitle">{{ $cropCycle->crop->name }} on {{ $cropCycle->block->name }} ({{ $cropCycle->block->farm->name }})</p>
     </div>
+    @if($canWrite)
     <div class="actions">
         @if($cropCycle->status === 'planned')
             <form action="{{ route('crop-cycles.activate', $cropCycle) }}" method="POST">
@@ -32,6 +34,7 @@
         @endif
         <a href="{{ route('crop-cycles.edit', $cropCycle) }}" class="btn btn-secondary">Edit</a>
     </div>
+    @endif
 </div>
 
 <div class="detail-grid">
@@ -92,7 +95,7 @@
         </div>
     @endif
 
-    @if(in_array($cropCycle->status, ['planned', 'active']))
+    @if($canWrite && in_array($cropCycle->status, ['planned', 'active']))
     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
         <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">{{ $cropCycle->seasonalBudget ? 'Update Budget' : 'Set Budget (required before activation)' }}</h4>
         <form action="{{ route('crop-cycles.budget', $cropCycle) }}" method="POST">

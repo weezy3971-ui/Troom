@@ -2,12 +2,13 @@
 @section('title', 'Farms')
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'master_data'); @endphp
 <div class="page-header">
     <div>
         <h1 class="page-title">Farms</h1>
         <p class="page-subtitle">Manage your farm locations and sizes</p>
     </div>
-    <a href="{{ route('farms.create') }}" class="btn btn-primary">+ Add Farm</a>
+    @if($canWrite)<a href="{{ route('farms.create') }}" class="btn btn-primary">+ Add Farm</a>@endif
 </div>
 
 <x-search-bar
@@ -29,7 +30,7 @@
                 <div class="icon">🌾</div>
                 <h3>No farms registered yet</h3>
                 <p>Start by adding your first farm to the system.</p>
-                <a href="{{ route('farms.create') }}" class="btn btn-primary">+ Add Farm</a>
+                @if($canWrite)<a href="{{ route('farms.create') }}" class="btn btn-primary">+ Add Farm</a>@endif
             @endif
         </div>
     </div>
@@ -59,11 +60,14 @@
                         <td>{{ $farm->assets_count }}</td>
                         <td>
                             <div class="actions">
+                                <a href="{{ route('farms.show', $farm) }}" class="btn btn-ghost btn-sm">View</a>
+                                @if($canWrite)
                                 <a href="{{ route('farms.edit', $farm) }}" class="btn btn-ghost btn-sm">Edit</a>
                                 <form action="{{ route('farms.destroy', $farm) }}" method="POST" onsubmit="return confirm('Delete this farm?')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

@@ -2,6 +2,7 @@
 @section('title', $block->name)
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'master_data'); @endphp
 <div class="breadcrumbs">
     <a href="{{ route('blocks.index') }}">Blocks</a> <span>/</span> <span>{{ $block->name }}</span>
 </div>
@@ -11,9 +12,11 @@
         <h1 class="page-title">{{ $block->name }}</h1>
         <p class="page-subtitle">{{ $block->farm->name }} — {{ $block->soil_type ?? 'Soil type not set' }}</p>
     </div>
+    @if($canWrite)
     <div class="actions">
         <a href="{{ route('blocks.edit', $block) }}" class="btn btn-secondary">Edit</a>
     </div>
+    @endif
 </div>
 
 <div class="detail-grid">
@@ -38,7 +41,7 @@
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Crop Cycles on this Block</h3>
-        <a href="{{ route('crop-cycles.create') }}" class="btn btn-primary btn-sm">+ New Cycle</a>
+        @if(\App\Support\ModuleAccess::allows(auth()->user(), 'crop_cycles'))<a href="{{ route('crop-cycles.create') }}" class="btn btn-primary btn-sm">+ New Cycle</a>@endif
     </div>
     @if($block->cropCycles->isEmpty())
         <div class="empty-state" style="padding: 30px;">

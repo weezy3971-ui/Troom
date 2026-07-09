@@ -2,12 +2,13 @@
 @section('title', 'Crop Cycles')
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'crop_cycles'); @endphp
 <div class="page-header">
     <div>
         <h1 class="page-title">Crop Cycles</h1>
         <p class="page-subtitle">Plan and track each crop cycle per block and season</p>
     </div>
-    <a href="{{ route('crop-cycles.create') }}" class="btn btn-primary">+ New Crop Cycle</a>
+    @if($canWrite)<a href="{{ route('crop-cycles.create') }}" class="btn btn-primary">+ New Crop Cycle</a>@endif
 </div>
 
 <x-search-bar
@@ -32,7 +33,7 @@
                 <div class="icon">📅</div>
                 <h3>No crop cycles planned</h3>
                 <p>Create a crop cycle to start tracking planting, budgets, and harvests.</p>
-                <a href="{{ route('crop-cycles.create') }}" class="btn btn-primary">+ New Crop Cycle</a>
+                @if($canWrite)<a href="{{ route('crop-cycles.create') }}" class="btn btn-primary">+ New Crop Cycle</a>@endif
             @endif
         </div>
     </div>

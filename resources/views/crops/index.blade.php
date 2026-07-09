@@ -2,12 +2,13 @@
 @section('title', 'Crops')
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'master_data'); @endphp
 <div class="page-header">
     <div>
         <h1 class="page-title">Crop Catalogue</h1>
         <p class="page-subtitle">Manage crop varieties and their expected yields</p>
     </div>
-    <a href="{{ route('crops.create') }}" class="btn btn-primary">+ Add Crop</a>
+    @if($canWrite)<a href="{{ route('crops.create') }}" class="btn btn-primary">+ Add Crop</a>@endif
 </div>
 
 <x-search-bar
@@ -29,7 +30,7 @@
                 <div class="icon">🌱</div>
                 <h3>No crops in catalogue</h3>
                 <p>Add your crop varieties to start planning crop cycles.</p>
-                <a href="{{ route('crops.create') }}" class="btn btn-primary">+ Add Crop</a>
+                @if($canWrite)<a href="{{ route('crops.create') }}" class="btn btn-primary">+ Add Crop</a>@endif
             @endif
         </div>
     </div>
@@ -61,11 +62,14 @@
                         <td>{{ $crop->crop_cycles_count }}</td>
                         <td>
                             <div class="actions">
+                                <a href="{{ route('crops.show', $crop) }}" class="btn btn-ghost btn-sm">View</a>
+                                @if($canWrite)
                                 <a href="{{ route('crops.edit', $crop) }}" class="btn btn-ghost btn-sm">Edit</a>
                                 <form action="{{ route('crops.destroy', $crop) }}" method="POST" onsubmit="return confirm('Delete this crop?')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>
