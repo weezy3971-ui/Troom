@@ -22,6 +22,35 @@ class FarmController extends Controller
         return view('farms.index', compact('farms', 'search'));
     }
 
+    /**
+     * Map view: farms plotted from their coordinates, coloured by whether they
+     * have an active crop cycle, with block/asset counts in the popup.
+     */
+    public function map()
+    {
+        $farms = Farm::withCount('blocks', 'assets')
+            ->with(['blocks' => fn($q) => $q->withCount(['cropCycles as active_cycles_count' => fn($c) => $c->where('status', 'active')])])
+            ->get()
+            ->map(function ($farm) {
+                $activeCycles = $farm->blocks->sum('active_cycles_count');
+                return [
+                    'id' => $farm->id,
+                    'name' => $farm->name,
+                    'location' => $farm->location,
+                    'lat' => (float) $farm->latitude,
+                    'lng' => (float) $farm->longitude,
+                    'blocks' => $farm->blocks_count,
+                    'assets' => $farm->assets_count,
+                    'active_cycles' => $activeCycles,
+                    'url' => route('farms.show', $farm),
+                ];
+            })
+            ->filter(fn($f) => $f['lat'] && $f['lng'])
+            ->values();
+
+        return view('farms.map', compact('farms'));
+    }
+
     public function create()
     {
         return view('farms.create');

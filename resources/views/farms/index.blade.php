@@ -8,7 +8,10 @@
         <h1 class="page-title">Farms</h1>
         <p class="page-subtitle">Manage your farm locations and sizes</p>
     </div>
-    @if($canWrite)<a href="{{ route('farms.create') }}" class="btn btn-primary">+ Add Farm</a>@endif
+    <div class="actions">
+        <a href="{{ route('farms.map') }}" class="btn btn-secondary">🗺️ Map View</a>
+        @if($canWrite)<a href="{{ route('farms.create') }}" class="btn btn-primary">+ Add Farm</a>@endif
+    </div>
 </div>
 
 <x-search-bar

@@ -12,17 +12,39 @@
             default => number_format($v, 0),
         };
     };
+    // Renders a compact inline SVG sparkline from an array of values.
+    $sparkline = function (array $values, string $stroke = 'var(--olive)') {
+        if (count($values) < 2) return '';
+        $w = 60; $h = 20; $pad = 2;
+        $min = min($values); $max = max($values); $range = ($max - $min) ?: 1;
+        $n = count($values);
+        $pts = [];
+        foreach ($values as $i => $v) {
+            $x = $pad + ($i / ($n - 1)) * ($w - 2 * $pad);
+            $y = $h - $pad - (($v - $min) / $range) * ($h - 2 * $pad);
+            $pts[] = round($x, 1) . ',' . round($y, 1);
+        }
+        $poly = implode(' ', $pts);
+        $last = end($pts);
+        [$lx, $ly] = explode(',', $last);
+        return '<svg width="' . $w . '" height="' . $h . '" viewBox="0 0 ' . $w . ' ' . $h . '" style="display:block;">'
+            . '<polyline points="' . $poly . '" fill="none" stroke="' . $stroke . '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'
+            . '<circle cx="' . $lx . '" cy="' . $ly . '" r="2.2" fill="' . $stroke . '"/></svg>';
+    };
+    $accentStroke = [
+        'success' => 'var(--success)', 'warning' => 'var(--warning)', 'harvest' => 'var(--terracotta)', 'accent' => 'var(--olive)',
+    ];
     $cards = [
-        ['key' => 'harvest_today',      'label' => 'Harvest Today',     'accent' => 'harvest'],
-        ['key' => 'yield_per_acre',     'label' => 'Yield / Acre',      'accent' => 'accent'],
-        ['key' => 'revenue',            'label' => 'Revenue (KES)',     'accent' => 'success'],
-        ['key' => 'cost_per_kg',        'label' => 'Cost / kg (KES)',   'accent' => 'warning'],
-        ['key' => 'gross_margin',       'label' => 'Gross Margin (KES)', 'accent' => 'success'],
-        ['key' => 'orders_pending',     'label' => 'Orders Pending',    'accent' => 'accent'],
-        ['key' => 'quality_rejection',  'label' => 'Quality Rejection', 'accent' => 'warning'],
-        ['key' => 'truck_utilisation',  'label' => 'Truck Utilisation', 'accent' => 'accent'],
-        ['key' => 'farm_health',        'label' => 'Farm Health',       'accent' => 'success'],
-        ['key' => 'cash_flow_forecast', 'label' => 'Cash Flow Forecast', 'accent' => 'harvest'],
+        ['key' => 'harvest_today',      'label' => 'Harvest Today',     'accent' => 'harvest', 'icon' => 'harvest'],
+        ['key' => 'yield_per_acre',     'label' => 'Yield / Acre',      'accent' => 'accent',  'icon' => 'cycles'],
+        ['key' => 'revenue',            'label' => 'Revenue (KES)',     'accent' => 'success', 'icon' => 'finance'],
+        ['key' => 'cost_per_kg',        'label' => 'Cost / kg (KES)',   'accent' => 'warning', 'icon' => 'inventory'],
+        ['key' => 'gross_margin',       'label' => 'Gross Margin (KES)', 'accent' => 'success', 'icon' => 'finance'],
+        ['key' => 'orders_pending',     'label' => 'Orders Pending',    'accent' => 'accent',  'icon' => 'sales'],
+        ['key' => 'quality_rejection',  'label' => 'Quality Rejection', 'accent' => 'warning', 'icon' => 'quality'],
+        ['key' => 'truck_utilisation',  'label' => 'Truck Utilisation', 'accent' => 'accent',  'icon' => 'logistics'],
+        ['key' => 'farm_health',        'label' => 'Farm Health',       'accent' => 'success', 'icon' => 'farm'],
+        ['key' => 'cash_flow_forecast', 'label' => 'Cash Flow Forecast', 'accent' => 'harvest', 'icon' => 'finance'],
     ];
 @endphp
 
@@ -56,9 +78,13 @@
 @else
     <div class="stats-grid">
         @foreach($cards as $card)
-        <div class="stat-card">
-            <div class="stat-label">{{ $card['label'] }}</div>
-            <div class="stat-value {{ $card['accent'] }}">{{ $fmt($snapshots->get($card['key'])) }}</div>
+        @php $series = $history->get($card['key'], []); @endphp
+        <div class="stat-card has-icon">
+            <span class="stat-icon {{ $card['accent'] }}"><x-icon :name="$card['icon']" solid /></span>
+            <span class="stat-body">
+                <span class="stat-label" style="display:block;">{{ $card['label'] }}</span>
+                <span class="stat-value {{ $card['accent'] }}">{{ $fmt($snapshots->get($card['key'])) }}</span>
+            </span>
         </div>
         @endforeach
     </div>

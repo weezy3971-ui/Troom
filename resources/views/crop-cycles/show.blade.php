@@ -101,26 +101,34 @@
     @endif
 
     @if($canWrite && in_array($cropCycle->status, ['planned', 'active']))
+    @php
+        // With no budget yet, pre-fill from the crop's reusable template (if any).
+        $tpl = $cropCycle->seasonalBudget ? null : $cropCycle->crop;
+        $usingTemplate = $tpl && $tpl->hasBudgetTemplate();
+    @endphp
     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
-        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">{{ $cropCycle->seasonalBudget ? 'Update Budget' : 'Set Budget (required before activation)' }}</h4>
+        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">{{ $cropCycle->seasonalBudget ? 'Update Budget' : 'Set Budget (required before activation)' }}</h4>
+        @if($usingTemplate)
+            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px;">Pre-filled from the <strong>{{ $cropCycle->crop->name }}</strong> budget template — adjust as needed.</p>
+        @endif
         <form action="{{ route('crop-cycles.budget', $cropCycle) }}" method="POST">
             @csrf
             <div class="form-grid">
                 <div class="form-group">
                     <label class="form-label" for="labour_budget">Labour Budget (KES)</label>
-                    <input type="number" id="labour_budget" name="labour_budget" value="{{ old('labour_budget', $cropCycle->seasonalBudget?->labour_budget ?? 0) }}" class="form-input" step="0.01" min="0" required>
+                    <input type="number" id="labour_budget" name="labour_budget" value="{{ old('labour_budget', $cropCycle->seasonalBudget?->labour_budget ?? ($tpl?->default_labour_budget ?? 0)) }}" class="form-input" step="0.01" min="0" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="input_budget">Input Budget (KES)</label>
-                    <input type="number" id="input_budget" name="input_budget" value="{{ old('input_budget', $cropCycle->seasonalBudget?->input_budget ?? 0) }}" class="form-input" step="0.01" min="0" required>
+                    <input type="number" id="input_budget" name="input_budget" value="{{ old('input_budget', $cropCycle->seasonalBudget?->input_budget ?? ($tpl?->default_input_budget ?? 0)) }}" class="form-input" step="0.01" min="0" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="irrigation_budget">Irrigation Budget (KES)</label>
-                    <input type="number" id="irrigation_budget" name="irrigation_budget" value="{{ old('irrigation_budget', $cropCycle->seasonalBudget?->irrigation_budget ?? 0) }}" class="form-input" step="0.01" min="0" required>
+                    <input type="number" id="irrigation_budget" name="irrigation_budget" value="{{ old('irrigation_budget', $cropCycle->seasonalBudget?->irrigation_budget ?? ($tpl?->default_irrigation_budget ?? 0)) }}" class="form-input" step="0.01" min="0" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="overhead_budget">Overhead Budget (KES)</label>
-                    <input type="number" id="overhead_budget" name="overhead_budget" value="{{ old('overhead_budget', $cropCycle->seasonalBudget?->overhead_budget ?? 0) }}" class="form-input" step="0.01" min="0" required>
+                    <input type="number" id="overhead_budget" name="overhead_budget" value="{{ old('overhead_budget', $cropCycle->seasonalBudget?->overhead_budget ?? ($tpl?->default_overhead_budget ?? 0)) }}" class="form-input" step="0.01" min="0" required>
                 </div>
             </div>
             <button type="submit" class="btn btn-primary">Save Budget</button>

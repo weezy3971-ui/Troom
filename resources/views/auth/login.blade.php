@@ -152,6 +152,10 @@
             <button type="submit" class="btn-login">Sign in</button>
         </form>
 
+        <div style="margin-top: 20px; font-size: 12px; color: var(--text-2); text-align: center;">
+            Have an approved email? <a href="{{ route('register') }}" style="color: var(--accent-hover); text-decoration: none; font-weight: 600;">Create your account</a>
+        </div>
+
         <div class="demo-hint">
             <div class="demo-toggle" onclick="toggleDemo()">
                 <strong>Demo access</strong>

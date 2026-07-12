@@ -16,10 +16,16 @@ class AnalyticsController extends Controller
             ? KpiSnapshot::where('snapshot_date', $latestDate)->get()->keyBy('key')
             : collect();
 
+        // Per-KPI trend history (oldest → newest) for inline sparklines.
+        $history = KpiSnapshot::orderBy('snapshot_date')
+            ->get()
+            ->groupBy('key')
+            ->map(fn($rows) => $rows->pluck('value')->map(fn($v) => (float) $v)->values()->all());
+
         // Proactive alerts aggregated from across the modules.
         $alerts = $alertService->collect();
 
-        return view('analytics.index', compact('snapshots', 'latestDate', 'alerts'));
+        return view('analytics.index', compact('snapshots', 'latestDate', 'alerts', 'history'));
     }
 
     public function recompute(KpiSnapshotService $service)

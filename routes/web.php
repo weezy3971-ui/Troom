@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CropController;
 use App\Http\Controllers\CropCycleController;
@@ -23,6 +25,7 @@ use App\Http\Controllers\PackhouseLotController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\QualityCheckController;
 use App\Http\Controllers\SalesOrderController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SprayLogController;
 use App\Support\ModuleAccess;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +37,8 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
@@ -45,9 +50,15 @@ Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Global quick-search
+    Route::get('/search', [SearchController::class, 'index'])->name('search');
+
     // Module 1: Master Data — readable by all roles (spec), writable by managers.
     // Write routes (create/store/edit/update/destroy) are registered before the
     // read routes so `create` is not swallowed by the `{model}` show route.
+    // Farm map view (distinct path so it doesn't collide with farms/{farm}).
+    Route::get('farms-map', [FarmController::class, 'map'])->name('farms.map');
+
     $masterData = ModuleAccess::middleware('master_data');
     foreach (['farms' => FarmController::class, 'blocks' => BlockController::class, 'crops' => CropController::class, 'assets' => AssetController::class] as $name => $ctrl) {
         Route::resource($name, $ctrl)->except(['index', 'show'])->middleware($masterData);
@@ -139,4 +150,15 @@ Route::middleware('auth')->group(function () {
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile');
+
+    // Administration: user onboarding, roles & the audit trail (owner + horticulture_manager).
+    Route::middleware(ModuleAccess::middleware('admin'))->group(function () {
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::post('users/approve', [UserController::class, 'approveEmail'])->name('users.approve');
+        Route::delete('users/approvals/{approvedEmail}', [UserController::class, 'revokeApproval'])->name('users.approvals.revoke');
+        Route::put('users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
+        Route::put('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
+
+        Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+    });
 });

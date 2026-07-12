@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ApprovedEmail;
 use App\Models\Asset;
 use App\Models\Block;
 use App\Models\ChartOfAccount;
@@ -76,9 +77,12 @@ class DatabaseSeeder extends Seeder
         $blockE = Block::create(['farm_id' => $nanyuki->id,  'name' => 'Block E — South',        'size_acres' => 20.0, 'soil_type' => 'Red earth']);
 
         // ---- Crops ----
-        $rose    = Crop::create(['name' => 'Rose',       'variety' => 'Red Naomi',   'crop_type' => 'Flower',    'days_to_maturity' => 60,  'expected_yield_per_acre' => 8000]);
-        $avocado = Crop::create(['name' => 'Avocado',    'variety' => 'Hass',        'crop_type' => 'Fruit',     'days_to_maturity' => 365, 'expected_yield_per_acre' => 6000]);
-        $tomato  = Crop::create(['name' => 'Tomato',     'variety' => 'Anna F1',     'crop_type' => 'Vegetable', 'days_to_maturity' => 90,  'expected_yield_per_acre' => 25000]);
+        $rose    = Crop::create(['name' => 'Rose',       'variety' => 'Red Naomi',   'crop_type' => 'Flower',    'days_to_maturity' => 60,  'expected_yield_per_acre' => 8000,
+            'default_labour_budget' => 150000, 'default_input_budget' => 80000, 'default_irrigation_budget' => 30000, 'default_overhead_budget' => 20000]);
+        $avocado = Crop::create(['name' => 'Avocado',    'variety' => 'Hass',        'crop_type' => 'Fruit',     'days_to_maturity' => 365, 'expected_yield_per_acre' => 6000,
+            'default_labour_budget' => 200000, 'default_input_budget' => 120000, 'default_irrigation_budget' => 50000, 'default_overhead_budget' => 30000]);
+        $tomato  = Crop::create(['name' => 'Tomato',     'variety' => 'Anna F1',     'crop_type' => 'Vegetable', 'days_to_maturity' => 90,  'expected_yield_per_acre' => 25000,
+            'default_labour_budget' => 110000, 'default_input_budget' => 70000, 'default_irrigation_budget' => 25000, 'default_overhead_budget' => 15000]);
         $bean    = Crop::create(['name' => 'French Bean','variety' => 'Samantha',    'crop_type' => 'Vegetable', 'days_to_maturity' => 55,  'expected_yield_per_acre' => 4000]);
         $straw   = Crop::create(['name' => 'Strawberry', 'variety' => 'Chandler',   'crop_type' => 'Fruit',     'days_to_maturity' => 120, 'expected_yield_per_acre' => 15000]);
 
@@ -333,7 +337,40 @@ class DatabaseSeeder extends Seeder
             ['code' => '5000', 'name' => 'Farm Operating Costs',  'type' => 'expense', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
+        // ---- Approved-email allowlist (onboarding) ----
+        // Existing seeded accounts, recorded as already-registered approvals.
+        $owner = User::where('role', 'owner')->first();
+        foreach (User::all() as $existing) {
+            ApprovedEmail::create([
+                'email' => $existing->email,
+                'role' => $existing->role,
+                'invited_by' => $owner?->id,
+                'registered_at' => now(),
+            ]);
+        }
+        // A couple of pending invitations awaiting self-registration.
+        ApprovedEmail::create(['email' => 'newagronomist@trooms.co.ke', 'role' => 'agronomist',      'invited_by' => $owner?->id]);
+        ApprovedEmail::create(['email' => 'newdriver@trooms.co.ke',     'role' => 'driver',          'invited_by' => $owner?->id]);
+        ApprovedEmail::create(['email' => 'newstores@trooms.co.ke',     'role' => 'storekeeper',     'invited_by' => $owner?->id]);
+
         // ---- Module 17: Executive KPI snapshots ----
         (new KpiSnapshotService())->recompute();
+
+        // Backfill ~8 days of KPI history (jittered around today's values) so the
+        // executive dashboard sparklines show a trend rather than a single point.
+        $latest = \App\Models\KpiSnapshot::max('snapshot_date');
+        if ($latest) {
+            $current = \App\Models\KpiSnapshot::where('snapshot_date', $latest)->get();
+            foreach (range(8, 1) as $daysAgo) {
+                $date = \Illuminate\Support\Carbon::parse($latest)->subDays($daysAgo)->toDateString();
+                foreach ($current as $snap) {
+                    $factor = 0.82 + (mt_rand(0, 36) / 100); // 0.82–1.18
+                    \App\Models\KpiSnapshot::updateOrCreate(
+                        ['snapshot_date' => $date, 'key' => $snap->key],
+                        ['value' => round((float) $snap->value * $factor, 2), 'unit' => $snap->unit, 'meta' => $snap->meta]
+                    );
+                }
+            }
+        }
     }
 }

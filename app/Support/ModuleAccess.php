@@ -32,6 +32,8 @@ class ModuleAccess
         'logistics'   => ['horticulture_manager', 'sales_officer', 'driver'],
         'finance'     => ['md', 'finance_officer'],
         'analytics'   => ['md', 'horticulture_manager'],
+        // User administration & audit trail (owner always allowed via CheckRole).
+        'admin'       => ['horticulture_manager'],
     ];
 
     /**
