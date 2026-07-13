@@ -354,6 +354,8 @@ class DatabaseSeeder extends Seeder
         ApprovedEmail::create(['email' => 'newstores@trooms.co.ke',     'role' => 'storekeeper',     'invited_by' => $owner?->id]);
 
         // ---- Module 17: Executive KPI snapshots ----
+        $this->call(StableSeeder::class);
+
         (new KpiSnapshotService())->recompute();
 
         // Backfill ~8 days of KPI history (jittered around today's values) so the

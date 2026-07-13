@@ -21,7 +21,12 @@ use App\Http\Controllers\IrrigationLogController;
 use App\Http\Controllers\LabourAttendanceController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NurseryBatchController;
+use App\Http\Controllers\GuideController;
+use App\Http\Controllers\HorseController;
+use App\Http\Controllers\HorseRideController;
 use App\Http\Controllers\PackhouseLotController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\WorkerController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\QualityCheckController;
 use App\Http\Controllers\SalesOrderController;
@@ -102,6 +107,18 @@ Route::middleware('auth')->group(function () {
     // Module 8: Labour & Attendance
     Route::resource('labour-attendances', LabourAttendanceController::class)->middleware(ModuleAccess::middleware('labour'));
 
+    // Module 8b: Projects, task-splitting & labour assignment
+    Route::middleware(ModuleAccess::middleware('projects'))->group(function () {
+        Route::resource('workers', WorkerController::class)->except('show');
+        Route::resource('projects', ProjectController::class);
+        Route::post('projects/{project}/tasks', [ProjectController::class, 'storeTask'])->name('projects.tasks.store');
+        Route::delete('projects/{project}/tasks/{task}', [ProjectController::class, 'destroyTask'])->name('projects.tasks.destroy');
+        Route::post('projects/{project}/tasks/{task}/assignments', [ProjectController::class, 'storeAssignment'])->name('projects.assignments.store');
+        Route::delete('projects/{project}/tasks/{task}/assignments/{assignment}', [ProjectController::class, 'destroyAssignment'])->name('projects.assignments.destroy');
+        Route::post('projects/{project}/inputs', [ProjectController::class, 'storeInput'])->name('projects.inputs.store');
+        Route::delete('projects/{project}/inputs/{transaction}', [ProjectController::class, 'destroyInput'])->name('projects.inputs.destroy');
+    });
+
     // ---- Phase 3: Post-Harvest & Commercial ----
 
     // Module 9: Machinery & Fleet is covered by the Assets resource above.
@@ -132,6 +149,16 @@ Route::middleware('auth')->group(function () {
 
     // Module 15: Logistics & Dispatch
     Route::resource('dispatches', DispatchController::class)->middleware(ModuleAccess::middleware('logistics'));
+
+    // Module 15b: Stables — horse rides & receipting
+    Route::middleware(ModuleAccess::middleware('stables'))->group(function () {
+        Route::resource('horses', HorseController::class)->except('show');
+        Route::resource('guides', GuideController::class)->except('show');
+        Route::resource('rides', HorseRideController::class)->only(['index', 'create', 'store', 'show']);
+        Route::post('rides/{ride}/assign', [HorseRideController::class, 'assign'])->name('rides.assign');
+        Route::post('rides/{ride}/cancel', [HorseRideController::class, 'cancel'])->name('rides.cancel');
+        Route::get('rides/{ride}/receipt', [HorseRideController::class, 'receipt'])->name('rides.receipt');
+    });
 
     // Module 16: Finance (Native Ledger)
     Route::middleware(ModuleAccess::middleware('finance'))->group(function () {
