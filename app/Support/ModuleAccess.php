@@ -33,7 +33,9 @@ class ModuleAccess
         'sales'       => ['horticulture_manager', 'sales_officer'],
         'logistics'   => ['horticulture_manager', 'sales_officer', 'driver'],
         'finance'     => ['md', 'finance_officer'],
-        'analytics'   => ['md', 'horticulture_manager'],
+        // Executive Dashboard is finance-facing: Finance Officer & MD only
+        // (owner is always allowed as super-admin).
+        'analytics'   => ['finance_officer', 'md'],
         // User administration & audit trail (owner always allowed via CheckRole).
         'admin'       => ['horticulture_manager'],
     ];

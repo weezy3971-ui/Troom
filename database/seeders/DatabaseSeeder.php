@@ -364,7 +364,7 @@ class DatabaseSeeder extends Seeder
         if ($latest) {
             $current = \App\Models\KpiSnapshot::where('snapshot_date', $latest)->get();
             foreach (range(8, 1) as $daysAgo) {
-                $date = \Illuminate\Support\Carbon::parse($latest)->subDays($daysAgo)->toDateString();
+                $date = \Illuminate\Support\Carbon::parse($latest)->subDays($daysAgo)->startOfDay();
                 foreach ($current as $snap) {
                     $factor = 0.82 + (mt_rand(0, 36) / 100); // 0.82–1.18
                     \App\Models\KpiSnapshot::updateOrCreate(

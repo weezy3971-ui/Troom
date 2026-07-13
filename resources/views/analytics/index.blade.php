@@ -92,6 +92,87 @@
     </div>
 @endif
 
+{{-- ---- Profit & Loss / ledger summary ---- --}}
+<div class="page-header" style="margin-top: 8px;">
+    <div>
+        <h3 class="card-title" style="font-size: 17px;">Profit &amp; Loss</h3>
+        <p class="page-subtitle">From the native ledger @if($pnl['as_of']) · to {{ \Carbon\Carbon::parse($pnl['as_of'])->format('M d, Y') }} @endif</p>
+    </div>
+    <a href="{{ route('finance.index') }}" class="btn btn-ghost btn-sm">Open Finance</a>
+</div>
+
+@if($pnl['posted'] === 0)
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="alert alert-info" style="margin: 0;">No ledger transactions have been posted yet. Post cost allocations and sales from <a href="{{ route('finance.index') }}">Finance</a> to populate the P&amp;L.</div>
+    </div>
+@else
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="stat-card has-icon">
+            <span class="stat-icon success"><x-icon name="finance" solid /></span>
+            <span class="stat-body">
+                <span class="stat-label" style="display:block;">Revenue</span>
+                <span class="stat-value success">{{ number_format($pnl['revenue']) }}</span>
+            </span>
+        </div>
+        <div class="stat-card has-icon">
+            <span class="stat-icon warning"><x-icon name="inventory" solid /></span>
+            <span class="stat-body">
+                <span class="stat-label" style="display:block;">Expenses</span>
+                <span class="stat-value warning">{{ number_format($pnl['expenses']) }}</span>
+            </span>
+        </div>
+        <div class="stat-card has-icon">
+            <span class="stat-icon {{ $pnl['net'] >= 0 ? 'success' : 'danger' }}"><x-icon name="cycles" solid /></span>
+            <span class="stat-body">
+                <span class="stat-label" style="display:block;">Net {{ $pnl['net'] >= 0 ? 'Profit' : 'Loss' }}</span>
+                <span class="stat-value" style="color: {{ $pnl['net'] >= 0 ? 'var(--success)' : 'var(--danger)' }};">{{ number_format($pnl['net']) }}</span>
+            </span>
+        </div>
+        <div class="stat-card has-icon">
+            <span class="stat-icon accent"><x-icon name="finance" solid /></span>
+            <span class="stat-body">
+                <span class="stat-label" style="display:block;">Cash &amp; Bank</span>
+                <span class="stat-value accent">{{ number_format($pnl['cash']) }}</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header" style="display:flex; justify-content: space-between; align-items:center;">
+            <h3 class="card-title">Statement</h3>
+            @if($pnl['margin'] !== null)
+                <span class="kpi-chip">Net margin: <strong>{{ number_format($pnl['margin'], 1) }}%</strong></span>
+            @endif
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Account</th><th>Type</th><th style="text-align:right;">Amount (KES)</th></tr></thead>
+                <tbody>
+                    @foreach($pnl['revenue_accounts'] as $a)
+                    <tr>
+                        <td style="font-weight:600; color: var(--text-primary);">{{ $a['name'] }} <span style="font-family: var(--font-mono); font-size:11px; color: var(--text-muted);">{{ $a['code'] }}</span></td>
+                        <td><span class="badge badge-active">Income</span></td>
+                        <td style="text-align:right;">{{ number_format($a['balance']) }}</td>
+                    </tr>
+                    @endforeach
+                    @foreach($pnl['expense_accounts'] as $a)
+                    <tr>
+                        <td style="font-weight:600; color: var(--text-primary);">{{ $a['name'] }} <span style="font-family: var(--font-mono); font-size:11px; color: var(--text-muted);">{{ $a['code'] }}</span></td>
+                        <td><span class="badge badge-maintenance">Expense</span></td>
+                        <td style="text-align:right;">({{ number_format($a['balance']) }})</td>
+                    </tr>
+                    @endforeach
+                    <tr style="border-top: 2px solid var(--border-strong);">
+                        <td style="font-weight:700; color: var(--text-primary);">Net {{ $pnl['net'] >= 0 ? 'Profit' : 'Loss' }}</td>
+                        <td></td>
+                        <td style="text-align:right; font-weight:700; color: {{ $pnl['net'] >= 0 ? 'var(--success)' : 'var(--danger)' }};">{{ number_format($pnl['net']) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+@endif
+
 <div class="card">
     <div class="card-header"><h3 class="card-title">Active Alerts</h3></div>
     @if(empty($alerts))

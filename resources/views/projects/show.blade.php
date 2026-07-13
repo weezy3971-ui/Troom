@@ -109,32 +109,36 @@
     @if($inventoryItems->isEmpty())
         <div class="alert alert-warning" style="margin: 0;">No inventory items exist yet. Add items in the Inventory module to consume them here.</div>
     @else
-        <form action="{{ route('projects.inputs.store', $project) }}" method="POST" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-            @csrf
-            <div class="form-group" style="min-width: 200px; margin: 0;">
-                <label class="form-label">Item *</label>
-                <select name="inventory_item_id" class="form-select" required>
-                    <option value="">— Select —</option>
-                    @foreach($inventoryItems as $item)
-                        <option value="{{ $item->id }}">{{ $item->name }} ({{ number_format($item->currentStock(), 2) }} {{ $item->unit }} in stock)</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="form-group" style="width: 120px; margin: 0;">
-                <label class="form-label">Quantity *</label>
-                <input type="number" step="0.01" min="0.01" name="quantity" class="form-input" required>
-            </div>
-            <div class="form-group" style="width: 140px; margin: 0;">
-                <label class="form-label">Cost (KES) *</label>
-                <input type="number" step="0.01" min="0" name="cost" class="form-input" required>
-            </div>
-            <div class="form-group" style="width: 150px; margin: 0;">
-                <label class="form-label">Date *</label>
-                <input type="date" name="transaction_date" value="{{ now()->toDateString() }}" class="form-input" required>
-            </div>
-            <button type="submit" class="btn btn-secondary">Log Input</button>
-        </form>
-        @error('quantity') <p class="form-error">{{ $message }}</p> @enderror
+        <button type="button" class="btn btn-secondary btn-sm" data-reveal="#log-input-form" @if($errors->has('quantity')) hidden @endif>+ Log Input</button>
+        <div id="log-input-form" @unless($errors->has('quantity')) hidden @endunless style="margin-top: 4px;">
+            <form action="{{ route('projects.inputs.store', $project) }}" method="POST" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                @csrf
+                <div class="form-group" style="min-width: 200px; margin: 0;">
+                    <label class="form-label">Item *</label>
+                    <select name="inventory_item_id" class="form-select" required>
+                        <option value="">— Select —</option>
+                        @foreach($inventoryItems as $item)
+                            <option value="{{ $item->id }}">{{ $item->name }} ({{ number_format($item->currentStock(), 2) }} {{ $item->unit }} in stock)</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group" style="width: 120px; margin: 0;">
+                    <label class="form-label">Quantity *</label>
+                    <input type="number" step="0.01" min="0.01" name="quantity" class="form-input" required>
+                </div>
+                <div class="form-group" style="width: 140px; margin: 0;">
+                    <label class="form-label">Cost (KES) *</label>
+                    <input type="number" step="0.01" min="0" name="cost" class="form-input" required>
+                </div>
+                <div class="form-group" style="width: 150px; margin: 0;">
+                    <label class="form-label">Date *</label>
+                    <input type="date" name="transaction_date" value="{{ now()->toDateString() }}" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn-secondary">Log Input</button>
+                <button type="button" class="btn btn-ghost" data-hide="#log-input-form">Cancel</button>
+            </form>
+            @error('quantity') <p class="form-error">{{ $message }}</p> @enderror
+        </div>
     @endif
 </div>
 
@@ -144,19 +148,25 @@
 </div>
 
 {{-- Add task --}}
-<div class="card" style="margin-bottom: 20px;">
-    <form action="{{ route('projects.tasks.store', $project) }}" method="POST" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
-        @csrf
-        <div class="form-group" style="flex: 1; min-width: 220px; margin: 0;">
-            <label class="form-label" for="task_name">New Task *</label>
-            <input type="text" id="task_name" name="name" class="form-input" placeholder="e.g. Land preparation" required>
+<div style="margin-bottom: 20px;">
+    <button type="button" class="btn btn-primary" data-reveal="#add-task-form" @if($errors->has('name')) hidden @endif>+ Add Task</button>
+    <div id="add-task-form" @unless($errors->has('name')) hidden @endunless>
+        <div class="card" style="margin-top: 10px;">
+            <form action="{{ route('projects.tasks.store', $project) }}" method="POST" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                @csrf
+                <div class="form-group" style="flex: 1; min-width: 220px; margin: 0;">
+                    <label class="form-label" for="task_name">New Task *</label>
+                    <input type="text" id="task_name" name="name" class="form-input" placeholder="e.g. Land preparation" required>
+                </div>
+                <div class="form-group" style="flex: 2; min-width: 220px; margin: 0;">
+                    <label class="form-label" for="task_desc">Description</label>
+                    <input type="text" id="task_desc" name="description" class="form-input" placeholder="Optional detail">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Task</button>
+                <button type="button" class="btn btn-ghost" data-hide="#add-task-form">Cancel</button>
+            </form>
         </div>
-        <div class="form-group" style="flex: 2; min-width: 220px; margin: 0;">
-            <label class="form-label" for="task_desc">Description</label>
-            <input type="text" id="task_desc" name="description" class="form-input" placeholder="Optional detail">
-        </div>
-        <button type="submit" class="btn btn-primary">+ Add Task</button>
-    </form>
+    </div>
 </div>
 
 @forelse($project->tasks as $task)
@@ -202,31 +212,35 @@
         @endif
 
         {{-- Assign worker to this task --}}
-        <form action="{{ route('projects.assignments.store', [$project, $task]) }}" method="POST" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-            @csrf
-            <div class="form-group" style="min-width: 180px; margin: 0;">
-                <label class="form-label">Worker *</label>
-                <select name="worker_id" class="form-select" required data-worker-select>
-                    <option value="">— Select —</option>
-                    @foreach($workers as $w)
-                        <option value="{{ $w->id }}" data-rate="{{ $w->default_rate }}">{{ $w->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="form-group" style="width: 150px; margin: 0;">
-                <label class="form-label">Date *</label>
-                <input type="date" name="assigned_date" value="{{ now()->toDateString() }}" class="form-input" required>
-            </div>
-            <div class="form-group" style="width: 110px; margin: 0;">
-                <label class="form-label">Hours *</label>
-                <input type="number" step="0.1" min="0" name="hours" class="form-input" required>
-            </div>
-            <div class="form-group" style="width: 130px; margin: 0;">
-                <label class="form-label">Rate *</label>
-                <input type="number" step="0.01" min="0" name="rate" class="form-input" data-rate-input required>
-            </div>
-            <button type="submit" class="btn btn-secondary">Assign</button>
-        </form>
+        <button type="button" class="btn btn-secondary btn-sm" data-reveal="#assign-form-{{ $task->id }}">+ Assign Worker</button>
+        <div id="assign-form-{{ $task->id }}" hidden style="margin-top: 4px;">
+            <form action="{{ route('projects.assignments.store', [$project, $task]) }}" method="POST" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                @csrf
+                <div class="form-group" style="min-width: 180px; margin: 0;">
+                    <label class="form-label">Worker *</label>
+                    <select name="worker_id" class="form-select" required data-worker-select>
+                        <option value="">— Select —</option>
+                        @foreach($workers as $w)
+                            <option value="{{ $w->id }}" data-rate="{{ $w->default_rate }}">{{ $w->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group" style="width: 150px; margin: 0;">
+                    <label class="form-label">Date *</label>
+                    <input type="date" name="assigned_date" value="{{ now()->toDateString() }}" class="form-input" required>
+                </div>
+                <div class="form-group" style="width: 110px; margin: 0;">
+                    <label class="form-label">Hours *</label>
+                    <input type="number" step="0.1" min="0" name="hours" class="form-input" required>
+                </div>
+                <div class="form-group" style="width: 130px; margin: 0;">
+                    <label class="form-label">Rate *</label>
+                    <input type="number" step="0.01" min="0" name="rate" class="form-input" data-rate-input required>
+                </div>
+                <button type="submit" class="btn btn-secondary">Assign</button>
+                <button type="button" class="btn btn-ghost" data-hide="#assign-form-{{ $task->id }}">Cancel</button>
+            </form>
+        </div>
     </div>
 @empty
     <div class="card">
@@ -243,6 +257,27 @@
 @endif
 
 <script>
+    // Reveal / hide collapsible inline forms.
+    document.querySelectorAll('[data-reveal]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var target = document.querySelector(this.getAttribute('data-reveal'));
+            if (!target) return;
+            target.hidden = false;
+            this.hidden = true;
+            var input = target.querySelector('input, select');
+            if (input) input.focus();
+        });
+    });
+    document.querySelectorAll('[data-hide]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var sel = this.getAttribute('data-hide');
+            var target = document.querySelector(sel);
+            if (target) target.hidden = true;
+            var revealBtn = document.querySelector('[data-reveal="' + sel + '"]');
+            if (revealBtn) revealBtn.hidden = false;
+        });
+    });
+
     // Prefill the rate input with the selected worker's default rate.
     document.querySelectorAll('[data-worker-select]').forEach(function (sel) {
         sel.addEventListener('change', function () {

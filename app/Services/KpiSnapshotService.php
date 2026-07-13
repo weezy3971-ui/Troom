@@ -66,8 +66,12 @@ class KpiSnapshotService
         ];
 
         foreach ($kpis as $kpi) {
+            // Match on a Carbon (start of day) so the bound value is formatted
+            // to the same 'Y-m-d H:i:s' the date-cast column stores. Passing a
+            // bare 'Y-m-d' string never matches, causing duplicate-insert
+            // UNIQUE violations on recompute.
             KpiSnapshot::updateOrCreate(
-                ['snapshot_date' => $date->toDateString(), 'key' => $kpi['key']],
+                ['snapshot_date' => $date->copy()->startOfDay(), 'key' => $kpi['key']],
                 ['value' => $kpi['value'], 'unit' => $kpi['unit']]
             );
         }

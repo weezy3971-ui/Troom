@@ -86,13 +86,16 @@ class Horse extends Model
      * Whether this horse can take a new ride over [start, end] — it must be
      * free (including its rest buffer) across that whole window.
      */
-    public function isFreeFor(Carbon $start, Carbon $end): bool
+    public function isFreeFor(Carbon $start, Carbon $end, ?int $exceptRideId = null): bool
     {
         if (! $this->is_active) {
             return false;
         }
 
         foreach ($this->activeRides() as $r) {
+            if ($exceptRideId && $r->id === $exceptRideId) {
+                continue; // ignore the ride currently being (re)assigned/edited
+            }
             $restEnd = $r->end_time->copy()->addMinutes($this->rest_minutes);
             // Overlap test between [start, end] and [r.start, r.end + rest].
             if ($start->lessThan($restEnd) && $r->start_time->lessThan($end)) {

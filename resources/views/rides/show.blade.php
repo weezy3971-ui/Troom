@@ -22,7 +22,12 @@
         <p class="page-subtitle"><span style="font-family: var(--font-mono);">{{ $ride->receipt_number }}</span> · {{ $ride->start_time->format('M d, Y H:i') }}</p>
     </div>
     <div class="actions">
-        <a href="{{ route('rides.receipt', $ride) }}" target="_blank" class="btn btn-secondary">Print Receipt</a>
+        <a href="{{ route('rides.edit', $ride) }}" class="btn btn-secondary">Edit</a>
+        @if($ride->payment_status === 'paid')
+            <a href="{{ route('rides.receipt', $ride) }}" target="_blank" class="btn btn-secondary">Print Receipt</a>
+        @else
+            <button type="button" class="btn btn-ghost" disabled title="Mark the ride as paid to print a receipt">Print Receipt</button>
+        @endif
         @if($st !== 'cancelled' && $st !== 'completed')
         <form action="{{ route('rides.cancel', $ride) }}" method="POST" data-confirm="Cancel this ride?">
             @csrf

@@ -154,7 +154,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(ModuleAccess::middleware('stables'))->group(function () {
         Route::resource('horses', HorseController::class)->except('show');
         Route::resource('guides', GuideController::class)->except('show');
-        Route::resource('rides', HorseRideController::class)->only(['index', 'create', 'store', 'show']);
+        Route::resource('rides', HorseRideController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
         Route::post('rides/{ride}/assign', [HorseRideController::class, 'assign'])->name('rides.assign');
         Route::post('rides/{ride}/cancel', [HorseRideController::class, 'cancel'])->name('rides.cancel');
         Route::get('rides/{ride}/receipt', [HorseRideController::class, 'receipt'])->name('rides.receipt');

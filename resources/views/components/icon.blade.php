@@ -42,6 +42,8 @@
         'notifications' => '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
         'modules' => '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
         'planning' => '<path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M11 14h2M11 18h2"/>',
+        'horse' => '<path d="M8.5 20.5c-3-1.6-4.5-5-4.5-8.5a8 8 0 0 1 16 0c0 3.5-1.5 6.9-4.5 8.5"/><circle cx="6.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/><circle cx="17.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/><circle cx="6.8" cy="13.5" r=".6" fill="currentColor" stroke="none"/><circle cx="17.2" cy="13.5" r=".6" fill="currentColor" stroke="none"/>',
+        'chevron' => '<path d="m9 18 6-6-6-6"/>',
     ];
 
     $useSolid = $solid && isset($solidIcons[$name]);
