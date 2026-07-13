@@ -59,7 +59,9 @@
     </div>
     <form action="{{ route('analytics.recompute') }}" method="POST">
         @csrf
-        <button type="submit" class="btn btn-primary">Recompute Snapshots</button>
+        <button type="submit" class="btn btn-primary" title="Recompute snapshots" aria-label="Recompute snapshots" style="padding:9px 11px;">
+            <x-icon name="cycles" size="18" />
+        </button>
     </form>
 </div>
 

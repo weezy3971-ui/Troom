@@ -10,6 +10,7 @@ class CostAllocation extends Model
     protected $fillable = [
         'crop_cycle_id',
         'block_id',
+        'project_id',
         'source_type',
         'source_id',
         'amount',
@@ -30,5 +31,10 @@ class CostAllocation extends Model
     public function block(): BelongsTo
     {
         return $this->belongsTo(Block::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 }

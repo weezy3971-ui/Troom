@@ -32,6 +32,7 @@ class User extends Authenticatable
         'quality_officer' => 'Quality Officer',
         'packhouse_supervisor' => 'Packhouse Supervisor',
         'driver' => 'Driver',
+        'stable_manager' => 'Stable Manager',
     ];
 
     /**

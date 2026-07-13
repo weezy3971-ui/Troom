@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') — Trooms ERP</title>
     <meta name="description" content="Trooms Horticulture ERP — Farm management from field to customer">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
+    <meta name="theme-color" content="#2F6B3B">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -31,7 +34,7 @@
             --rail-icon: #93A89A;
             --rail-icon-hover: #DAE7DE;
             --rail-icon-active: #8FCB84;   /* fresh sprout green */
-            --rail-width: 64px;
+            --rail-width: 240px;
             --rail-tooltip-bg: #2C3E33;
 
             /* ---- Main area (soft neutral sage — light & easy on the eyes) ---- */
@@ -137,9 +140,9 @@
             background: var(--rail-bg);
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
             z-index: 100;
-            padding: 0;
+            padding: 0 12px;
             overflow-y: auto;
             overflow-x: hidden;
             scrollbar-width: none;
@@ -151,9 +154,18 @@
             width: 100%;
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 16px 0 12px;
+            justify-content: flex-start;
+            gap: 10px;
+            padding: 18px 8px 12px;
             flex-shrink: 0;
+        }
+
+        .sidebar-brand .brand-name {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+            color: #EAF3EC;
         }
 
         .sidebar-brand .logo {
@@ -181,33 +193,34 @@
         }
 
         .sidebar-divider {
-            width: 28px;
+            width: auto;
             height: 1px;
             background: rgba(255,255,255,0.08);
-            margin: 4px auto;
+            margin: 6px 8px;
         }
 
         .sidebar-nav {
             list-style: none;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
             gap: 2px;
         }
 
         .sidebar-nav li {
             width: 100%;
             display: flex;
-            justify-content: center;
         }
 
         .sidebar-nav a {
             position: relative;
             display: flex;
             align-items: center;
-            justify-content: center;
-            width: 40px;
+            justify-content: flex-start;
+            gap: 12px;
+            width: 100%;
             height: 40px;
+            padding: 0 12px;
             border-radius: 10px;
             color: var(--rail-icon);
             text-decoration: none;
@@ -223,45 +236,17 @@
             flex-shrink: 0;
         }
 
-        /* ---- Tooltip label (hover-reveal) ---- */
+        /* ---- Inline nav label ---- */
         .sidebar-nav a .nav-label {
-            position: fixed;
-            top: 0;
-            left: 0;
-            background: var(--rail-bg);
-            color: #DAE7DE;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 12.5px;
+            font-size: 13.5px;
             font-weight: 500;
             font-family: var(--font-body);
             line-height: 1;
             white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            transform: translateX(-4px);
-            transition: opacity 120ms ease, transform 120ms ease;
-            z-index: 9999;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05);
+            overflow: hidden;
+            text-overflow: ellipsis;
             letter-spacing: 0.15px;
             -webkit-font-smoothing: antialiased;
-        }
-
-        .sidebar-nav a .nav-label::before {
-            content: '';
-            position: absolute;
-            left: -3px;
-            top: 50%;
-            transform: translateY(-50%) rotate(45deg);
-            width: 6px;
-            height: 6px;
-            background: var(--rail-bg);
-        }
-
-        .sidebar-nav a:hover .nav-label,
-        .sidebar-nav a:focus .nav-label {
-            opacity: 1;
-            transform: translateX(0);
         }
 
         /* ---- Hover & active states ---- */
@@ -960,7 +945,7 @@
 
         .badge-planned { background: var(--info-bg); color: var(--info-text); }
         .badge-active { background: var(--success-bg); color: var(--success-text); }
-        .badge-completed { background: rgba(92, 106, 97, 0.12); color: var(--text-muted); }
+        .badge-completed { background: rgba(92, 106, 97, 0.12); color: var(--text-secondary); }
         .badge-cancelled { background: var(--danger-bg); color: var(--danger-text); }
         .badge-operational { background: var(--success-bg); color: var(--success-text); }
         .badge-maintenance { background: var(--warning-bg); color: var(--warning-text); }
@@ -971,7 +956,7 @@
         .badge-sown { background: var(--info-bg); color: var(--info-text); }
         .badge-growing { background: var(--warning-bg); color: var(--warning-text); }
         .badge-ready { background: var(--success-bg); color: var(--success-text); }
-        .badge-transplanted { background: rgba(92, 106, 97, 0.12); color: var(--text-muted); }
+        .badge-transplanted { background: rgba(92, 106, 97, 0.12); color: var(--text-secondary); }
         .badge-neutral { background: rgba(92, 106, 97, 0.12); color: var(--text-secondary); }
 
         /* ============================================
@@ -1329,6 +1314,7 @@
     <aside class="sidebar">
         <div class="sidebar-brand">
             <div class="logo"><x-icon name="crops" size="20" /></div>
+            <span class="brand-name">Trooms</span>
         </div>
 
         <div class="sidebar-divider"></div>
@@ -1366,7 +1352,7 @@
             </ul>
         </div>
 
-        @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour'); @endphp
+        @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour') || $ma::allows($u,'projects'); @endphp
         @if($fieldOps)
         <div class="sidebar-divider"></div>
         {{-- Field Operations --}}
@@ -1378,6 +1364,7 @@
                 @if($ma::allows($u,'fertigation'))<li><a href="{{ route('fertigation-logs.index') }}" class="{{ request()->routeIs('fertigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="fertigation" /></span><span class="nav-label">Fertigation</span></a></li>@endif
                 @if($ma::allows($u,'pest'))<li><a href="{{ route('spray-logs.index') }}" class="{{ request()->routeIs('spray-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="pest" /></span><span class="nav-label">Pest &amp; Disease</span></a></li>@endif
                 @if($ma::allows($u,'labour'))<li><a href="{{ route('labour-attendances.index') }}" class="{{ request()->routeIs('labour-attendances.*') ? 'active' : '' }}"><span class="icon"><x-icon name="labour" /></span><span class="nav-label">Labour</span></a></li>@endif
+                @if($ma::allows($u,'projects'))<li><a href="{{ route('projects.index') }}" class="{{ request()->routeIs('projects.*') || request()->routeIs('workers.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Projects</span></a></li>@endif
             </ul>
         </div>
         @endif
@@ -1405,6 +1392,18 @@
                 @if($ma::allows($u,'sales'))<li><a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') || request()->routeIs('sales-orders.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Sales</span></a></li>@endif
                 @if($ma::allows($u,'logistics'))<li><a href="{{ route('dispatches.index') }}" class="{{ request()->routeIs('dispatches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="logistics" /></span><span class="nav-label">Logistics</span></a></li>@endif
                 @if($ma::allows($u,'finance'))<li><a href="{{ route('finance.index') }}" class="{{ request()->routeIs('finance.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Finance</span></a></li>@endif
+            </ul>
+        </div>
+        @endif
+
+        @if($ma::allows($u,'stables'))
+        <div class="sidebar-divider"></div>
+        {{-- Stables --}}
+        <div class="sidebar-section">
+            <ul class="sidebar-nav">
+                <li><a href="{{ route('rides.index') }}" class="{{ request()->routeIs('rides.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Horse Rides</span></a></li>
+                <li><a href="{{ route('horses.index') }}" class="{{ request()->routeIs('horses.*') ? 'active' : '' }}"><span class="icon"><x-icon name="assets" /></span><span class="nav-label">Horses</span></a></li>
+                <li><a href="{{ route('guides.index') }}" class="{{ request()->routeIs('guides.*') ? 'active' : '' }}"><span class="icon"><x-icon name="labour" /></span><span class="nav-label">Guides</span></a></li>
             </ul>
         </div>
         @endif
@@ -1572,21 +1571,8 @@
         </div>
     </div>
 
-    {{-- ---- Sidebar Tooltip Positioning ---- --}}
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Sidebar tooltip positioning
-        const links = document.querySelectorAll('.sidebar-nav a');
-        links.forEach(function(link) {
-            link.addEventListener('mouseenter', function() {
-                const label = this.querySelector('.nav-label');
-                if (!label) return;
-                const rect = this.getBoundingClientRect();
-                label.style.top = (rect.top + rect.height / 2 - label.offsetHeight / 2) + 'px';
-                label.style.left = (rect.right + 10) + 'px';
-            });
-        });
-
         // User dropdown — close on outside click or Escape
         var userMenu = document.getElementById('user-menu-toggle');
         if (userMenu) {

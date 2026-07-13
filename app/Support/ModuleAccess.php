@@ -24,6 +24,8 @@ class ModuleAccess
         'fertigation' => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
         'pest'        => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
         'labour'      => ['horticulture_manager', 'farm_supervisor'],
+        'projects'    => ['horticulture_manager', 'farm_supervisor'],
+        'stables'     => ['horticulture_manager', 'stable_manager'],
         'inventory'   => ['horticulture_manager', 'storekeeper'],
         'harvest'     => ['horticulture_manager', 'farm_supervisor', 'packhouse_supervisor'],
         'packhouse'   => ['horticulture_manager', 'packhouse_supervisor'],

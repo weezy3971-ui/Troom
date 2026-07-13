@@ -11,6 +11,7 @@ class InventoryTransaction extends Model
         'inventory_item_id',
         'farm_id',
         'crop_cycle_id',
+        'project_id',
         'type',
         'quantity',
         'transaction_date',
@@ -37,6 +38,11 @@ class InventoryTransaction extends Model
     public function cropCycle(): BelongsTo
     {
         return $this->belongsTo(CropCycle::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     /**
