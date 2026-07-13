@@ -66,7 +66,7 @@ class CropCycleController extends Controller
 
     public function show(CropCycle $cropCycle)
     {
-        $cropCycle->load('block.farm', 'crop', 'seasonalBudget');
+        $cropCycle->load('block.farm', 'crop', 'seasonalBudget', 'costAllocations');
         return view('crop-cycles.show', compact('cropCycle'));
     }
 
@@ -80,12 +80,29 @@ class CropCycleController extends Controller
     public function update(Request $request, CropCycle $cropCycle)
     {
         $validated = $request->validate([
-            'block_id' => 'required|exists:blocks,id',
-            'crop_id' => 'required|exists:crops,id',
-            'season_name' => 'required|string|max:255',
-            'planting_date' => 'nullable|date',
+            'block_id'              => 'required|exists:blocks,id',
+            'crop_id'               => 'required|exists:crops,id',
+            'season_name'           => 'required|string|max:255',
+            'planting_date'         => 'nullable|date',
             'expected_harvest_date' => 'nullable|date|after_or_equal:planting_date',
         ]);
+
+        // Business rule: a block can only have one active crop cycle at a time.
+        // Re-check when block_id is being changed on an active cycle.
+        if (
+            $cropCycle->status === 'active'
+            && (int) $validated['block_id'] !== (int) $cropCycle->block_id
+        ) {
+            $blockAlreadyActive = CropCycle::where('block_id', $validated['block_id'])
+                ->where('status', 'active')
+                ->where('id', '!=', $cropCycle->id)
+                ->exists();
+
+            if ($blockAlreadyActive) {
+                return back()->withInput()
+                    ->with('error', 'Cannot move this cycle: the target block already has an active crop cycle.');
+            }
+        }
 
         $cropCycle->update($validated);
 
@@ -159,6 +176,19 @@ class CropCycleController extends Controller
 
     public function destroy(CropCycle $cropCycle)
     {
+        // Business rule: do not delete a cycle that already has harvest or cost data.
+        $harvestCount = $cropCycle->harvestBatches()->count();
+        $costCount    = $cropCycle->costAllocations()->count();
+
+        if ($harvestCount > 0 || $costCount > 0) {
+            $refs = [];
+            if ($harvestCount > 0) $refs[] = "{$harvestCount} harvest batch(es)";
+            if ($costCount    > 0) $refs[] = "{$costCount} cost allocation(s)";
+            $detail = implode(' and ', $refs);
+            return redirect()->route('crop-cycles.index')
+                ->with('error', "Cannot delete \"{$cropCycle->season_name}\": it has {$detail} linked to it.");
+        }
+
         $cropCycle->delete();
 
         return redirect()->route('crop-cycles.index')

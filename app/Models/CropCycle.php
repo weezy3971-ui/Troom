@@ -96,12 +96,15 @@ class CropCycle extends Model
      * A pre-harvest interval is active when any spray on this cycle has a PHI
      * window that has not yet cleared. Harvest Batches cannot be created while
      * this returns true (enforced in the Harvest module).
+     *
+     * NOTE: Uses a collection filter rather than raw SQL so it works across
+     * all database engines (SQLite, MySQL, PostgreSQL).
      */
     public function hasActivePreHarvestInterval(): bool
     {
-        return $this->sprayLogs()
-            ->whereRaw("date(log_date, '+' || pre_harvest_interval_days || ' days') >= date('now')")
-            ->exists();
+        return $this->sprayLogs
+            ->filter(fn($spray) => $spray->isPhiActive())
+            ->isNotEmpty();
     }
 
     /**

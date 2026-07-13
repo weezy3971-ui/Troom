@@ -41,12 +41,18 @@ class NurseryBatch extends Model
     }
 
     /**
-     * A batch's status auto-updates to transplanted once a linked Planting is recorded.
+     * A batch's status auto-updates to reflect planting state:
+     * - transplanted: once any Planting is recorded.
+     * - ready:        reverts to ready if all plantings are removed.
      */
     public function syncTransplantStatus(): void
     {
-        if ($this->plantings()->exists() && $this->status !== 'transplanted') {
+        $hasPlantings = $this->plantings()->exists();
+
+        if ($hasPlantings && $this->status !== 'transplanted') {
             $this->update(['status' => 'transplanted']);
+        } elseif (! $hasPlantings && $this->status === 'transplanted') {
+            $this->update(['status' => 'ready']);
         }
     }
 }

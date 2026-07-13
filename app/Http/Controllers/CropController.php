@@ -36,6 +36,10 @@ class CropController extends Controller
             'crop_type' => 'required|string|max:255',
             'days_to_maturity' => 'nullable|integer|min:1',
             'expected_yield_per_acre' => 'nullable|numeric|min:0',
+            'default_labour_budget' => 'nullable|numeric|min:0',
+            'default_input_budget' => 'nullable|numeric|min:0',
+            'default_irrigation_budget' => 'nullable|numeric|min:0',
+            'default_overhead_budget' => 'nullable|numeric|min:0',
         ]);
 
         Crop::create($validated);
@@ -63,6 +67,10 @@ class CropController extends Controller
             'crop_type' => 'required|string|max:255',
             'days_to_maturity' => 'nullable|integer|min:1',
             'expected_yield_per_acre' => 'nullable|numeric|min:0',
+            'default_labour_budget' => 'nullable|numeric|min:0',
+            'default_input_budget' => 'nullable|numeric|min:0',
+            'default_irrigation_budget' => 'nullable|numeric|min:0',
+            'default_overhead_budget' => 'nullable|numeric|min:0',
         ]);
 
         $crop->update($validated);

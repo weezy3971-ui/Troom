@@ -62,7 +62,8 @@ class SalesOrder extends Model
 
     /**
      * Business rule: an order_at_risk alert fires when a delivery date is
-     * approaching without sufficient quality-passed lot quantity allocated.
+     * approaching (within 7 days) without sufficient quality-passed lot
+     * quantity allocated.
      */
     public function isAtRisk(): bool
     {
@@ -74,7 +75,10 @@ class SalesOrder extends Model
             return false;
         }
 
-        $approaching = $this->delivery_date->isBefore(now()->addDays(7));
+        // "Approaching" means the delivery date is in the future but within 7 days.
+        $approaching = $this->delivery_date->isFuture()
+            && $this->delivery_date->isBefore(now()->addDays(7));
+
         $underAllocated = $this->allocatedQuantity() < (float) $this->requested_quantity;
 
         return $approaching && $underAllocated;

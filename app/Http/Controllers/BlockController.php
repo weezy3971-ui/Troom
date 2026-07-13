@@ -47,8 +47,32 @@ class BlockController extends Controller
 
     public function show(Block $block)
     {
-        $block->load('farm', 'cropCycles.crop');
-        return view('blocks.show', compact('block'));
+        // Consolidated block hub: everything happening on this block in one place.
+        $block->load([
+            'farm',
+            'cropCycles.crop',
+            'irrigationLogs' => fn($q) => $q->latest('log_date')->limit(15),
+            'irrigationLogs.pump',
+            'fertigationLogs' => fn($q) => $q->latest('log_date')->limit(15),
+            'sprayLogs' => fn($q) => $q->latest('log_date')->limit(15),
+            'harvestBatches' => fn($q) => $q->latest('harvest_date')->limit(15),
+            'harvestBatches.cropCycle.crop',
+            'labourAttendances' => fn($q) => $q->latest('attendance_date')->limit(15),
+            'dailyActivities' => fn($q) => $q->latest('activity_date')->limit(15),
+        ]);
+
+        // Totals shown as tab counters (independent of the 15-row display cap).
+        $counts = [
+            'cycles' => $block->cropCycles->count(),
+            'irrigation' => $block->irrigationLogs()->count(),
+            'fertigation' => $block->fertigationLogs()->count(),
+            'spray' => $block->sprayLogs()->count(),
+            'harvest' => $block->harvestBatches()->count(),
+            'labour' => $block->labourAttendances()->count(),
+            'activity' => $block->dailyActivities()->count(),
+        ];
+
+        return view('blocks.show', compact('block', 'counts'));
     }
 
     public function edit(Block $block)

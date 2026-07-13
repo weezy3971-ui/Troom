@@ -29,9 +29,11 @@ class HarvestBatchController extends Controller
 
     public function create()
     {
-        $cropCycles = CropCycle::with('block', 'crop')->orderBy('season_name')->get();
-        $workers = User::orderBy('name')->get();
-        return view('harvest-batches.create', compact('cropCycles', 'workers'));
+        $cropCycles = CropCycle::with('block', 'crop', 'sprayLogs')->orderBy('season_name')->get();
+        $workers    = User::orderBy('name')->get();
+        // IDs of cycles currently blocked by an active PHI window — used by the view to warn the user.
+        $phiBlockedIds = $cropCycles->filter(fn($c) => $c->hasActivePreHarvestInterval())->pluck('id')->toArray();
+        return view('harvest-batches.create', compact('cropCycles', 'workers', 'phiBlockedIds'));
     }
 
     public function store(Request $request)
@@ -47,7 +49,15 @@ class HarvestBatchController extends Controller
 
     public function show(HarvestBatch $harvestBatch)
     {
-        $harvestBatch->load('cropCycle.crop', 'cropCycle.block', 'block', 'harvestedBy', 'packhouseLots');
+        $harvestBatch->load(
+            'cropCycle.crop',
+            'cropCycle.block',
+            'cropCycle.seasonalBudget',
+            'cropCycle.harvestBatches',
+            'block',
+            'harvestedBy',
+            'packhouseLots'
+        );
         return view('harvest-batches.show', compact('harvestBatch'));
     }
 
@@ -61,6 +71,8 @@ class HarvestBatchController extends Controller
     public function update(Request $request, HarvestBatch $harvestBatch)
     {
         $validated = $this->validateBatch($request);
+        // Business rule: PHI block applies to edits as well as new entries.
+        $this->assertNoActivePhi($validated['crop_cycle_id']);
 
         $harvestBatch->update($validated);
 
@@ -82,7 +94,7 @@ class HarvestBatchController extends Controller
      */
     private function assertNoActivePhi(int $cropCycleId): void
     {
-        $cycle = CropCycle::find($cropCycleId);
+        $cycle = CropCycle::with('sprayLogs')->find($cropCycleId);
 
         if ($cycle && $cycle->hasActivePreHarvestInterval()) {
             throw ValidationException::withMessages([

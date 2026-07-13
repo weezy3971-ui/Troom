@@ -32,6 +32,31 @@
                 <input type="number" id="expected_yield_per_acre" name="expected_yield_per_acre" value="{{ old('expected_yield_per_acre') }}" class="form-input" step="0.01" min="0">
             </div>
         </div>
+
+        {{-- Reusable budget template --}}
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Default Budget Template (optional)</h4>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">These figures pre-fill a new crop cycle's seasonal budget so you don't re-enter them each season.</p>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="default_labour_budget">Labour (KES)</label>
+                    <input type="number" id="default_labour_budget" name="default_labour_budget" value="{{ old('default_labour_budget') }}" class="form-input" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="default_input_budget">Inputs (KES)</label>
+                    <input type="number" id="default_input_budget" name="default_input_budget" value="{{ old('default_input_budget') }}" class="form-input" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="default_irrigation_budget">Irrigation (KES)</label>
+                    <input type="number" id="default_irrigation_budget" name="default_irrigation_budget" value="{{ old('default_irrigation_budget') }}" class="form-input" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="default_overhead_budget">Overhead (KES)</label>
+                    <input type="number" id="default_overhead_budget" name="default_overhead_budget" value="{{ old('default_overhead_budget') }}" class="form-input" step="0.01" min="0">
+                </div>
+            </div>
+        </div>
+
         <div style="display: flex; gap: 12px; margin-top: 8px;">
             <button type="submit" class="btn btn-primary">Save Crop</button>
             <a href="{{ route('crops.index') }}" class="btn btn-ghost">Cancel</a>

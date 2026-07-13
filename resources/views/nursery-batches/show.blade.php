@@ -13,7 +13,7 @@
     </div>
     <div class="actions">
         <a href="{{ route('nursery-batches.edit', $nurseryBatch) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('nursery-batches.destroy', $nurseryBatch) }}" method="POST" onsubmit="return confirm('Delete this batch?');">
+        <form action="{{ route('nursery-batches.destroy', $nurseryBatch) }}" method="POST" data-confirm="Delete this batch?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>
@@ -79,7 +79,7 @@
     @else
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Date</th><th>Crop Cycle</th><th>Block</th><th>Quantity</th></tr></thead>
+                <thead><tr><th>Date</th><th>Crop Cycle</th><th>Block</th><th>Quantity</th><th style="text-align: right;">Actions</th></tr></thead>
                 <tbody>
                     @foreach($nurseryBatch->plantings as $planting)
                     <tr>
@@ -87,6 +87,15 @@
                         <td>{{ $planting->cropCycle->season_name }}</td>
                         <td>{{ $planting->cropCycle->block->name }}</td>
                         <td>{{ number_format($planting->quantity) }}</td>
+                        <td>
+                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                <a href="{{ route('nursery-batches.plantings.edit', [$nurseryBatch, $planting]) }}" class="btn btn-secondary btn-sm">Edit</a>
+                                <form action="{{ route('nursery-batches.plantings.destroy', [$nurseryBatch, $planting]) }}" method="POST" data-confirm="Delete this planting record?">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>

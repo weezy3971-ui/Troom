@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Block extends Model
 {
@@ -44,6 +45,27 @@ class Block extends Model
     public function labourAttendances(): HasMany
     {
         return $this->hasMany(LabourAttendance::class);
+    }
+
+    public function harvestBatches(): HasMany
+    {
+        return $this->hasMany(HarvestBatch::class);
+    }
+
+    /**
+     * Fertigation logs recorded against any crop cycle on this block.
+     */
+    public function fertigationLogs(): HasManyThrough
+    {
+        return $this->hasManyThrough(FertigationLog::class, CropCycle::class);
+    }
+
+    /**
+     * Spray logs recorded against any crop cycle on this block.
+     */
+    public function sprayLogs(): HasManyThrough
+    {
+        return $this->hasManyThrough(SprayLog::class, CropCycle::class);
     }
 
     /**

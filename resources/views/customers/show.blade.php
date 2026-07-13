@@ -14,7 +14,7 @@
     <div class="actions">
         <a href="{{ route('sales-orders.create') }}" class="btn btn-primary">+ New Order</a>
         <a href="{{ route('customers.edit', $customer) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('customers.destroy', $customer) }}" method="POST" onsubmit="return confirm('Delete this customer?');">
+        <form action="{{ route('customers.destroy', $customer) }}" method="POST" data-confirm="Delete this customer?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>

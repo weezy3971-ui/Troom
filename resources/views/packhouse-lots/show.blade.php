@@ -13,7 +13,7 @@
     </div>
     <div class="actions">
         <a href="{{ route('packhouse-lots.edit', $packhouseLot) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('packhouse-lots.destroy', $packhouseLot) }}" method="POST" onsubmit="return confirm('Delete this lot?');">
+        <form action="{{ route('packhouse-lots.destroy', $packhouseLot) }}" method="POST" data-confirm="Delete this lot?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>

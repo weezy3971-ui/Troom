@@ -16,6 +16,11 @@ class CheckRole
     {
         $user = $request->user();
 
+        // The owner is a super-admin with unrestricted access.
+        if ($user && $user->role === 'owner') {
+            return $next($request);
+        }
+
         if (!$user || !in_array($user->role, $roles)) {
             abort(403, 'You do not have permission to access this resource.');
         }

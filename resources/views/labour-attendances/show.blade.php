@@ -13,7 +13,7 @@
     </div>
     <div class="actions">
         <a href="{{ route('labour-attendances.edit', $labourAttendance) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('labour-attendances.destroy', $labourAttendance) }}" method="POST" onsubmit="return confirm('Delete this attendance and its cost allocation?');">
+        <form action="{{ route('labour-attendances.destroy', $labourAttendance) }}" method="POST" data-confirm="Delete this attendance and its cost allocation?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>

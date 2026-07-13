@@ -25,9 +25,10 @@
                 <select id="crop_id" name="crop_id" class="form-select" required>
                     <option value="">Select a crop</option>
                     @foreach($crops as $crop)
-                        <option value="{{ $crop->id }}" {{ old('crop_id') == $crop->id ? 'selected' : '' }}>{{ $crop->name }} {{ $crop->variety ? '('.$crop->variety.')' : '' }}</option>
+                        <option value="{{ $crop->id }}" data-maturity="{{ $crop->days_to_maturity }}" {{ old('crop_id') == $crop->id ? 'selected' : '' }}>{{ $crop->name }} {{ $crop->variety ? '('.$crop->variety.')' : '' }}</option>
                     @endforeach
                 </select>
+                <p id="maturity-hint" style="font-size:12px; color:var(--text-muted); margin-top:4px; display:none;"></p>
             </div>
             <div class="form-group">
                 <label class="form-label" for="season_name">Season Name *</label>
@@ -40,6 +41,7 @@
             <div class="form-group">
                 <label class="form-label" for="expected_harvest_date">Expected Harvest Date</label>
                 <input type="date" id="expected_harvest_date" name="expected_harvest_date" value="{{ old('expected_harvest_date') }}" class="form-input">
+                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Auto-calculated from the crop's maturity when you set a planting date — you can override it.</p>
             </div>
         </div>
         <div style="display: flex; gap: 12px; margin-top: 8px;">
@@ -48,4 +50,42 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var cropSel = document.getElementById('crop_id');
+    var planting = document.getElementById('planting_date');
+    var harvest = document.getElementById('expected_harvest_date');
+    var hint = document.getElementById('maturity-hint');
+    var harvestTouched = false;
+
+    harvest.addEventListener('input', function () { harvestTouched = true; });
+
+    function maturityDays() {
+        var opt = cropSel.options[cropSel.selectedIndex];
+        var d = opt ? parseInt(opt.getAttribute('data-maturity'), 10) : NaN;
+        return isNaN(d) ? null : d;
+    }
+
+    function recalc() {
+        var days = maturityDays();
+        if (days) {
+            hint.style.display = 'block';
+            hint.textContent = 'Matures in about ' + days + ' days.';
+        } else {
+            hint.style.display = 'none';
+        }
+        // Only auto-fill if the user hasn't manually edited the harvest date.
+        if (!harvestTouched && planting.value && days) {
+            var d = new Date(planting.value + 'T00:00:00');
+            d.setDate(d.getDate() + days);
+            harvest.value = d.toISOString().slice(0, 10);
+        }
+    }
+
+    cropSel.addEventListener('change', recalc);
+    planting.addEventListener('change', recalc);
+    recalc();
+});
+</script>
 @endsection

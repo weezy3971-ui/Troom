@@ -2,6 +2,7 @@
 @section('title', $cropCycle->season_name)
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'crop_cycles'); @endphp
 <div class="breadcrumbs">
     <a href="{{ route('crop-cycles.index') }}">Crop Cycles</a> <span>/</span> <span>{{ $cropCycle->season_name }}</span>
 </div>
@@ -11,6 +12,7 @@
         <h1 class="page-title">{{ $cropCycle->season_name }}</h1>
         <p class="page-subtitle">{{ $cropCycle->crop->name }} on {{ $cropCycle->block->name }} ({{ $cropCycle->block->farm->name }})</p>
     </div>
+    @if($canWrite)
     <div class="actions">
         @if($cropCycle->status === 'planned')
             <form action="{{ route('crop-cycles.activate', $cropCycle) }}" method="POST">
@@ -25,13 +27,19 @@
             </form>
         @endif
         @if(in_array($cropCycle->status, ['planned', 'active']))
-            <form action="{{ route('crop-cycles.cancel', $cropCycle) }}" method="POST" onsubmit="return confirm('Cancel this crop cycle?')">
+            <form action="{{ route('crop-cycles.cancel', $cropCycle) }}" method="POST" data-confirm="Cancel this crop cycle?">
                 @csrf
                 <button type="submit" class="btn btn-danger">Cancel Cycle</button>
             </form>
         @endif
         <a href="{{ route('crop-cycles.edit', $cropCycle) }}" class="btn btn-secondary">Edit</a>
+        <form action="{{ route('crop-cycles.destroy', $cropCycle) }}" method="POST" data-confirm="Permanently delete this crop cycle? This cannot be undone.">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
     </div>
+    @endif
 </div>
 
 <div class="detail-grid">
@@ -92,27 +100,35 @@
         </div>
     @endif
 
-    @if(in_array($cropCycle->status, ['planned', 'active']))
+    @if($canWrite && in_array($cropCycle->status, ['planned', 'active']))
+    @php
+        // With no budget yet, pre-fill from the crop's reusable template (if any).
+        $tpl = $cropCycle->seasonalBudget ? null : $cropCycle->crop;
+        $usingTemplate = $tpl && $tpl->hasBudgetTemplate();
+    @endphp
     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
-        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">{{ $cropCycle->seasonalBudget ? 'Update Budget' : 'Set Budget (required before activation)' }}</h4>
+        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">{{ $cropCycle->seasonalBudget ? 'Update Budget' : 'Set Budget (required before activation)' }}</h4>
+        @if($usingTemplate)
+            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px;">Pre-filled from the <strong>{{ $cropCycle->crop->name }}</strong> budget template — adjust as needed.</p>
+        @endif
         <form action="{{ route('crop-cycles.budget', $cropCycle) }}" method="POST">
             @csrf
             <div class="form-grid">
                 <div class="form-group">
                     <label class="form-label" for="labour_budget">Labour Budget (KES)</label>
-                    <input type="number" id="labour_budget" name="labour_budget" value="{{ old('labour_budget', $cropCycle->seasonalBudget?->labour_budget ?? 0) }}" class="form-input" step="0.01" min="0" required>
+                    <input type="number" id="labour_budget" name="labour_budget" value="{{ old('labour_budget', $cropCycle->seasonalBudget?->labour_budget ?? ($tpl?->default_labour_budget ?? 0)) }}" class="form-input" step="0.01" min="0" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="input_budget">Input Budget (KES)</label>
-                    <input type="number" id="input_budget" name="input_budget" value="{{ old('input_budget', $cropCycle->seasonalBudget?->input_budget ?? 0) }}" class="form-input" step="0.01" min="0" required>
+                    <input type="number" id="input_budget" name="input_budget" value="{{ old('input_budget', $cropCycle->seasonalBudget?->input_budget ?? ($tpl?->default_input_budget ?? 0)) }}" class="form-input" step="0.01" min="0" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="irrigation_budget">Irrigation Budget (KES)</label>
-                    <input type="number" id="irrigation_budget" name="irrigation_budget" value="{{ old('irrigation_budget', $cropCycle->seasonalBudget?->irrigation_budget ?? 0) }}" class="form-input" step="0.01" min="0" required>
+                    <input type="number" id="irrigation_budget" name="irrigation_budget" value="{{ old('irrigation_budget', $cropCycle->seasonalBudget?->irrigation_budget ?? ($tpl?->default_irrigation_budget ?? 0)) }}" class="form-input" step="0.01" min="0" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="overhead_budget">Overhead Budget (KES)</label>
-                    <input type="number" id="overhead_budget" name="overhead_budget" value="{{ old('overhead_budget', $cropCycle->seasonalBudget?->overhead_budget ?? 0) }}" class="form-input" step="0.01" min="0" required>
+                    <input type="number" id="overhead_budget" name="overhead_budget" value="{{ old('overhead_budget', $cropCycle->seasonalBudget?->overhead_budget ?? ($tpl?->default_overhead_budget ?? 0)) }}" class="form-input" step="0.01" min="0" required>
                 </div>
             </div>
             <button type="submit" class="btn btn-primary">Save Budget</button>
@@ -120,4 +136,36 @@
     </div>
     @endif
 </div>
+
+{{-- Budget vs. Actual --}}
+@if($cropCycle->seasonalBudget)
+@php
+    $totalBudget  = (float) $cropCycle->seasonalBudget->total_budget;
+    $actualCost   = $cropCycle->actualCost();
+    $remaining    = $totalBudget - $actualCost;
+    $pct          = $totalBudget > 0 ? min(round(($actualCost / $totalBudget) * 100, 1), 100) : 0;
+    $overBudget   = $actualCost > $totalBudget;
+@endphp
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Budget vs. Actual</h3>
+        @if($overBudget)
+            <span class="badge badge-down" style="margin-left: 10px;">⚠ Over Budget</span>
+        @endif
+    </div>
+    <div style="padding: 16px 0 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+            <span>Spent: <strong style="color: {{ $overBudget ? 'var(--red, #ef4444)' : 'var(--text)' }};">KES {{ number_format($actualCost) }}</strong></span>
+            <span>Budget: <strong>KES {{ number_format($totalBudget) }}</strong></span>
+        </div>
+        <div style="background: var(--border); border-radius: 6px; height: 10px; overflow: hidden;">
+            <div style="height: 100%; width: {{ $pct }}%; background: {{ $overBudget ? '#ef4444' : 'var(--accent, #6366f1)' }}; border-radius: 6px; transition: width 0.4s ease;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+            <span>{{ $pct }}% used</span>
+            <span>{{ $overBudget ? 'Over by KES ' . number_format(abs($remaining)) : 'KES ' . number_format($remaining) . ' remaining' }}</span>
+        </div>
+    </div>
+</div>
+@endif
 @endsection

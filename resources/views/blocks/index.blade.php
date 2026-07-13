@@ -2,12 +2,13 @@
 @section('title', 'Blocks')
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'master_data'); @endphp
 <div class="page-header">
     <div>
         <h1 class="page-title">Blocks</h1>
         <p class="page-subtitle">Farm subdivisions where crops are planted</p>
     </div>
-    <a href="{{ route('blocks.create') }}" class="btn btn-primary">+ Add Block</a>
+    @if($canWrite)<a href="{{ route('blocks.create') }}" class="btn btn-primary">+ Add Block</a>@endif
 </div>
 
 <x-search-bar
@@ -29,7 +30,7 @@
                 <div class="icon">🗺️</div>
                 <h3>No blocks registered yet</h3>
                 <p>Blocks are subdivisions of farms where individual crops are grown.</p>
-                <a href="{{ route('blocks.create') }}" class="btn btn-primary">+ Add Block</a>
+                @if($canWrite)<a href="{{ route('blocks.create') }}" class="btn btn-primary">+ Add Block</a>@endif
             @endif
         </div>
     </div>
@@ -59,11 +60,14 @@
                         <td>{{ $block->crop_cycles_count }}</td>
                         <td>
                             <div class="actions">
+                                <a href="{{ route('blocks.show', $block) }}" class="btn btn-ghost btn-sm">View</a>
+                                @if($canWrite)
                                 <a href="{{ route('blocks.edit', $block) }}" class="btn btn-ghost btn-sm">Edit</a>
-                                <form action="{{ route('blocks.destroy', $block) }}" method="POST" onsubmit="return confirm('Delete this block?')">
+                                <form action="{{ route('blocks.destroy', $block) }}" method="POST" data-confirm="Delete this block?">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

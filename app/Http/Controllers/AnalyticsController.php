@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CropCycle;
-use App\Models\InventoryItem;
 use App\Models\KpiSnapshot;
-use App\Models\SalesOrder;
+use App\Services\AlertService;
 use App\Services\KpiSnapshotService;
 
 class AnalyticsController extends Controller
 {
-    public function index()
+    public function index(AlertService $alertService)
     {
         $latestDate = KpiSnapshot::max('snapshot_date');
 
@@ -18,10 +16,16 @@ class AnalyticsController extends Controller
             ? KpiSnapshot::where('snapshot_date', $latestDate)->get()->keyBy('key')
             : collect();
 
-        // Proactive alerts aggregated from across the modules.
-        $alerts = $this->collectAlerts();
+        // Per-KPI trend history (oldest → newest) for inline sparklines.
+        $history = KpiSnapshot::orderBy('snapshot_date')
+            ->get()
+            ->groupBy('key')
+            ->map(fn($rows) => $rows->pluck('value')->map(fn($v) => (float) $v)->values()->all());
 
-        return view('analytics.index', compact('snapshots', 'latestDate', 'alerts'));
+        // Proactive alerts aggregated from across the modules.
+        $alerts = $alertService->collect();
+
+        return view('analytics.index', compact('snapshots', 'latestDate', 'alerts', 'history'));
     }
 
     public function recompute(KpiSnapshotService $service)
@@ -30,45 +34,5 @@ class AnalyticsController extends Controller
 
         return redirect()->route('analytics.index')
             ->with('success', 'KPI snapshots recomputed.');
-    }
-
-    /**
-     * Surface the alert conditions the spec defines across modules.
-     */
-    private function collectAlerts(): array
-    {
-        $alerts = [];
-
-        foreach (CropCycle::with('seasonalBudget', 'costAllocations', 'block', 'crop')->get() as $cycle) {
-            if ($cycle->isBudgetExceeded()) {
-                $alerts[] = [
-                    'type' => 'budget_exceeded',
-                    'severity' => 'danger',
-                    'message' => "Budget exceeded for {$cycle->season_name} ({$cycle->block->name}).",
-                ];
-            }
-        }
-
-        foreach (InventoryItem::with('transactions')->get() as $item) {
-            if ($item->isLowStock()) {
-                $alerts[] = [
-                    'type' => 'low_inventory',
-                    'severity' => 'warning',
-                    'message' => "Low stock: {$item->name} is below its reorder level.",
-                ];
-            }
-        }
-
-        foreach (SalesOrder::with('customer', 'lines')->get() as $order) {
-            if ($order->isAtRisk()) {
-                $alerts[] = [
-                    'type' => 'order_at_risk',
-                    'severity' => 'warning',
-                    'message' => "Order at risk: {$order->customer->name} order #{$order->id} is under-allocated near its delivery date.",
-                ];
-            }
-        }
-
-        return $alerts;
     }
 }

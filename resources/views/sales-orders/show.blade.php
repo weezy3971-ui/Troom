@@ -13,7 +13,7 @@
     </div>
     <div class="actions">
         <a href="{{ route('sales-orders.edit', $salesOrder) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('sales-orders.destroy', $salesOrder) }}" method="POST" onsubmit="return confirm('Delete this order?');">
+        <form action="{{ route('sales-orders.destroy', $salesOrder) }}" method="POST" data-confirm="Delete this order?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>
@@ -63,7 +63,7 @@
                         <td class="mono">{{ number_format($line->unit_price, 2) }}</td>
                         <td class="mono">{{ number_format($line->lineTotal(), 2) }}</td>
                         <td>
-                            <form action="{{ route('sales-orders.lines.destroy', [$salesOrder, $line]) }}" method="POST" onsubmit="return confirm('Remove this line?');">
+                            <form action="{{ route('sales-orders.lines.destroy', [$salesOrder, $line]) }}" method="POST" data-confirm="Remove this line?">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-ghost btn-sm">Remove</button>
                             </form>

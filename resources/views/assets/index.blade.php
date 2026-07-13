@@ -2,12 +2,13 @@
 @section('title', 'Assets')
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'master_data'); @endphp
 <div class="page-header">
     <div>
         <h1 class="page-title">Assets & Equipment</h1>
         <p class="page-subtitle">Pumps, vehicles, and farm equipment</p>
     </div>
-    <a href="{{ route('assets.create') }}" class="btn btn-primary">+ Register Asset</a>
+    @if($canWrite)<a href="{{ route('assets.create') }}" class="btn btn-primary">+ Register Asset</a>@endif
 </div>
 
 <x-search-bar
@@ -33,7 +34,7 @@
                 <div class="icon">🚜</div>
                 <h3>No assets registered</h3>
                 <p>Register pumps, vehicles, and equipment to track their usage and maintenance.</p>
-                <a href="{{ route('assets.create') }}" class="btn btn-primary">+ Register Asset</a>
+                @if($canWrite)<a href="{{ route('assets.create') }}" class="btn btn-primary">+ Register Asset</a>@endif
             @endif
         </div>
     </div>
@@ -65,11 +66,14 @@
                         <td>{{ number_format($asset->current_hours) }}h / {{ number_format($asset->current_mileage) }}km</td>
                         <td>
                             <div class="actions">
+                                <a href="{{ route('assets.show', $asset) }}" class="btn btn-ghost btn-sm">View</a>
+                                @if($canWrite)
                                 <a href="{{ route('assets.edit', $asset) }}" class="btn btn-ghost btn-sm">Edit</a>
-                                <form action="{{ route('assets.destroy', $asset) }}" method="POST" onsubmit="return confirm('Decommission this asset?')">
+                                <form action="{{ route('assets.destroy', $asset) }}" method="POST" data-confirm="Decommission this asset?">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Remove</button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

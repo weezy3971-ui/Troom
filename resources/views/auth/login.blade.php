@@ -32,7 +32,7 @@
         }
         .login-card {
             width: 100%;
-            max-width: 400px;
+            max-width: 440px;
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 16px;
@@ -73,13 +73,43 @@
         }
         .btn-login:hover { background: var(--accent-hover); }
         .error { background: rgba(240,101,90,0.1); color: #f0655a; border: 1px solid rgba(240,101,90,0.22); padding: 10px 14px; border-radius: 9px; font-size: 12px; margin-bottom: 20px; }
+
+        /* Demo accounts panel */
         .demo-hint {
-            margin-top: 24px; padding: 13px 14px;
+            margin-top: 24px; padding: 14px;
             background: var(--glow); border: 1px solid rgba(52,211,153,0.18);
             border-radius: 9px; font-size: 11.5px; color: var(--text-2);
         }
-        .demo-hint strong { color: var(--accent-hover); font-weight: 600; }
-        .demo-hint code { font-family: var(--font-mono); color: var(--text); }
+        .demo-toggle {
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; user-select: none;
+        }
+        .demo-toggle strong { color: var(--accent-hover); font-weight: 600; }
+        .demo-toggle .toggle-hint { font-size: 11px; color: var(--muted); }
+        .demo-accounts { margin-top: 12px; display: none; }
+        .demo-accounts.open { display: block; }
+        .demo-group-label {
+            font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--muted);
+            margin: 12px 0 4px;
+        }
+        .demo-group-label:first-child { margin-top: 4px; }
+        .demo-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 9px; border-radius: 7px;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .demo-row:hover { background: rgba(52,211,153,0.07); }
+        .demo-row-email { font-family: var(--font-mono); color: var(--text); font-size: 11px; flex: 1; }
+        .demo-row-role {
+            font-size: 10px; color: var(--muted); background: rgba(255,255,255,0.04);
+            border-radius: 4px; padding: 2px 6px; white-space: nowrap;
+        }
+        .demo-all-pass {
+            margin-top: 10px; font-size: 10.5px; color: var(--muted);
+            border-top: 1px solid rgba(52,211,153,0.1); padding-top: 8px;
+        }
+        .demo-all-pass code { font-family: var(--font-mono); color: var(--text); }
     </style>
 </head>
 <body>
@@ -122,10 +152,88 @@
             <button type="submit" class="btn-login">Sign in</button>
         </form>
 
-        <div class="demo-hint">
-            <strong>Demo access</strong><br>
-            <code>admin@trooms.co.ke</code> / <code>password</code>
+        <div style="margin-top: 20px; font-size: 12px; color: var(--text-2); text-align: center;">
+            Have an approved email? <a href="{{ route('register') }}" style="color: var(--accent-hover); text-decoration: none; font-weight: 600;">Create your account</a>
         </div>
+
+        <div class="demo-hint">
+            <div class="demo-toggle" onclick="toggleDemo()">
+                <strong>Demo access</strong>
+                <span class="toggle-hint" id="demo-arrow">Show all accounts ▾</span>
+            </div>
+
+            <div class="demo-accounts" id="demo-accounts">
+
+                <div class="demo-group-label">Executive</div>
+                <div class="demo-row" onclick="fillLogin('admin@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">admin@trooms.co.ke</span>
+                    <span class="demo-row-role">Owner / Full Access</span>
+                </div>
+                <div class="demo-row" onclick="fillLogin('james@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">james@trooms.co.ke</span>
+                    <span class="demo-row-role">Managing Director</span>
+                </div>
+
+                <div class="demo-group-label">Farm Operations</div>
+                <div class="demo-row" onclick="fillLogin('grace@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">grace@trooms.co.ke</span>
+                    <span class="demo-row-role">Horticulture Manager</span>
+                </div>
+                <div class="demo-row" onclick="fillLogin('peter@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">peter@trooms.co.ke</span>
+                    <span class="demo-row-role">Agronomist</span>
+                </div>
+                <div class="demo-row" onclick="fillLogin('alice@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">alice@trooms.co.ke</span>
+                    <span class="demo-row-role">Farm Supervisor</span>
+                </div>
+
+                <div class="demo-group-label">Post-Harvest &amp; Commercial</div>
+                <div class="demo-row" onclick="fillLogin('john@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">john@trooms.co.ke</span>
+                    <span class="demo-row-role">Packhouse Supervisor</span>
+                </div>
+                <div class="demo-row" onclick="fillLogin('mary@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">mary@trooms.co.ke</span>
+                    <span class="demo-row-role">Quality Officer</span>
+                </div>
+                <div class="demo-row" onclick="fillLogin('lucy@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">lucy@trooms.co.ke</span>
+                    <span class="demo-row-role">Sales Officer</span>
+                </div>
+                <div class="demo-row" onclick="fillLogin('daniel@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">daniel@trooms.co.ke</span>
+                    <span class="demo-row-role">Driver / Logistics</span>
+                </div>
+
+                <div class="demo-group-label">Finance &amp; Stores</div>
+                <div class="demo-row" onclick="fillLogin('david@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">david@trooms.co.ke</span>
+                    <span class="demo-row-role">Finance Officer</span>
+                </div>
+                <div class="demo-row" onclick="fillLogin('samuel@trooms.co.ke')" title="Click to fill">
+                    <span class="demo-row-email">samuel@trooms.co.ke</span>
+                    <span class="demo-row-role">Storekeeper</span>
+                </div>
+
+                <div class="demo-all-pass">All accounts — password: <code>password</code></div>
+            </div>
+        </div>
+
+        <script>
+        function toggleDemo() {
+            var panel = document.getElementById('demo-accounts');
+            var arrow = document.getElementById('demo-arrow');
+            panel.classList.toggle('open');
+            arrow.textContent = panel.classList.contains('open')
+                ? 'Hide accounts ▴'
+                : 'Show all accounts ▾';
+        }
+        function fillLogin(email) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = 'password';
+        }
+        </script>
     </div>
 </body>
 </html>

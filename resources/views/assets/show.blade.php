@@ -2,6 +2,7 @@
 @section('title', $asset->name)
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'master_data'); @endphp
 <div class="breadcrumbs">
     <a href="{{ route('assets.index') }}">Assets</a> <span>/</span> <span>{{ $asset->name }}</span>
 </div>
@@ -11,9 +12,11 @@
         <h1 class="page-title">{{ $asset->name }}</h1>
         <p class="page-subtitle">{{ $asset->farm->name }} — <span class="badge badge-{{ $asset->type }}">{{ ucfirst($asset->type) }}</span></p>
     </div>
+    @if($canWrite)
     <div class="actions">
         <a href="{{ route('assets.edit', $asset) }}" class="btn btn-secondary">Edit</a>
     </div>
+    @endif
 </div>
 
 <div class="detail-grid">

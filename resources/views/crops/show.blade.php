@@ -2,6 +2,7 @@
 @section('title', $crop->name)
 
 @section('content')
+@php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'master_data'); @endphp
 <div class="breadcrumbs">
     <a href="{{ route('crops.index') }}">Crops</a> <span>/</span> <span>{{ $crop->name }}</span>
 </div>
@@ -11,9 +12,11 @@
         <h1 class="page-title">{{ $crop->name }}</h1>
         <p class="page-subtitle">{{ $crop->variety ?? 'No variety specified' }} — {{ $crop->crop_type }}</p>
     </div>
+    @if($canWrite)
     <div class="actions">
         <a href="{{ route('crops.edit', $crop) }}" class="btn btn-secondary">Edit</a>
     </div>
+    @endif
 </div>
 
 <div class="detail-grid">

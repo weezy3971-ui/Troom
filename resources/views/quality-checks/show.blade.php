@@ -13,7 +13,7 @@
     </div>
     <div class="actions">
         <a href="{{ route('quality-checks.edit', $qualityCheck) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('quality-checks.destroy', $qualityCheck) }}" method="POST" onsubmit="return confirm('Delete this check?');">
+        <form action="{{ route('quality-checks.destroy', $qualityCheck) }}" method="POST" data-confirm="Delete this check?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>
@@ -56,6 +56,11 @@
         </div>
         @endforeach
     </div>
+</div>
+@else
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Parameters</h3></div>
+    <p style="color: var(--text-muted); font-size: 13px; padding: 16px 0;">No parameters recorded for this quality check.</p>
 </div>
 @endif
 @endsection

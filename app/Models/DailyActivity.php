@@ -39,6 +39,7 @@ class DailyActivity extends Model
         'logged_by',
         'photo_path',
         'gps_location',
+        'client_uuid',
     ];
 
     protected $casts = [

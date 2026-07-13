@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Crop;
 use App\Models\CropCycle;
 use App\Models\NurseryBatch;
+use App\Models\Planting;
 use Illuminate\Http\Request;
 
 class NurseryBatchController extends Controller
@@ -106,5 +107,60 @@ class NurseryBatchController extends Controller
 
         return redirect()->route('nursery-batches.index')
             ->with('success', 'Nursery batch deleted successfully.');
+    }
+
+    /**
+     * Show the edit form for a single planting (transplant) record.
+     */
+    public function editPlanting(NurseryBatch $nurseryBatch, Planting $planting)
+    {
+        abort_unless($planting->nursery_batch_id === $nurseryBatch->id, 404);
+
+        $cropCycles = CropCycle::with('block', 'crop')->orderBy('season_name')->get();
+
+        return view('plantings.edit', compact('nurseryBatch', 'planting', 'cropCycles'));
+    }
+
+    /**
+     * Update a planting record.
+     * Business rule: the revised quantity cannot exceed the batch's available
+     * quantity (remaining stock plus whatever this planting currently holds).
+     */
+    public function updatePlanting(Request $request, NurseryBatch $nurseryBatch, Planting $planting)
+    {
+        abort_unless($planting->nursery_batch_id === $nurseryBatch->id, 404);
+
+        $validated = $request->validate([
+            'crop_cycle_id' => 'required|exists:crop_cycles,id',
+            'quantity' => 'required|integer|min:1',
+            'planting_date' => 'required|date',
+        ]);
+
+        $available = $nurseryBatch->remainingQuantity() + $planting->quantity;
+        if ($validated['quantity'] > $available) {
+            return back()->withInput()->with('error',
+                "Quantity exceeds the batch's available quantity ({$available}).");
+        }
+
+        $planting->update($validated);
+        $nurseryBatch->syncTransplantStatus();
+
+        return redirect()->route('nursery-batches.show', $nurseryBatch)
+            ->with('success', 'Planting updated successfully.');
+    }
+
+    /**
+     * Delete a planting record. Removing the last planting reverts the batch
+     * status from "transplanted" back to "ready" (see syncTransplantStatus).
+     */
+    public function destroyPlanting(NurseryBatch $nurseryBatch, Planting $planting)
+    {
+        abort_unless($planting->nursery_batch_id === $nurseryBatch->id, 404);
+
+        $planting->delete();
+        $nurseryBatch->syncTransplantStatus();
+
+        return redirect()->route('nursery-batches.show', $nurseryBatch)
+            ->with('success', 'Planting deleted successfully.');
     }
 }

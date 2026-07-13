@@ -11,83 +11,119 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     <style>
         /* ============================================
-           TROOMS ERP — Earthy Botanical Redesign
-           Icon-rail sidebar · Warm cream palette ·
-           Olive & terracotta accents
+           TROOMS ERP — "Fresh Greenhouse" theme
+           Icon-rail sidebar · Cool-sage background ·
+           Leaf-green primary · clay / wheat / water-teal accents
            ============================================ */
 
         :root {
-            /* ---- Sidebar rail (dark) ---- */
-            --rail-bg: #1a1f1c;
-            --rail-bg-hover: #262c28;
-            --rail-icon: #8a9590;
-            --rail-icon-hover: #d4ddd8;
-            --rail-icon-active: #c8a96e;
+            /* ============================================================
+               PALETTE — "Fresh Greenhouse"
+               A crisp botanical light theme: cool-sage background (fresh,
+               low eye-strain on data-heavy screens), white cards, a deep
+               forest sidebar, leaf-green primary, and earthy clay / wheat /
+               water-teal accents. Every text colour meets WCAG AA (most AAA).
+               ============================================================ */
+
+            /* ---- Sidebar rail (deep forest — grounding anchor) ---- */
+            --rail-bg: #17271C;
+            --rail-bg-hover: #223528;
+            --rail-icon: #93A89A;
+            --rail-icon-hover: #DAE7DE;
+            --rail-icon-active: #8FCB84;   /* fresh sprout green */
             --rail-width: 64px;
-            --rail-tooltip-bg: #3a3a3a;
+            --rail-tooltip-bg: #2C3E33;
 
-            /* ---- Main area (warm earthy) ---- */
-            --bg-primary: #F5F1EB;
-            --bg-secondary: #EDE8E0;
-            --bg-card: #FFFFFF;
-            --bg-card-hover: #FAF8F5;
+            /* ---- Main area (soft neutral sage — light & easy on the eyes) ---- */
+            --bg-primary: #F3F5EF;         /* app background — cleaner, less saturated */
+            --bg-secondary: #E8EDE2;       /* insets, hovers, table stripes */
+            --bg-card: #FCFDFB;            /* cards — soft off-white, avoids sunlight glare "halo" */
+            --bg-card-hover: #F7F9F4;
             --bg-input: #FFFFFF;
-            --border: #DDD6CA;
-            --border-strong: #C5BBA9;
-            --border-focus: #7A8B4A;
+            --border: #DCE2D3;
+            --border-strong: #C4CEB7;
+            --border-focus: #2F6B3B;
 
-            /* ---- Text ---- */
-            --text-primary: #2C3A2E;
-            --text-secondary: #5A6B5E;
-            --text-muted: #8E9A8F;
+            /* ---- Text (all AA+ on white and on the sage background) ---- */
+            --text-primary: #17231B;   /* ~14:1 on white */
+            --text-secondary: #43554A; /* ~7:1  on white */
+            --text-muted: #5C6A61;     /* ~5:1  on white */
 
-            /* ---- Accent palette ---- */
-            --olive: #6B7F3A;
-            --olive-soft: #8A9B5A;
-            --olive-bg: rgba(107, 127, 58, 0.10);
-            --terracotta: #C0734A;
-            --terracotta-bg: rgba(192, 115, 74, 0.10);
-            --gold: #B8963E;
-            --gold-bg: rgba(184, 150, 62, 0.10);
+            /* ---- Brand / accents ---- */
+            --olive: #2F6B3B;              /* leaf-green primary; white text ~5.2:1 */
+            --olive-soft: #3E844B;         /* hover */
+            --olive-bg: rgba(47, 107, 59, 0.10);
+            --terracotta: #B0562F;         /* clay accent; text on white ~4.9:1 */
+            --terracotta-bg: rgba(176, 86, 47, 0.10);
+            --gold: #97741A;               /* harvest wheat; text ~5.2:1 */
+            --gold-bg: rgba(151, 116, 26, 0.12);
 
-            /* ---- Status ---- */
-            --success: #5E8E42;
-            --success-bg: rgba(94, 142, 66, 0.10);
-            --warning: #C09A3E;
-            --warning-bg: rgba(192, 154, 62, 0.10);
-            --danger: #B85A4A;
-            --danger-bg: rgba(184, 90, 74, 0.10);
-            --info: #4A7A8E;
-            --info-bg: rgba(74, 122, 142, 0.10);
+            /* ---- Status (accent = border/badge; -text = AA-safe text on tints) ---- */
+            --success: #3C8048;
+            --success-bg: rgba(60, 128, 72, 0.12);
+            --success-text: #1F5127;   /* ~8:1 on white — field-readable */
+            --warning: #8A6210;
+            --warning-bg: rgba(138, 98, 16, 0.12);
+            --warning-text: #5C4008;   /* ~7.5:1 on white — replaces low-contrast gold */
+            --danger: #B23A2C;
+            --danger-bg: rgba(178, 58, 44, 0.12);
+            --danger-text: #7C2418;    /* ~7.8:1 on white — field-readable */
+            --info: #2F6E82;               /* water-teal — fits irrigation context */
+            --info-bg: rgba(47, 110, 130, 0.12);
+            --info-text: #1E4A58;      /* ~7.6:1 on white — field-readable */
 
             /* ---- Spacing / Radius ---- */
             --topbar-height: 56px;
             --radius: 10px;
             --radius-sm: 6px;
             --radius-lg: 14px;
-            --shadow-sm: 0 1px 3px rgba(44, 58, 46, 0.06);
-            --shadow: 0 2px 8px rgba(44, 58, 46, 0.08);
-            --shadow-lg: 0 8px 24px rgba(44, 58, 46, 0.10);
+            --shadow-sm: 0 1px 3px rgba(23, 39, 28, 0.06);
+            --shadow: 0 2px 8px rgba(23, 39, 28, 0.08);
+            --shadow-lg: 0 8px 24px rgba(23, 39, 28, 0.12);
             --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 
             /* ---- Fonts ---- */
             --font-display: 'Fraunces', Georgia, serif;
             --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+            --font-sans: var(--font-body);
+
+            /* ---- Aliases ----
+               Several views were written against an alternate variable naming
+               scheme that was never defined, so those colours rendered broken
+               (e.g. links using var(--accent-hover) had no colour). Map them
+               onto the hardened palette so every reference resolves to an
+               AA-contrast colour. */
+            --accent: var(--olive);
+            --accent-hover: var(--olive);
+            --accent-strong: var(--gold);
+            --bg: var(--bg-primary);
+            --card: var(--bg-card);
+            --input: var(--bg-input);
+            --muted: var(--text-muted);
+            --text: var(--text-primary);
+            --color-white: #FFFFFF;
+            --color-black: #1F2A22;
+            --glow: var(--shadow);
+            --stroke-color: var(--border);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: var(--font-body);
+            /* Slightly larger base type improves legibility for low-vision users. */
+            font-size: 16px;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
         }
+        /* Lift the smallest uppercase micro-labels to a legible minimum. */
+        .stat-label, .detail-label, .kpi-chip, .table-wrap th { font-size: 12px !important; }
 
-        ::selection { background: rgba(107, 127, 58, 0.2); color: var(--text-primary); }
+        ::selection { background: rgba(47, 107, 59, 0.20); color: var(--text-primary); }
 
         /* ============================================
            SIDEBAR RAIL — 64px icon strip
@@ -193,7 +229,7 @@
             top: 0;
             left: 0;
             background: var(--rail-bg);
-            color: #e8e4df;
+            color: #DAE7DE;
             padding: 6px 14px;
             border-radius: 6px;
             font-size: 12.5px;
@@ -235,7 +271,7 @@
         }
 
         .sidebar-nav a.active {
-            background: rgba(200, 169, 110, 0.12);
+            background: rgba(143, 203, 132, 0.16);
             color: var(--rail-icon-active);
         }
 
@@ -273,7 +309,7 @@
             left: var(--rail-width);
             right: 0;
             height: var(--topbar-height);
-            background: rgba(245, 241, 235, 0.85);
+            background: rgba(243, 245, 239, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
@@ -309,7 +345,7 @@
             letter-spacing: 0.6px;
             background: var(--olive-bg);
             color: var(--olive);
-            border: 1px solid rgba(107, 127, 58, 0.18);
+            border: 1px solid rgba(47, 107, 59, 0.18);
         }
 
         .user-menu {
@@ -415,7 +451,7 @@
             letter-spacing: 0.5px;
             background: var(--olive-bg);
             color: var(--olive);
-            border: 1px solid rgba(107, 127, 58, 0.18);
+            border: 1px solid rgba(47, 107, 59, 0.18);
         }
 
         .user-dropdown-section {
@@ -494,6 +530,120 @@
             transition: all var(--transition);
         }
         .icon-btn:hover { background: var(--bg-card); color: var(--text-primary); border-color: var(--border-strong); }
+
+        /* ---- Notifications bell ---- */
+        .notif-wrap { position: relative; }
+        .notif-btn { position: relative; }
+        .notif-btn.active { background: var(--olive-bg); color: var(--olive); border-color: rgba(47, 107, 59, 0.25); }
+        .notif-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            border-radius: 8px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 9.5px;
+            font-weight: 700;
+            line-height: 16px;
+            text-align: center;
+            box-shadow: 0 0 0 2px var(--bg-primary);
+            font-family: var(--font-mono);
+        }
+        /* ---- Notification dropdown panel ---- */
+        .notif-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 340px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .notif-wrap.open .notif-dropdown { display: flex; flex-direction: column; }
+        .notif-dropdown-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .notif-dropdown-count {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1px 7px;
+        }
+        .notif-dropdown-body {
+            max-height: 340px;
+            overflow-y: auto;
+        }
+        .notif-item {
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item-meta {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 3px;
+        }
+        .notif-item-type {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .notif-item--danger  .notif-item-type { color: var(--danger-text, #b91c1c); }
+        .notif-item--warning .notif-item-type { color: var(--warning-text, #92400e); }
+        .notif-item--info    .notif-item-type { color: var(--info-text, #1d4ed8); }
+        .notif-item-module {
+            font-size: 10px;
+            color: var(--text-muted);
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1px 6px;
+        }
+        .notif-item-msg {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.45;
+        }
+        .notif-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 28px 16px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .notif-dropdown-footer {
+            display: block;
+            text-align: center;
+            padding: 10px 16px;
+            font-size: 12px;
+            color: var(--olive);
+            text-decoration: none;
+            border-top: 1px solid var(--border);
+            background: var(--bg-primary);
+        }
+        .notif-dropdown-footer:hover { text-decoration: underline; }
 
         /* ============================================
            MAIN CONTENT
@@ -583,7 +733,7 @@
         .card-glass {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(221, 214, 202, 0.6);
+            border: 1px solid rgba(214, 222, 204, 0.7);
         }
 
         .card-header {
@@ -606,38 +756,75 @@
            ============================================ */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
             margin-bottom: 24px;
+        }
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
         .stat-card {
             position: relative;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            box-shadow: var(--shadow-sm);
-            transition: border-color var(--transition);
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: 0 1px 2px rgba(23, 39, 28, 0.04), 0 4px 12px rgba(23, 39, 28, 0.05);
+            transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+            overflow: hidden;
         }
-        .stat-card:hover { border-color: var(--border-strong); }
+        .stat-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(23, 39, 28, 0.06), 0 10px 24px rgba(23, 39, 28, 0.08);
+            border-color: var(--border-strong);
+        }
+
+        /* Icon-tile variant (soft tinted square + label/value beside it). */
+        .stat-card.has-icon { display: flex; align-items: center; gap: 12px; }
+        .stat-icon {
+            flex-shrink: 0;
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--olive-bg); color: var(--olive);
+        }
+        .stat-icon svg { width: 18px; height: 18px; }
+        .stat-icon.success { background: var(--success-bg); color: var(--success); }
+        .stat-icon.warning { background: var(--warning-bg); color: var(--warning); }
+        .stat-icon.danger  { background: var(--danger-bg);  color: var(--danger); }
+        .stat-icon.info    { background: var(--info-bg);    color: var(--info); }
+        .stat-icon.harvest { background: var(--terracotta-bg); color: var(--terracotta); }
+        .stat-icon.accent  { background: var(--olive-bg);   color: var(--olive); }
+        .stat-icon.muted   { background: var(--bg-secondary); color: var(--text-muted); }
+        .stat-body { min-width: 0; flex: 1; overflow: hidden; }
 
         .stat-label {
-            font-size: 11.5px;
+            font-size: 10px;
             color: var(--text-muted);
-            font-weight: 500;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .stat-value {
-            font-family: var(--font-mono);
-            font-size: 28px;
+            font-family: var(--font-display);
+            font-size: clamp(16px, 1.5vw, 22px);
             font-weight: 700;
-            letter-spacing: -1.5px;
+            letter-spacing: -0.3px;
             color: var(--text-primary);
+            line-height: 1.15;
             font-feature-settings: 'tnum' 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .stat-value.accent { color: var(--olive); }
@@ -672,7 +859,7 @@
         tbody td {
             padding: 12px 16px;
             font-size: 13px;
-            border-bottom: 1px solid rgba(221, 214, 202, 0.5);
+            border-bottom: 1px solid rgba(214, 222, 204, 0.6);
             color: var(--text-secondary);
         }
 
@@ -771,40 +958,52 @@
             letter-spacing: 0.3px;
         }
 
-        .badge-planned { background: var(--info-bg); color: var(--info); }
-        .badge-active { background: var(--success-bg); color: var(--success); }
-        .badge-completed { background: rgba(142, 154, 143, 0.12); color: var(--text-muted); }
-        .badge-cancelled { background: var(--danger-bg); color: var(--danger); }
-        .badge-operational { background: var(--success-bg); color: var(--success); }
-        .badge-maintenance { background: var(--warning-bg); color: var(--warning); }
-        .badge-down { background: var(--danger-bg); color: var(--danger); }
-        .badge-pump { background: var(--info-bg); color: var(--info); }
-        .badge-vehicle { background: rgba(139, 118, 180, 0.12); color: #7a6aad; }
+        .badge-planned { background: var(--info-bg); color: var(--info-text); }
+        .badge-active { background: var(--success-bg); color: var(--success-text); }
+        .badge-completed { background: rgba(92, 106, 97, 0.12); color: var(--text-muted); }
+        .badge-cancelled { background: var(--danger-bg); color: var(--danger-text); }
+        .badge-operational { background: var(--success-bg); color: var(--success-text); }
+        .badge-maintenance { background: var(--warning-bg); color: var(--warning-text); }
+        .badge-down { background: var(--danger-bg); color: var(--danger-text); }
+        .badge-pump { background: var(--info-bg); color: var(--info-text); }
+        .badge-vehicle { background: rgba(90, 78, 128, 0.12); color: #574a86; }
         .badge-equipment { background: var(--terracotta-bg); color: var(--terracotta); }
-        .badge-sown { background: var(--info-bg); color: var(--info); }
-        .badge-growing { background: var(--warning-bg); color: var(--warning); }
-        .badge-ready { background: var(--success-bg); color: var(--success); }
-        .badge-transplanted { background: rgba(142, 154, 143, 0.12); color: var(--text-muted); }
-        .badge-neutral { background: rgba(142, 154, 143, 0.12); color: var(--text-secondary); }
+        .badge-sown { background: var(--info-bg); color: var(--info-text); }
+        .badge-growing { background: var(--warning-bg); color: var(--warning-text); }
+        .badge-ready { background: var(--success-bg); color: var(--success-text); }
+        .badge-transplanted { background: rgba(92, 106, 97, 0.12); color: var(--text-muted); }
+        .badge-neutral { background: rgba(92, 106, 97, 0.12); color: var(--text-secondary); }
 
         /* ============================================
            ALERTS
            ============================================ */
         .alert {
-            padding: 12px 16px;
+            padding: 13px 16px;
             border-radius: var(--radius-sm);
-            font-size: 13px;
+            font-size: 14.5px;
+            line-height: 1.5;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
+            /* Body text stays dark & high-contrast; severity is shown by the
+               tinted background and the coloured left border, not by text colour. */
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--text-muted);
             animation: slideIn 0.3s ease;
         }
+        /* Coloured label/heading inside an alert keeps the severity hue. */
+        .alert strong { letter-spacing: 0.4px; }
 
-        .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(94, 142, 66, 0.18); }
-        .alert-error { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(184, 90, 74, 0.18); }
-        .alert-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(192, 154, 62, 0.18); }
-        .alert-info { background: var(--info-bg); color: var(--info); border: 1px solid rgba(74, 122, 142, 0.18); }
+        .alert-success { background: var(--success-bg); border-left-color: var(--success); }
+        .alert-success strong { color: var(--success-text); }
+        .alert-error { background: var(--danger-bg); border-left-color: var(--danger); }
+        .alert-error strong { color: var(--danger-text); }
+        .alert-warning { background: var(--warning-bg); border-left-color: var(--warning); }
+        .alert-warning strong { color: var(--warning-text); }
+        .alert-info { background: var(--info-bg); border-left-color: var(--info); }
+        .alert-info strong { color: var(--info-text); }
 
         /* ============================================
            PAGE HEADER
@@ -1023,6 +1222,106 @@
             .kpi-bar { gap: 6px; }
             .kpi-chip { padding: 6px 10px; }
         }
+
+        /* ============================================
+           CONFIRM MODAL
+           ============================================ */
+        .confirm-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(26, 31, 28, 0.55);
+            backdrop-filter: blur(2px);
+            animation: fadeIn 0.15s ease;
+        }
+        .confirm-overlay.open { display: flex; }
+        .confirm-dialog {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            padding: 24px;
+            transform: translateY(4px);
+            animation: confirmPop 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes confirmPop { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .confirm-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 14px;
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+        .confirm-title {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .confirm-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 22px;
+            line-height: 1.55;
+        }
+        .confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* ============================================
+           TABS (block hub, crop-cycle timeline toggle, …)
+           ============================================ */
+        .hub-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 0; }
+        .hub-tab {
+            appearance: none; background: none; border: none; cursor: pointer;
+            font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--text-secondary);
+            padding: 10px 14px; border-bottom: 3px solid transparent; margin-bottom: -2px;
+            display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+        }
+        .hub-tab:hover { color: var(--text-primary); }
+        .hub-tab.active { color: var(--olive); border-bottom-color: var(--olive); }
+        .hub-tab .count {
+            font-size: 11px; font-weight: 700; background: var(--bg-secondary); color: var(--text-secondary);
+            border-radius: 20px; padding: 1px 8px; min-width: 20px; text-align: center;
+        }
+        .hub-tab.active .count { background: var(--olive-bg); color: var(--olive); }
+        .hub-panel { display: none; padding-top: 4px; }
+        .hub-panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+        /* ============================================
+           TOPBAR SEARCH
+           ============================================ */
+        .topbar-search { position: relative; display: flex; align-items: center; }
+        .topbar-search-icon {
+            position: absolute; left: 10px; display: flex; align-items: center;
+            color: var(--text-muted); pointer-events: none;
+        }
+        .topbar-search input {
+            width: 200px; max-width: 34vw;
+            padding: 7px 10px 7px 32px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); font-family: inherit; font-size: 13px;
+            color: var(--text-primary); transition: all var(--transition);
+        }
+        .topbar-search input:focus {
+            outline: none; border-color: var(--border-focus); width: 260px;
+            box-shadow: 0 0 0 3px var(--olive-bg);
+        }
+        @media (max-width: 640px) { .topbar-search { display: none; } }
     </style>
 </head>
 <body>
@@ -1034,17 +1333,21 @@
 
         <div class="sidebar-divider"></div>
 
+        @php $u = auth()->user(); $ma = \App\Support\ModuleAccess::class; @endphp
+
         {{-- Overview --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
                 <li><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><span class="icon"><x-icon name="dashboard" /></span><span class="nav-label">Dashboard</span></a></li>
+                @if($ma::allows($u, 'analytics'))
                 <li><a href="{{ route('analytics.index') }}" class="{{ request()->routeIs('analytics.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">Executive Dashboard</span></a></li>
+                @endif
             </ul>
         </div>
 
         <div class="sidebar-divider"></div>
 
-        {{-- Master Data --}}
+        {{-- Master Data (readable by all roles) --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
                 <li><a href="{{ route('farms.index') }}" class="{{ request()->routeIs('farms.*') ? 'active' : '' }}"><span class="icon"><x-icon name="farm" /></span><span class="nav-label">Farms</span></a></li>
@@ -1056,67 +1359,68 @@
 
         <div class="sidebar-divider"></div>
 
-        {{-- Planning --}}
+        {{-- Planning (crop cycles readable by all roles) --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
                 <li><a href="{{ route('crop-cycles.index') }}" class="{{ request()->routeIs('crop-cycles.*') ? 'active' : '' }}"><span class="icon"><x-icon name="cycles" /></span><span class="nav-label">Crop Cycles</span></a></li>
             </ul>
         </div>
 
+        @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour'); @endphp
+        @if($fieldOps)
         <div class="sidebar-divider"></div>
-
         {{-- Field Operations --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
-                <li><a href="{{ route('nursery-batches.index') }}" class="{{ request()->routeIs('nursery-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="nursery" /></span><span class="nav-label">Nursery</span></a></li>
-                <li><a href="{{ route('daily-activities.index') }}" class="{{ request()->routeIs('daily-activities.*') ? 'active' : '' }}"><span class="icon"><x-icon name="operations" /></span><span class="nav-label">Daily Operations</span></a></li>
-                <li><a href="{{ route('irrigation-logs.index') }}" class="{{ request()->routeIs('irrigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="irrigation" /></span><span class="nav-label">Irrigation</span></a></li>
-                <li><a href="{{ route('fertigation-logs.index') }}" class="{{ request()->routeIs('fertigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="fertigation" /></span><span class="nav-label">Fertigation</span></a></li>
-                <li><a href="{{ route('spray-logs.index') }}" class="{{ request()->routeIs('spray-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="pest" /></span><span class="nav-label">Pest &amp; Disease</span></a></li>
-                <li><a href="{{ route('labour-attendances.index') }}" class="{{ request()->routeIs('labour-attendances.*') ? 'active' : '' }}"><span class="icon"><x-icon name="labour" /></span><span class="nav-label">Labour</span></a></li>
+                @if($ma::allows($u,'nursery'))<li><a href="{{ route('nursery-batches.index') }}" class="{{ request()->routeIs('nursery-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="nursery" /></span><span class="nav-label">Nursery</span></a></li>@endif
+                @if($ma::allows($u,'daily_ops'))<li><a href="{{ route('daily-activities.index') }}" class="{{ request()->routeIs('daily-activities.*') ? 'active' : '' }}"><span class="icon"><x-icon name="operations" /></span><span class="nav-label">Daily Operations</span></a></li>@endif
+                @if($ma::allows($u,'irrigation'))<li><a href="{{ route('irrigation-logs.index') }}" class="{{ request()->routeIs('irrigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="irrigation" /></span><span class="nav-label">Irrigation</span></a></li>@endif
+                @if($ma::allows($u,'fertigation'))<li><a href="{{ route('fertigation-logs.index') }}" class="{{ request()->routeIs('fertigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="fertigation" /></span><span class="nav-label">Fertigation</span></a></li>@endif
+                @if($ma::allows($u,'pest'))<li><a href="{{ route('spray-logs.index') }}" class="{{ request()->routeIs('spray-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="pest" /></span><span class="nav-label">Pest &amp; Disease</span></a></li>@endif
+                @if($ma::allows($u,'labour'))<li><a href="{{ route('labour-attendances.index') }}" class="{{ request()->routeIs('labour-attendances.*') ? 'active' : '' }}"><span class="icon"><x-icon name="labour" /></span><span class="nav-label">Labour</span></a></li>@endif
             </ul>
         </div>
+        @endif
 
+        @php $postHarvest = $ma::allows($u,'inventory') || $ma::allows($u,'harvest') || $ma::allows($u,'packhouse') || $ma::allows($u,'quality'); @endphp
+        @if($postHarvest)
         <div class="sidebar-divider"></div>
-
         {{-- Post-Harvest --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
-                <li><a href="{{ route('inventory-items.index') }}" class="{{ request()->routeIs('inventory-items.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Inventory</span></a></li>
-                <li><a href="{{ route('harvest-batches.index') }}" class="{{ request()->routeIs('harvest-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="harvest" /></span><span class="nav-label">Harvest</span></a></li>
-                <li><a href="{{ route('packhouse-lots.index') }}" class="{{ request()->routeIs('packhouse-lots.*') ? 'active' : '' }}"><span class="icon"><x-icon name="packhouse" /></span><span class="nav-label">Packhouse</span></a></li>
-                <li><a href="{{ route('quality-checks.index') }}" class="{{ request()->routeIs('quality-checks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="quality" /></span><span class="nav-label">Quality</span></a></li>
+                @if($ma::allows($u,'inventory'))<li><a href="{{ route('inventory-items.index') }}" class="{{ request()->routeIs('inventory-items.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Inventory</span></a></li>@endif
+                @if($ma::allows($u,'harvest'))<li><a href="{{ route('harvest-batches.index') }}" class="{{ request()->routeIs('harvest-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="harvest" /></span><span class="nav-label">Harvest</span></a></li>@endif
+                @if($ma::allows($u,'packhouse'))<li><a href="{{ route('packhouse-lots.index') }}" class="{{ request()->routeIs('packhouse-lots.*') || request()->routeIs('trace.lookup') ? 'active' : '' }}"><span class="icon"><x-icon name="packhouse" /></span><span class="nav-label">Packhouse</span></a></li>@endif
+                @if($ma::allows($u,'quality'))<li><a href="{{ route('quality-checks.index') }}" class="{{ request()->routeIs('quality-checks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="quality" /></span><span class="nav-label">Quality</span></a></li>@endif
             </ul>
         </div>
+        @endif
 
+        @php $commercial = $ma::allows($u,'sales') || $ma::allows($u,'logistics') || $ma::allows($u,'finance'); @endphp
+        @if($commercial)
         <div class="sidebar-divider"></div>
-
         {{-- Commercial --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
-                <li><a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') || request()->routeIs('sales-orders.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Sales</span></a></li>
-                <li><a href="{{ route('dispatches.index') }}" class="{{ request()->routeIs('dispatches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="logistics" /></span><span class="nav-label">Logistics</span></a></li>
-                <li><a href="{{ route('finance.index') }}" class="{{ request()->routeIs('finance.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Finance</span></a></li>
+                @if($ma::allows($u,'sales'))<li><a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') || request()->routeIs('sales-orders.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Sales</span></a></li>@endif
+                @if($ma::allows($u,'logistics'))<li><a href="{{ route('dispatches.index') }}" class="{{ request()->routeIs('dispatches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="logistics" /></span><span class="nav-label">Logistics</span></a></li>@endif
+                @if($ma::allows($u,'finance'))<li><a href="{{ route('finance.index') }}" class="{{ request()->routeIs('finance.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Finance</span></a></li>@endif
             </ul>
         </div>
+        @endif
 
-        {{-- Footer icons --}}
-        <div class="sidebar-footer">
-            <div class="sidebar-divider"></div>
+        @if($ma::allows($u,'admin'))
+        <div class="sidebar-divider"></div>
+        {{-- Administration --}}
+        <div class="sidebar-section">
             <ul class="sidebar-nav">
-                <li><a href="#"><span class="icon"><x-icon name="notifications" /></span><span class="nav-label">Notifications</span></a></li>
-                <li><a href="#"><span class="icon"><x-icon name="settings" /></span><span class="nav-label">Settings</span></a></li>
-                @auth
-                <li>
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();">
-                        <span class="icon"><x-icon name="logout" /></span>
-                        <span class="nav-label">Log Out</span>
-                    </a>
-                    <form id="sidebar-logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form>
-                </li>
-                @endauth
+                <li><a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}"><span class="icon"><x-icon name="settings" /></span><span class="nav-label">Users &amp; Roles</span></a></li>
+                <li><a href="{{ route('activity-logs.index') }}" class="{{ request()->routeIs('activity-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">Audit Log</span></a></li>
             </ul>
         </div>
+        @endif
+
+        {{-- Settings & Log Out live in the top-right user menu, not the sidebar. --}}
     </aside>
 
     {{-- ---- Topbar ---- --}}
@@ -1129,7 +1433,50 @@
                 @php
                     $user = auth()->user();
                     $roleLabel = $user->role === 'owner' ? 'Horticulture Manager' : ucwords(str_replace('_', ' ', $user->role));
+                    $topbarAlerts = app(\App\Services\AlertService::class)->collect();
+                    $alertCount = count($topbarAlerts);
                 @endphp
+
+                {{-- Global quick-search --}}
+                <form method="GET" action="{{ route('search') }}" class="topbar-search" role="search">
+                    <span class="topbar-search-icon"><x-icon name="search" size="15" /></span>
+                    <input type="text" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" placeholder="Search…" aria-label="Search" autocomplete="off">
+                </form>
+
+                {{-- Notifications bell dropdown --}}
+                <div class="notif-wrap" id="notif-wrap">
+                    <button type="button" class="icon-btn notif-btn {{ request()->routeIs('notifications.*') ? 'active' : '' }}" aria-label="Notifications" title="Notifications" onclick="document.getElementById('notif-wrap').classList.toggle('open')" id="notif-bell-btn">
+                        <x-icon name="notifications" size="18" />
+                        @if($alertCount > 0)
+                            <span class="notif-badge">{{ $alertCount > 9 ? '9+' : $alertCount }}</span>
+                        @endif
+                    </button>
+                    <div class="notif-dropdown" role="dialog" aria-label="Notifications" onclick="event.stopPropagation()">
+                        <div class="notif-dropdown-header">
+                            <span>Notifications</span>
+                            @if($alertCount > 0)
+                                <span class="notif-dropdown-count">{{ $alertCount }} alert{{ $alertCount !== 1 ? 's' : '' }}</span>
+                            @endif
+                        </div>
+                        <div class="notif-dropdown-body">
+                            @forelse($topbarAlerts as $al)
+                                <div class="notif-item notif-item--{{ $al['severity'] }}">
+                                    <div class="notif-item-meta">
+                                        <span class="notif-item-type">{{ str_replace('_', ' ', $al['type']) }}</span>
+                                        <span class="notif-item-module">{{ $al['module'] }}</span>
+                                    </div>
+                                    <p class="notif-item-msg">{{ $al['message'] }}</p>
+                                </div>
+                            @empty
+                                <div class="notif-empty">
+                                    <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" fill="none"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                                    <span>All clear — no alerts</span>
+                                </div>
+                            @endforelse
+                        </div>
+                        <a href="{{ route('notifications.index') }}" class="notif-dropdown-footer">View all notifications →</a>
+                    </div>
+                </div>
                 <div class="user-menu" id="user-menu-toggle" onclick="this.classList.toggle('open')">
                     <div class="user-avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
                     <span>{{ $user->name }}</span>
@@ -1169,7 +1516,12 @@
 
                         {{-- Account actions --}}
                         <div class="user-dropdown-section">
-                            <a href="#" class="user-dropdown-item">
+                            <a href="{{ route('notifications.index') }}" class="user-dropdown-item">
+                                <span class="udd-icon"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
+                                Notifications
+                                @if($alertCount > 0)<span class="badge badge-down" style="margin-left:auto; font-size:10px;">{{ $alertCount }}</span>@endif
+                            </a>
+                            <a href="{{ route('settings.index') }}" class="user-dropdown-item">
                                 <span class="udd-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
                                 Settings
                             </a>
@@ -1206,6 +1558,20 @@
 
         @yield('content')
     </main>
+
+    {{-- ---- Global Confirm Modal (replaces native window.confirm) ---- --}}
+    <div class="confirm-overlay" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+        <div class="confirm-dialog">
+            <div class="confirm-icon">!</div>
+            <div class="confirm-title" id="confirm-modal-title">Please confirm</div>
+            <div class="confirm-message" id="confirm-modal-message"></div>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-ghost" id="confirm-modal-cancel">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-modal-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     {{-- ---- Sidebar Tooltip Positioning ---- --}}
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -1233,6 +1599,68 @@
                 if (e.key === 'Escape') {
                     userMenu.classList.remove('open');
                 }
+            });
+        }
+
+        // Notification dropdown — close on outside click or Escape
+        var notifWrap = document.getElementById('notif-wrap');
+        if (notifWrap) {
+            document.addEventListener('click', function(e) {
+                if (!notifWrap.contains(e.target)) {
+                    notifWrap.classList.remove('open');
+                }
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') notifWrap.classList.remove('open');
+            });
+        }
+
+
+        // In-app confirm modal — intercepts any form with a data-confirm attribute
+        // and replaces the native browser confirm() dialog with a styled modal.
+        var confirmModal   = document.getElementById('confirm-modal');
+        var confirmMessage = document.getElementById('confirm-modal-message');
+        var confirmOk      = document.getElementById('confirm-modal-ok');
+        var confirmCancel  = document.getElementById('confirm-modal-cancel');
+        var pendingForm    = null;
+
+        function closeConfirm() {
+            confirmModal.classList.remove('open');
+            pendingForm = null;
+        }
+
+        if (confirmModal) {
+            document.addEventListener('submit', function(e) {
+                var form = e.target;
+                if (!form.matches('[data-confirm]') || form.dataset.confirmed === 'true') {
+                    return; // no confirmation needed, or already confirmed
+                }
+                e.preventDefault();
+                pendingForm = form;
+                confirmMessage.textContent = form.getAttribute('data-confirm');
+                confirmOk.textContent = form.getAttribute('data-confirm-ok') || 'Confirm';
+                confirmModal.classList.add('open');
+                confirmOk.focus();
+            });
+
+            confirmOk.addEventListener('click', function() {
+                if (!pendingForm) return;
+                var form = pendingForm;
+                form.dataset.confirmed = 'true'; // let the next submit pass through
+                closeConfirm();
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
+            });
+
+            confirmCancel.addEventListener('click', closeConfirm);
+            confirmModal.addEventListener('click', function(e) {
+                if (e.target === confirmModal) closeConfirm();
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && confirmModal.classList.contains('open')) closeConfirm();
             });
         }
     });

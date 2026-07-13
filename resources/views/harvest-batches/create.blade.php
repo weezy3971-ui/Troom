@@ -66,4 +66,25 @@
         </div>
     </form>
 </div>
+
+<div id="phi-warning" class="alert alert-warning" style="display:none; max-width:760px; margin-top: 12px;">
+    ⚠ <strong>Harvest blocked:</strong> The selected crop cycle has an active pre-harvest interval. Submission will be rejected until the PHI window clears.
+</div>
+
+<script>
+(function () {
+    const phiBlockedIds = @json($phiBlockedIds);
+    const select  = document.getElementById('crop_cycle_id');
+    const warning = document.getElementById('phi-warning');
+
+    function check() {
+        const selected = parseInt(select.value, 10);
+        warning.style.display = phiBlockedIds.includes(selected) ? 'block' : 'none';
+    }
+
+    select.addEventListener('change', check);
+    check();
+}());
+</script>
 @endsection
+

@@ -3,15 +3,46 @@
 @section('title', 'Dashboard')
 
 @section('content')
+@php
+    $u = auth()->user();
+    $ma = \App\Support\ModuleAccess::class;
+    $toneColor = [
+        'success' => 'var(--success-text)',
+        'warning' => 'var(--warning-text)',
+        'danger'  => 'var(--danger-text)',
+        'info'    => 'var(--info-text)',
+        'muted'   => 'var(--text-muted)',
+    ];
+@endphp
+
 <div class="page-header">
     <div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Welcome back, {{ auth()->user()->name }}</p>
+        <h1 class="page-title">Welcome back, {{ $u->name }}</h1>
+        <p class="page-subtitle">{{ $u->roleLabel() }} · {{ now()->format('l, M j, Y') }}</p>
     </div>
 </div>
 
-{{-- Compact KPI Bar — clickable chips --}}
+
+{{-- Your focus: role-tailored counters --}}
+@if(!empty($focus))
+<h3 style="font-family: var(--font-display); font-size: 15px; margin-bottom: 12px; color: var(--text-secondary);">Your focus today</h3>
+<div class="stats-grid" style="margin-bottom: 24px;">
+    @foreach($focus as $item)
+        <a href="{{ $item['url'] }}" class="stat-card has-icon" style="text-decoration: none;">
+            <span class="stat-icon {{ $item['tone'] }}"><x-icon :name="$item['icon'] ?? 'dashboard'" solid /></span>
+            <span class="stat-body">
+                <span class="stat-label" style="display:block;">{{ $item['label'] }}</span>
+                <span class="stat-value" style="display:block; color: {{ $toneColor[$item['tone']] ?? 'var(--text-primary)' }};">{{ $item['value'] }}</span>
+                <span style="display:block; font-size: 12px; color: var(--text-muted); margin-top: 2px;">{{ $item['sub'] }}</span>
+            </span>
+        </a>
+    @endforeach
+</div>
+@endif
+
+{{-- Compact KPI Bar — only chips the user can reach --}}
 <div class="kpi-bar">
+    @if($ma::allows($u, 'master_data'))
     <a href="{{ route('farms.index') }}" class="kpi-chip">
         <span class="kpi-chip-dot olive"></span>
         <span class="kpi-chip-label">Farms</span>
@@ -27,24 +58,30 @@
         <span class="kpi-chip-label">Varieties</span>
         <span class="kpi-chip-value">{{ \App\Models\Crop::count() }}</span>
     </a>
-    <a href="{{ route('crop-cycles.index') }}" class="kpi-chip">
+    @endif
+    @if($ma::allows($u, 'crop_cycles') || $ma::allows($u, 'master_data'))
+    <a href="{{ route('crop-cycles.index', ['status' => 'active']) }}" class="kpi-chip">
         <span class="kpi-chip-dot success"></span>
         <span class="kpi-chip-label">Active</span>
         <span class="kpi-chip-value success">{{ \App\Models\CropCycle::where('status', 'active')->count() }}</span>
     </a>
-    <a href="{{ route('crop-cycles.index') }}" class="kpi-chip">
+    <a href="{{ route('crop-cycles.index', ['status' => 'planned']) }}" class="kpi-chip">
         <span class="kpi-chip-dot warning"></span>
         <span class="kpi-chip-label">Planned</span>
         <span class="kpi-chip-value warning">{{ \App\Models\CropCycle::where('status', 'planned')->count() }}</span>
     </a>
+    @endif
+    @if($ma::allows($u, 'master_data'))
     <a href="{{ route('assets.index') }}" class="kpi-chip">
         <span class="kpi-chip-dot terracotta"></span>
         <span class="kpi-chip-label">Assets</span>
         <span class="kpi-chip-value terracotta">{{ \App\Models\Asset::count() }}</span>
     </a>
+    @endif
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+@if($ma::allows($u, 'crop_cycles') || $ma::allows($u, 'master_data'))
+<div class="dashboard-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
     {{-- Recent Crop Cycles --}}
     <div class="card">
         <div class="card-header">
@@ -60,14 +97,7 @@
         @else
             <div class="table-wrap">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Block</th>
-                            <th>Crop</th>
-                            <th>Season</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Block</th><th>Crop</th><th>Season</th><th>Status</th></tr></thead>
                     <tbody>
                         @foreach($recentCycles as $cycle)
                         <tr>
@@ -93,19 +123,11 @@
         @if($farms->isEmpty())
             <div class="empty-state" style="padding: 30px;">
                 <p>No farms registered yet.</p>
-                <a href="{{ route('farms.create') }}" class="btn btn-primary btn-sm">Add First Farm</a>
             </div>
         @else
             <div class="table-wrap">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Farm</th>
-                            <th>Location</th>
-                            <th>Blocks</th>
-                            <th>Assets</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Farm</th><th>Location</th><th>Blocks</th><th>Assets</th></tr></thead>
                     <tbody>
                         @foreach($farms as $farm)
                         <tr>
@@ -121,4 +143,5 @@
         @endif
     </div>
 </div>
+@endif
 @endsection

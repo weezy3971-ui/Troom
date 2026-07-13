@@ -13,7 +13,7 @@
     </div>
     <div class="actions">
         <a href="{{ route('spray-logs.edit', $sprayLog) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('spray-logs.destroy', $sprayLog) }}" method="POST" onsubmit="return confirm('Delete this spray log?');">
+        <form action="{{ route('spray-logs.destroy', $sprayLog) }}" method="POST" data-confirm="Delete this spray log?">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-danger">Delete</button>
         </form>
