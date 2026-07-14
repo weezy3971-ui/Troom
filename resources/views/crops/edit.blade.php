@@ -2,9 +2,7 @@
 @section('title', 'Edit Crop')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('crops.index') }}">Crops</a> <span>/</span> <a href="{{ route('crops.show', $crop) }}">{{ $crop->name }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Crop</h1></div>
 
 <div class="card" style="max-width: 700px;">
@@ -13,15 +11,15 @@
         <div class="form-grid">
             <div class="form-group">
                 <label class="form-label" for="name">Crop Name *</label>
-                <input type="text" id="name" name="name" value="{{ old('name', $crop->name) }}" class="form-input" required>
+                <x-combobox name="name" :value="old('name', $crop->name)" :options="\App\Support\ReferenceData::cropNames()" :required="true" placeholder="Type or pick a crop" />
             </div>
             <div class="form-group">
                 <label class="form-label" for="variety">Variety</label>
-                <input type="text" id="variety" name="variety" value="{{ old('variety', $crop->variety) }}" class="form-input">
+                <x-combobox name="variety" :value="old('variety', $crop->variety)" :options="\App\Support\ReferenceData::varieties()" placeholder="Type or pick a variety" />
             </div>
             <div class="form-group">
                 <label class="form-label" for="crop_type">Crop Type *</label>
-                <input type="text" id="crop_type" name="crop_type" value="{{ old('crop_type', $crop->crop_type) }}" class="form-input" required>
+                <x-combobox name="crop_type" :value="old('crop_type', $crop->crop_type)" :options="\App\Support\ReferenceData::cropTypes()" :required="true" placeholder="e.g. Vegetable, Fruit, Herb" />
             </div>
             <div class="form-group">
                 <label class="form-label" for="days_to_maturity">Days to Maturity</label>
@@ -30,6 +28,30 @@
             <div class="form-group">
                 <label class="form-label" for="expected_yield_per_acre">Expected Yield per Acre (kg)</label>
                 <input type="number" id="expected_yield_per_acre" name="expected_yield_per_acre" value="{{ old('expected_yield_per_acre', $crop->expected_yield_per_acre) }}" class="form-input" step="0.01" min="0">
+            </div>
+        </div>
+
+        {{-- Yield projection template --}}
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Yield Projection Template (optional)</h4>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">Used to project a crop cycle's harvest and revenue from its planting detail.</p>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="seeds_per_bed">Seeds per Bed</label>
+                    <input type="number" id="seeds_per_bed" name="seeds_per_bed" value="{{ old('seeds_per_bed', $crop->seeds_per_bed) }}" class="form-input" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="expected_yield_per_bed_kg">Expected Yield per Bed (kg)</label>
+                    <input type="number" id="expected_yield_per_bed_kg" name="expected_yield_per_bed_kg" value="{{ old('expected_yield_per_bed_kg', $crop->expected_yield_per_bed_kg) }}" class="form-input" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reference_price_per_kg">Reference Price (KES/kg)</label>
+                    <input type="number" id="reference_price_per_kg" name="reference_price_per_kg" value="{{ old('reference_price_per_kg', $crop->reference_price_per_kg) }}" class="form-input" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="expected_germination_rate">Expected Germination Rate</label>
+                    <input type="number" id="expected_germination_rate" name="expected_germination_rate" value="{{ old('expected_germination_rate', $crop->expected_germination_rate) }}" class="form-input" step="0.01" min="0" max="1" placeholder="e.g. 0.85 for 85%">
+                </div>
             </div>
         </div>
 

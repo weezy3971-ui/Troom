@@ -2,10 +2,7 @@
 @section('title', 'Edit Planting')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('nursery-batches.index') }}">Nursery</a> <span>/</span>
-    <a href="{{ route('nursery-batches.show', $nurseryBatch) }}">Batch #{{ $nurseryBatch->id }}</a> <span>/</span> <span>Edit Planting</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Planting</h1></div>
 
 @php $available = $nurseryBatch->remainingQuantity() + $planting->quantity; @endphp

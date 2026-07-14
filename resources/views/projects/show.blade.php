@@ -18,9 +18,7 @@
 @endphp
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('projects.index') }}">Projects</a> <span>/</span> <span>{{ $project->name }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

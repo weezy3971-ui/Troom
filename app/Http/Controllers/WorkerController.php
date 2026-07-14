@@ -58,7 +58,11 @@ class WorkerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'worker_type' => 'required|in:casual,permanent',
+            'national_id' => 'nullable|string|max:50',
+            'employee_no' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:50',
+            'pay_phone' => 'nullable|string|max:50',
             'default_rate' => 'required|numeric|min:0',
             'is_active' => 'nullable|boolean',
         ]);

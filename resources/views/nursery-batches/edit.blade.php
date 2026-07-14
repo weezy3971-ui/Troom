@@ -2,10 +2,7 @@
 @section('title', 'Edit Nursery Batch')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('nursery-batches.index') }}">Nursery</a> <span>/</span>
-    <a href="{{ route('nursery-batches.show', $nurseryBatch) }}">Batch #{{ $nurseryBatch->id }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Nursery Batch</h1></div>
 
 <div class="card" style="max-width: 700px;">

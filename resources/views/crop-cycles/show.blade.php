@@ -3,9 +3,7 @@
 
 @section('content')
 @php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'crop_cycles'); @endphp
-<div class="breadcrumbs">
-    <a href="{{ route('crop-cycles.index') }}">Crop Cycles</a> <span>/</span> <span>{{ $cropCycle->season_name }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>
@@ -41,6 +39,12 @@
     </div>
     @endif
 </div>
+
+<x-help-panel title="Guide — crop cycle & schedule">
+    <p><strong>Activating</strong> a cycle needs a seasonal budget and locks the block to this cycle. On activation, the crop's active stage program is copied in as a dated <strong>Stage Schedule</strong> (each stage = planting date + its day offset).</p>
+    <p><strong>Stage Schedule:</strong> tick stages <em>Done</em> as the work happens. Pending stages that fall due raise a notification. If you add or change the crop program later, use <em>Regenerate</em> to rebuild the schedule.</p>
+    <p><strong>Yield Projection</strong> needs planting detail (beds/area) plus the crop's expected yield and reference price to estimate harvest and revenue, then compares against what's actually harvested.</p>
+</x-help-panel>
 
 <div class="detail-grid">
     <div class="detail-item">
@@ -168,4 +172,147 @@
     </div>
 </div>
 @endif
+
+{{-- Yield Projection & Revenue --}}
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Yield Projection &amp; Revenue</h3>
+        @if($projection['basis'])
+            <span class="badge badge-planned" style="margin-left: 10px;">{{ $projection['basis'] === 'per_bed' ? 'Per-bed basis' : 'Per-acre basis' }}</span>
+        @endif
+    </div>
+
+    @if($projection['projected_yield'] === null)
+        <p style="font-size: 13px; color: var(--text-muted); padding: 8px 0;">
+            No projection yet. Record planting detail (beds or area) on this cycle and set the crop's
+            expected yield{{ $projection['price_per_kg'] > 0 ? '' : ' and reference price' }} to see a projected harvest and revenue.
+        </p>
+    @else
+    @php
+        $germPct = round($projection['germination_rate'] * 100);
+    @endphp
+        <div class="stats-grid" style="margin-bottom: 0;">
+            <div class="stat-card">
+                <div class="stat-label">Planted</div>
+                <div class="stat-value" style="font-size: 20px;">
+                    {{ $projection['planted_beds'] ? number_format($projection['planted_beds']) . ' beds' : number_format($projection['planted_area'], 2) . ' ac' }}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Germination (assumed)</div>
+                <div class="stat-value" style="font-size: 20px;">{{ $germPct }}%</div>
+            </div>
+            <div class="stat-card" style="border-color: rgba(99,102,241,0.3);">
+                <div class="stat-label">Projected Yield</div>
+                <div class="stat-value accent" style="font-size: 20px;">{{ number_format($projection['projected_yield']) }} kg</div>
+            </div>
+            @if($projection['projected_revenue'] !== null)
+            <div class="stat-card" style="border-color: rgba(99,102,241,0.3);">
+                <div class="stat-label">Projected Revenue</div>
+                <div class="stat-value accent" style="font-size: 20px;">KES {{ number_format($projection['projected_revenue']) }}</div>
+            </div>
+            @endif
+        </div>
+
+        @if($projection['actual_yield'] > 0)
+        @php
+            $variance = $projection['yield_variance'];
+            $ahead = $variance !== null && $variance >= 0;
+        @endphp
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+            <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Projected vs. Actual</h4>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+                <span>Harvested so far: <strong style="color: var(--text);">{{ number_format($projection['actual_yield']) }} kg</strong></span>
+                <span>Projected: <strong>{{ number_format($projection['projected_yield']) }} kg</strong></span>
+            </div>
+            @if($variance !== null)
+            <div style="font-size: 12.5px; color: {{ $ahead ? 'var(--olive, #6b8e23)' : 'var(--danger-text, #ef4444)' }}; font-weight: 600;">
+                {{ $ahead ? '▲' : '▼' }} {{ $ahead ? '+' : '' }}{{ number_format($variance * 100, 1) }}% vs projection
+            </div>
+            @endif
+        </div>
+        @endif
+
+        <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 16px;">
+            Projection = {{ $projection['basis'] === 'per_bed' ? 'beds × expected yield/bed' : 'area × expected yield/acre' }}
+            × {{ $germPct }}% germination{{ $projection['price_per_kg'] > 0 ? ', valued at KES ' . number_format($projection['price_per_kg'], 2) . '/kg' : '' }}.
+            Germination and plant population are crop-default assumptions in this phase.
+        </p>
+    @endif
+</div>
+
+{{-- Theme 2: crop stage program schedule --}}
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Stage Schedule</h3>
+        @if($canSchedule)
+            <form action="{{ route('crop-cycles.schedule', $cropCycle) }}" method="POST" style="margin-left:auto;" data-confirm="Rebuild the schedule from the crop's active program? Existing stages will be replaced.">
+                @csrf
+                <button type="submit" class="btn btn-secondary btn-sm">{{ $cropCycle->stages->isEmpty() ? 'Generate Schedule' : 'Regenerate' }}</button>
+            </form>
+        @endif
+    </div>
+
+    @if($cropCycle->stages->isEmpty())
+        <div class="alert alert-info" style="margin: 16px 20px;">
+            @if($canSchedule)
+                No stages scheduled yet. Click <strong>Generate Schedule</strong> to build the timeline from the crop's program.
+            @else
+                No schedule. Set a planting date on this cycle and define an active
+                <a href="{{ route('crop-programs.index') }}">crop program</a> for {{ $cropCycle->crop?->name ?? 'this crop' }} to enable scheduling.
+            @endif
+        </div>
+    @else
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Stage</th><th>Activity</th><th>Due</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    @foreach($cropCycle->stages as $stage)
+                    <tr>
+                        <td>{{ $stage->sequence }}</td>
+                        <td style="font-weight: 600; color: var(--text-primary);">
+                            {{ $stage->name }}
+                            @if($stage->notes)<div class="page-subtitle" style="margin:0; font-weight:400;">{{ $stage->notes }}</div>@endif
+                        </td>
+                        <td>{{ $stage->activity_type ? ucfirst(str_replace('_',' ', $stage->activity_type)) : '—' }}</td>
+                        <td>{{ $stage->due_date->format('M d, Y') }}</td>
+                        <td>
+                            @if($stage->isDone())
+                                <span class="badge badge-completed">Done</span>
+                            @elseif($stage->status === 'skipped')
+                                <span class="badge badge-neutral">Skipped</span>
+                            @elseif($stage->isOverdue())
+                                <span class="badge badge-cancelled">Overdue</span>
+                            @elseif($stage->isDue())
+                                <span class="badge badge-planned">Due today</span>
+                            @else
+                                <span class="badge badge-active">Pending</span>
+                            @endif
+                        </td>
+                        <td>
+                            <div class="actions">
+                                @if($stage->isDone())
+                                    <form action="{{ route('crop-cycles.stages.update', [$cropCycle, $stage]) }}" method="POST">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="status" value="pending">
+                                        <button type="submit" class="btn btn-ghost btn-sm">Reopen</button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('crop-cycles.stages.update', [$cropCycle, $stage]) }}" method="POST">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="status" value="done">
+                                        <button type="submit" class="btn btn-secondary btn-sm">Mark Done</button>
+                                    </form>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+</div>
 @endsection

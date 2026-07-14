@@ -2,9 +2,7 @@
 @section('title', 'New Packhouse Lot')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('packhouse-lots.index') }}">Packhouse</a> <span>/</span> <span>New Lot</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Create Packhouse Lot</h1></div>
 
 <div class="card" style="max-width: 760px;">
@@ -36,7 +34,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="packaging_type">Packaging Type</label>
-                <input type="text" id="packaging_type" name="packaging_type" value="{{ old('packaging_type') }}" class="form-input" placeholder="e.g. 4kg carton">
+                <x-combobox name="packaging_type" :value="old('packaging_type')" :options="\App\Support\ReferenceData::packagingTypes()" placeholder="e.g. 4kg carton" />
             </div>
         </div>
         <p class="page-subtitle" style="margin-bottom: 16px;">A unique traceability code is generated automatically and cannot be changed once created.</p>

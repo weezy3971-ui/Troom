@@ -2,10 +2,7 @@
 @section('title', 'Edit Fertigation Log')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('fertigation-logs.index') }}">Fertigation</a> <span>/</span>
-    <a href="{{ route('fertigation-logs.show', $fertigationLog) }}">Log #{{ $fertigationLog->id }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Fertigation Log</h1></div>
 
 <div class="card" style="max-width: 760px;">

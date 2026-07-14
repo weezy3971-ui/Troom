@@ -2,9 +2,7 @@
 @section('title', 'New Sales Order')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('sales-orders.index') }}">Sales Orders</a> <span>/</span> <span>New Order</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Create Sales Order</h1></div>
 
 <div class="card" style="max-width: 760px;">

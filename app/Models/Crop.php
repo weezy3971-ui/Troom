@@ -13,6 +13,10 @@ class Crop extends Model
         'crop_type',
         'days_to_maturity',
         'expected_yield_per_acre',
+        'seeds_per_bed',
+        'expected_yield_per_bed_kg',
+        'reference_price_per_kg',
+        'expected_germination_rate',
         'default_labour_budget',
         'default_input_budget',
         'default_irrigation_budget',
@@ -22,6 +26,10 @@ class Crop extends Model
     protected $casts = [
         'days_to_maturity' => 'integer',
         'expected_yield_per_acre' => 'decimal:2',
+        'seeds_per_bed' => 'integer',
+        'expected_yield_per_bed_kg' => 'decimal:2',
+        'reference_price_per_kg' => 'decimal:2',
+        'expected_germination_rate' => 'decimal:3',
         'default_labour_budget' => 'decimal:2',
         'default_input_budget' => 'decimal:2',
         'default_irrigation_budget' => 'decimal:2',
@@ -50,6 +58,17 @@ class Crop extends Model
     public function cropCycles(): HasMany
     {
         return $this->hasMany(CropCycle::class);
+    }
+
+    public function programs(): HasMany
+    {
+        return $this->hasMany(CropProgram::class);
+    }
+
+    /** The program used when materialising a cycle schedule (first active one). */
+    public function activeProgram(): ?CropProgram
+    {
+        return $this->programs()->where('is_active', true)->with('stages')->first();
     }
 
     public function nurseryBatches(): HasMany

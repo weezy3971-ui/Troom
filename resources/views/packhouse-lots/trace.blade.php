@@ -2,9 +2,7 @@
 @section('title', 'Traceability Lookup')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('packhouse-lots.index') }}">Packhouse</a> <span>/</span> <span>Trace Lookup</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

@@ -11,12 +11,18 @@ class Planting extends Model
         'nursery_batch_id',
         'crop_cycle_id',
         'quantity',
+        'bed_count',
+        'seeds_sown',
+        'area_acres',
         'planting_date',
     ];
 
     protected $casts = [
         'planting_date' => 'date',
         'quantity' => 'integer',
+        'bed_count' => 'integer',
+        'seeds_sown' => 'integer',
+        'area_acres' => 'decimal:2',
     ];
 
     public function nurseryBatch(): BelongsTo

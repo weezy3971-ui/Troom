@@ -2,9 +2,7 @@
 @section('title', $inventoryItem->name)
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('inventory-items.index') }}">Inventory</a> <span>/</span> <span>{{ $inventoryItem->name }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

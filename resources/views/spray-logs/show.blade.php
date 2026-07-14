@@ -2,9 +2,7 @@
 @section('title', 'Spray Log')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('spray-logs.index') }}">Pest &amp; Disease</a> <span>/</span> <span>Log #{{ $sprayLog->id }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

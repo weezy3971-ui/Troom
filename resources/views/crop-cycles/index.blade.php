@@ -8,7 +8,10 @@
         <h1 class="page-title">Crop Cycles</h1>
         <p class="page-subtitle">Plan and track each crop cycle per block and season</p>
     </div>
-    @if($canWrite)<a href="{{ route('crop-cycles.create') }}" class="btn btn-primary">+ New Crop Cycle</a>@endif
+    <div class="actions">
+        <a href="{{ route('crop-cycles.planner') }}" class="btn btn-secondary">🫘 Planting Planner</a>
+        @if($canWrite)<a href="{{ route('crop-cycles.create') }}" class="btn btn-primary">+ New Crop Cycle</a>@endif
+    </div>
 </div>
 
 <x-search-bar

@@ -2,10 +2,7 @@
 @section('title', 'Edit Ride ' . $ride->receipt_number)
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('rides.index') }}">Rides</a> <span>/</span>
-    <a href="{{ route('rides.show', $ride) }}">{{ $ride->receipt_number }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Ride</h1></div>
 
 <div class="card" style="max-width: 760px;">

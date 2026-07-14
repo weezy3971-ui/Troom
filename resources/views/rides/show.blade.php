@@ -10,9 +10,7 @@
 @endphp
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('rides.index') }}">Rides</a> <span>/</span> <span>{{ $ride->receipt_number }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

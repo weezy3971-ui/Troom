@@ -2,9 +2,7 @@
 @section('title', 'New Inventory Item')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('inventory-items.index') }}">Inventory</a> <span>/</span> <span>New Item</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Register Inventory Item</h1></div>
 
 <div class="card" style="max-width: 760px;">
@@ -17,15 +15,19 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="category">Category *</label>
-                <select id="category" name="category" class="form-select" required>
-                    @foreach(['fertilizer', 'chemical', 'seed', 'spare', 'packaging', 'other'] as $cat)
-                        <option value="{{ $cat }}" {{ old('category') == $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
+                <x-combobox name="category" :value="old('category')" :options="\App\Support\ReferenceData::inventoryCategories()" :required="true" placeholder="e.g. fertilizer, packaging" />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="stage">Store Stage *</label>
+                <select id="stage" name="stage" class="form-select" required>
+                    @foreach(\App\Models\InventoryItem::STAGES as $value => $label)
+                        <option value="{{ $value }}" {{ old('stage', 'general') == $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label" for="unit">Unit *</label>
-                <input type="text" id="unit" name="unit" value="{{ old('unit', 'kg') }}" class="form-input" required>
+                <x-combobox name="unit" :value="old('unit', 'kg')" :options="\App\Support\ReferenceData::units()" :required="true" placeholder="e.g. kg, litre, unit" />
             </div>
             <div class="form-group">
                 <label class="form-label" for="reorder_level">Reorder Level *</label>

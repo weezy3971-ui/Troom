@@ -2,9 +2,7 @@
 @section('title', 'Log Harvest')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('harvest-batches.index') }}">Harvest</a> <span>/</span> <span>Log Harvest</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Log Harvest Batch</h1></div>
 
 <div class="card" style="max-width: 760px;">
@@ -39,12 +37,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="quality_grade">Quality Grade</label>
-                <select id="quality_grade" name="quality_grade" class="form-select">
-                    <option value="">—</option>
-                    @foreach(['Grade A', 'Grade B', 'Grade C'] as $grade)
-                        <option value="{{ $grade }}" {{ old('quality_grade') == $grade ? 'selected' : '' }}>{{ $grade }}</option>
-                    @endforeach
-                </select>
+                <x-combobox name="quality_grade" :value="old('quality_grade')" :options="\App\Support\ReferenceData::qualityGrades()" placeholder="e.g. Grade A" />
             </div>
             <div class="form-group">
                 <label class="form-label" for="rejects_kg">Rejects (kg)</label>

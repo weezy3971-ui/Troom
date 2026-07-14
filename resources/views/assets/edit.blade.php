@@ -2,9 +2,7 @@
 @section('title', 'Edit Asset')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('assets.index') }}">Assets</a> <span>/</span> <a href="{{ route('assets.show', $asset) }}">{{ $asset->name }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Asset</h1></div>
 
 <div class="card" style="max-width: 700px;">

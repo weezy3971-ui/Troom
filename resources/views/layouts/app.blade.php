@@ -347,6 +347,7 @@
             gap: 16px;
         }
 
+
         .topbar-title {
             font-family: var(--font-display);
             font-size: 17px;
@@ -1181,6 +1182,25 @@
         .breadcrumbs a { color: var(--text-secondary); text-decoration: none; transition: color var(--transition); }
         .breadcrumbs a:hover { color: var(--olive); }
 
+        /* Back / forward navigation arrows embedded where breadcrumbs used to be */
+        .crumb-nav { display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+        .crumb-nav-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--olive-bg);
+            color: var(--olive);
+            cursor: pointer;
+            transition: background var(--transition), color var(--transition), border-color var(--transition);
+        }
+        .crumb-nav-btn:hover { background: var(--olive); color: #fff; border-color: var(--olive); }
+        .crumb-nav-btn .icon { display: inline-flex; }
+        .crumb-nav-btn.back .icon { transform: rotate(180deg); }
+
         /* ============================================
            EMPTY STATE
            ============================================ */
@@ -1370,7 +1390,7 @@
         <div class="sidebar-divider"></div>
 
         {{-- Master Data (readable by all roles) --}}
-        <details class="nav-group" {{ request()->routeIs('farms.*','blocks.*','crops.*','assets.*','crop-cycles.*') ? 'open' : '' }}>
+        <details class="nav-group" {{ request()->routeIs('farms.*','blocks.*','crops.*','crop-programs.*','assets.*','crop-cycles.*','checkouts.*') ? 'open' : '' }}>
             <summary>
                 <span class="icon"><x-icon name="blocks" /></span>
                 <span class="nav-group-title nav-label">Master Data</span>
@@ -1380,8 +1400,11 @@
                 <li><a href="{{ route('farms.index') }}" class="{{ request()->routeIs('farms.*') ? 'active' : '' }}"><span class="icon"><x-icon name="farm" /></span><span class="nav-label">Farms</span></a></li>
                 <li><a href="{{ route('blocks.index') }}" class="{{ request()->routeIs('blocks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="blocks" /></span><span class="nav-label">Blocks</span></a></li>
                 <li><a href="{{ route('crops.index') }}" class="{{ request()->routeIs('crops.*') ? 'active' : '' }}"><span class="icon"><x-icon name="crops" /></span><span class="nav-label">Crops</span></a></li>
-                <li><a href="{{ route('crop-cycles.index') }}" class="{{ request()->routeIs('crop-cycles.*') ? 'active' : '' }}"><span class="icon"><x-icon name="cycles" /></span><span class="nav-label">Crop Cycles</span></a></li>
+                @if($ma::allows($u,'crop_cycles'))<li><a href="{{ route('crop-programs.index') }}" class="{{ request()->routeIs('crop-programs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Crop Programs</span></a></li>@endif
+                <li><a href="{{ route('crop-cycles.index') }}" class="{{ request()->routeIs('crop-cycles.*') && ! request()->routeIs('crop-cycles.planner') ? 'active' : '' }}"><span class="icon"><x-icon name="cycles" /></span><span class="nav-label">Crop Cycles</span></a></li>
+                <li><a href="{{ route('crop-cycles.planner') }}" class="{{ request()->routeIs('crop-cycles.planner') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Planting Planner</span></a></li>
                 <li><a href="{{ route('assets.index') }}" class="{{ request()->routeIs('assets.*') ? 'active' : '' }}"><span class="icon"><x-icon name="assets" /></span><span class="nav-label">Assets</span></a></li>
+                @if($ma::allows($u,'checkouts'))<li><a href="{{ route('checkouts.index') }}" class="{{ request()->routeIs('checkouts.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Checkouts</span></a></li>@endif
             </ul>
         </details>
 
@@ -1409,7 +1432,7 @@
         @php $postHarvest = $ma::allows($u,'inventory') || $ma::allows($u,'harvest') || $ma::allows($u,'packhouse') || $ma::allows($u,'quality'); @endphp
         @if($postHarvest)
         {{-- Post-Harvest --}}
-        <details class="nav-group" {{ request()->routeIs('inventory-items.*','harvest-batches.*','packhouse-lots.*','trace.lookup','quality-checks.*') ? 'open' : '' }}>
+        <details class="nav-group" {{ request()->routeIs('inventory-items.*','procurement-requests.*','harvest-batches.*','packhouse-lots.*','trace.lookup','quality-checks.*') ? 'open' : '' }}>
             <summary>
                 <span class="icon"><x-icon name="inventory" /></span>
                 <span class="nav-group-title nav-label">Post-Harvest</span>
@@ -1417,6 +1440,7 @@
             </summary>
             <ul class="sidebar-nav nav-group-items">
                 @if($ma::allows($u,'inventory'))<li><a href="{{ route('inventory-items.index') }}" class="{{ request()->routeIs('inventory-items.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Inventory</span></a></li>@endif
+                @if($ma::allows($u,'inventory'))<li><a href="{{ route('procurement-requests.index') }}" class="{{ request()->routeIs('procurement-requests.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Procurement</span></a></li>@endif
                 @if($ma::allows($u,'harvest'))<li><a href="{{ route('harvest-batches.index') }}" class="{{ request()->routeIs('harvest-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="harvest" /></span><span class="nav-label">Harvest</span></a></li>@endif
                 @if($ma::allows($u,'packhouse'))<li><a href="{{ route('packhouse-lots.index') }}" class="{{ request()->routeIs('packhouse-lots.*') || request()->routeIs('trace.lookup') ? 'active' : '' }}"><span class="icon"><x-icon name="packhouse" /></span><span class="nav-label">Packhouse</span></a></li>@endif
                 @if($ma::allows($u,'quality'))<li><a href="{{ route('quality-checks.index') }}" class="{{ request()->routeIs('quality-checks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="quality" /></span><span class="nav-label">Quality</span></a></li>@endif
@@ -1427,7 +1451,7 @@
         @php $commercial = $ma::allows($u,'sales') || $ma::allows($u,'logistics') || $ma::allows($u,'finance'); @endphp
         @if($commercial)
         {{-- Commercial --}}
-        <details class="nav-group" {{ request()->routeIs('customers.*','sales-orders.*','dispatches.*','finance.*') ? 'open' : '' }}>
+        <details class="nav-group" {{ request()->routeIs('customers.*','sales-orders.*','outgrowers.*','dispatches.*','finance.*') ? 'open' : '' }}>
             <summary>
                 <span class="icon"><x-icon name="sales" /></span>
                 <span class="nav-group-title nav-label">Commercial</span>
@@ -1435,6 +1459,7 @@
             </summary>
             <ul class="sidebar-nav nav-group-items">
                 @if($ma::allows($u,'sales'))<li><a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') || request()->routeIs('sales-orders.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Sales</span></a></li>@endif
+                @if($ma::allows($u,'sales'))<li><a href="{{ route('outgrowers.index') }}" class="{{ request()->routeIs('outgrowers.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Outgrowers</span></a></li>@endif
                 @if($ma::allows($u,'logistics'))<li><a href="{{ route('dispatches.index') }}" class="{{ request()->routeIs('dispatches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="logistics" /></span><span class="nav-label">Logistics</span></a></li>@endif
                 @if($ma::allows($u,'finance'))<li><a href="{{ route('finance.index') }}" class="{{ request()->routeIs('finance.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Finance</span></a></li>@endif
             </ul>

@@ -2,9 +2,7 @@
 @section('title', 'Edit Farm')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('farms.index') }}">Farms</a> <span>/</span> <a href="{{ route('farms.show', $farm) }}">{{ $farm->name }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <h1 class="page-title">Edit Farm</h1>

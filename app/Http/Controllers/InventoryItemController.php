@@ -22,8 +22,13 @@ class InventoryItemController extends Controller
             });
         }
 
+        $stage = $request->input('stage');
+        if ($stage) {
+            $query->where('stage', $stage);
+        }
+
         $items = $query->get();
-        return view('inventory-items.index', compact('items', 'search'));
+        return view('inventory-items.index', compact('items', 'search', 'stage'));
     }
 
     public function create()
@@ -129,6 +134,7 @@ class InventoryItemController extends Controller
             'farm_id' => 'nullable|exists:farms,id',
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
+            'stage' => 'required|in:pre_harvest_input,post_harvest_packaging,general',
             'unit' => 'required|string|max:50',
             'reorder_level' => 'required|numeric|min:0',
         ]);

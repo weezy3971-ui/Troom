@@ -2,9 +2,7 @@
 @section('title', 'Log Activity')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('daily-activities.index') }}">Daily Operations</a> <span>/</span> <span>Log Activity</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Log Activity</h1></div>
 
 <div class="card" style="max-width: 760px;">

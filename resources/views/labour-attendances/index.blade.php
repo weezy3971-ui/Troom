@@ -43,8 +43,8 @@
                         <th>Worker</th>
                         <th>Task</th>
                         <th>Block</th>
-                        <th>Hours</th>
-                        <th>Rate</th>
+                        <th>Basis</th>
+                        <th>Detail</th>
                         <th>Cost (KES)</th>
                         <th>Actions</th>
                     </tr>
@@ -58,8 +58,18 @@
                         <td>{{ $attendance->worker_name }}</td>
                         <td>{{ $attendance->task }}</td>
                         <td>{{ $attendance->block?->name ?? '—' }}</td>
-                        <td>{{ number_format($attendance->hours_worked, 1) }}</td>
-                        <td>{{ number_format($attendance->rate) }}</td>
+                        <td>
+                            <span class="badge {{ $attendance->isTargetBased() ? 'badge-neutral' : 'badge-active' }}">
+                                {{ $attendance->isTargetBased() ? 'Target' : 'Hourly' }}
+                            </span>
+                        </td>
+                        <td>
+                            @if($attendance->isTargetBased())
+                                {{ number_format($attendance->qty_completed, 2) }} {{ $attendance->target_unit }} × {{ number_format($attendance->rate_per_unit) }}
+                            @else
+                                {{ number_format($attendance->hours_worked, 1) }} hr × {{ number_format($attendance->rate) }}
+                            @endif
+                        </td>
                         <td>{{ number_format($attendance->cost) }}</td>
                         <td>
                             <div class="actions">

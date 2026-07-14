@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Crop;
 use App\Models\Customer;
+use App\Models\Outgrower;
 use App\Models\PackhouseLot;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderLine;
@@ -52,7 +53,9 @@ class SalesOrderController extends Controller
             ->get()
             ->filter(fn($lot) => $lot->isQualityPassed());
 
-        return view('sales-orders.show', compact('salesOrder', 'availableLots'));
+        $outgrowers = Outgrower::where('is_active', true)->orderBy('name')->get();
+
+        return view('sales-orders.show', compact('salesOrder', 'availableLots', 'outgrowers'));
     }
 
     public function edit(SalesOrder $salesOrder)
@@ -85,16 +88,24 @@ class SalesOrderController extends Controller
     public function addLine(Request $request, SalesOrder $salesOrder)
     {
         $validated = $request->validate([
-            'packhouse_lot_id' => 'required|exists:packhouse_lots,id',
+            'source' => 'required|in:lot,outgrower',
+            'packhouse_lot_id' => 'required_if:source,lot|nullable|exists:packhouse_lots,id',
+            'outgrower_id' => 'required_if:source,outgrower|nullable|exists:outgrowers,id',
             'quantity' => 'required|numeric|min:0.01',
             'unit_price' => 'required|numeric|min:0',
         ]);
 
-        $lot = PackhouseLot::find($validated['packhouse_lot_id']);
-        if (! $lot->isQualityPassed()) {
-            throw ValidationException::withMessages([
-                'packhouse_lot_id' => 'This lot is not quality-passed and cannot be allocated. Re-grade or write it off first.',
-            ]);
+        if ($validated['source'] === 'lot') {
+            $lot = PackhouseLot::find($validated['packhouse_lot_id']);
+            if (! $lot->isQualityPassed()) {
+                throw ValidationException::withMessages([
+                    'packhouse_lot_id' => 'This lot is not quality-passed and cannot be allocated. Re-grade or write it off first.',
+                ]);
+            }
+            // A lot line never carries an outgrower, and vice versa.
+            $validated['outgrower_id'] = null;
+        } else {
+            $validated['packhouse_lot_id'] = null;
         }
 
         $validated['sales_order_id'] = $salesOrder->id;
@@ -104,8 +115,12 @@ class SalesOrderController extends Controller
             $salesOrder->update(['status' => 'allocated']);
         }
 
+        $msg = $validated['source'] === 'outgrower'
+            ? 'Outgrower produce added to order.'
+            : 'Lot allocated to order.';
+
         return redirect()->route('sales-orders.show', $salesOrder)
-            ->with('success', 'Lot allocated to order.');
+            ->with('success', $msg);
     }
 
     public function destroyLine(SalesOrder $salesOrder, SalesOrderLine $line)
@@ -114,6 +129,30 @@ class SalesOrderController extends Controller
 
         return redirect()->route('sales-orders.show', $salesOrder)
             ->with('success', 'Order line removed.');
+    }
+
+    /**
+     * Record what the buyer actually accepted vs rejected/returned and any
+     * amount repaid ("out of 1000 kilos we need 950, then 50 you'll reject").
+     */
+    public function recordDelivery(Request $request, SalesOrder $salesOrder)
+    {
+        $validated = $request->validate([
+            'delivered_quantity' => 'required|numeric|min:0',
+            'rejected_quantity' => 'nullable|numeric|min:0',
+            'returned_quantity' => 'nullable|numeric|min:0',
+            'amount_repaid' => 'nullable|numeric|min:0',
+        ]);
+
+        $salesOrder->update([
+            'delivered_quantity' => $validated['delivered_quantity'],
+            'rejected_quantity' => $validated['rejected_quantity'] ?? 0,
+            'returned_quantity' => $validated['returned_quantity'] ?? 0,
+            'amount_repaid' => $validated['amount_repaid'] ?? 0,
+        ]);
+
+        return redirect()->route('sales-orders.show', $salesOrder)
+            ->with('success', 'Delivery outcome recorded.');
     }
 
     private function validateOrder(Request $request): array

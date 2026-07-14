@@ -2,9 +2,7 @@
 @section('title', $customer->name)
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('customers.index') }}">Customers</a> <span>/</span> <span>{{ $customer->name }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

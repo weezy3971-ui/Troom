@@ -2,9 +2,7 @@
 @section('title', 'New Project')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('projects.index') }}">Projects</a> <span>/</span> <span>New Project</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">New Project</h1></div>
 
 <div class="card" style="max-width: 860px;">

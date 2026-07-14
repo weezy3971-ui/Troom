@@ -44,6 +44,22 @@ class Asset extends Model
         return $this->hasMany(Dispatch::class, 'vehicle_asset_id');
     }
 
+    public function checkouts(): HasMany
+    {
+        return $this->hasMany(AssetCheckout::class)->latest('checked_out_at');
+    }
+
+    /** The open (not-yet-returned) checkout, if this asset is currently out. */
+    public function currentCheckout(): ?AssetCheckout
+    {
+        return $this->checkouts()->whereNull('returned_at')->first();
+    }
+
+    public function isCheckedOut(): bool
+    {
+        return $this->checkouts()->whereNull('returned_at')->exists();
+    }
+
     public function isOperational(): bool
     {
         return $this->status === 'operational';

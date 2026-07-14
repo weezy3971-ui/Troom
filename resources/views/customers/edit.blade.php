@@ -2,10 +2,7 @@
 @section('title', 'Edit Customer')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('customers.index') }}">Customers</a> <span>/</span>
-    <a href="{{ route('customers.show', $customer) }}">{{ $customer->name }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Customer</h1></div>
 
 <div class="card" style="max-width: 760px;">

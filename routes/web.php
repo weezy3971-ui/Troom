@@ -4,10 +4,12 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AssetCheckoutController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CropController;
 use App\Http\Controllers\CropCycleController;
+use App\Http\Controllers\CropProgramController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DailyActivityController;
 use App\Http\Controllers\DashboardController;
@@ -21,10 +23,12 @@ use App\Http\Controllers\IrrigationLogController;
 use App\Http\Controllers\LabourAttendanceController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NurseryBatchController;
+use App\Http\Controllers\OutgrowerController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HorseController;
 use App\Http\Controllers\HorseRideController;
 use App\Http\Controllers\PackhouseLotController;
+use App\Http\Controllers\ProcurementRequestController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\WorkerController;
 use App\Http\Controllers\SettingsController;
@@ -73,12 +77,24 @@ Route::middleware('auth')->group(function () {
     // Module 2: Crop Planning & Seasonal Budgets — read-all, write restricted.
     $cropCycles = ModuleAccess::middleware('crop_cycles');
     Route::resource('crop-cycles', CropCycleController::class)->except(['index', 'show'])->middleware($cropCycles);
+    // Planting schedule planner — a self-contained tool; must be declared before the
+    // {cropCycle} show route so "planner" isn't parsed as a crop-cycle id.
+    Route::get('crop-cycles/planner', [CropCycleController::class, 'planner'])->name('crop-cycles.planner');
     Route::resource('crop-cycles', CropCycleController::class)->only(['index', 'show']);
     Route::middleware($cropCycles)->group(function () {
         Route::post('crop-cycles/{cropCycle}/activate', [CropCycleController::class, 'activate'])->name('crop-cycles.activate');
         Route::post('crop-cycles/{cropCycle}/complete', [CropCycleController::class, 'complete'])->name('crop-cycles.complete');
         Route::post('crop-cycles/{cropCycle}/cancel', [CropCycleController::class, 'cancel'])->name('crop-cycles.cancel');
         Route::post('crop-cycles/{cropCycle}/budget', [CropCycleController::class, 'setBudget'])->name('crop-cycles.budget');
+
+        // Stage schedule (Theme 2 — crop stage programs materialised onto a cycle)
+        Route::post('crop-cycles/{cropCycle}/schedule', [CropCycleController::class, 'generateSchedule'])->name('crop-cycles.schedule');
+        Route::patch('crop-cycles/{cropCycle}/stages/{stage}', [CropCycleController::class, 'updateStage'])->name('crop-cycles.stages.update');
+
+        // Crop stage programs (reusable per-crop protocols)
+        Route::resource('crop-programs', CropProgramController::class);
+        Route::post('crop-programs/{cropProgram}/stages', [CropProgramController::class, 'storeStage'])->name('crop-programs.stages.store');
+        Route::delete('crop-programs/{cropProgram}/stages/{stage}', [CropProgramController::class, 'destroyStage'])->name('crop-programs.stages.destroy');
     });
 
     // ---- Phase 2: Field Operations ----
@@ -104,7 +120,7 @@ Route::middleware('auth')->group(function () {
     // Module 7: Pest & Disease Management
     Route::resource('spray-logs', SprayLogController::class)->middleware(ModuleAccess::middleware('pest'));
 
-    // Module 8: Labour & Attendance
+    // Module 8: Labour & Attendance (hourly time via optional check-in/out, or target/piece-rate)
     Route::resource('labour-attendances', LabourAttendanceController::class)->middleware(ModuleAccess::middleware('labour'));
 
     // Module 8b: Projects, task-splitting & labour assignment
@@ -123,14 +139,35 @@ Route::middleware('auth')->group(function () {
 
     // Module 9: Machinery & Fleet is covered by the Assets resource above.
 
+    // Module 9b: Asset check-out / check-in register (tool custody)
+    Route::middleware(ModuleAccess::middleware('checkouts'))->group(function () {
+        Route::get('checkouts', [AssetCheckoutController::class, 'index'])->name('checkouts.index');
+        Route::get('checkouts/create', [AssetCheckoutController::class, 'create'])->name('checkouts.create');
+        Route::post('checkouts', [AssetCheckoutController::class, 'store'])->name('checkouts.store');
+        Route::post('checkouts/{checkout}/checkin', [AssetCheckoutController::class, 'checkin'])->name('checkouts.checkin');
+        Route::delete('checkouts/{checkout}', [AssetCheckoutController::class, 'destroy'])->name('checkouts.destroy');
+    });
+
     // Module 10: Inventory & Stores
     Route::middleware(ModuleAccess::middleware('inventory'))->group(function () {
         Route::resource('inventory-items', InventoryItemController::class);
         Route::post('inventory-items/{inventoryItem}/transactions', [InventoryItemController::class, 'storeTransaction'])->name('inventory-items.transactions.store');
+
+        // Module 10b: Procurement requests (requested → ordered → received)
+        Route::resource('procurement-requests', ProcurementRequestController::class)->except(['edit', 'update']);
+        Route::post('procurement-requests/{procurementRequest}/lines', [ProcurementRequestController::class, 'storeLine'])->name('procurement-requests.lines.store');
+        Route::delete('procurement-requests/{procurementRequest}/lines/{line}', [ProcurementRequestController::class, 'destroyLine'])->name('procurement-requests.lines.destroy');
+        Route::post('procurement-requests/{procurementRequest}/order', [ProcurementRequestController::class, 'markOrdered'])->name('procurement-requests.order');
+        Route::post('procurement-requests/{procurementRequest}/receive', [ProcurementRequestController::class, 'markReceived'])->name('procurement-requests.receive');
     });
 
     // Module 11: Harvest Management
-    Route::resource('harvest-batches', HarvestBatchController::class)->middleware(ModuleAccess::middleware('harvest'));
+    Route::middleware(ModuleAccess::middleware('harvest'))->group(function () {
+        Route::resource('harvest-batches', HarvestBatchController::class);
+        Route::post('harvest-batches/{harvestBatch}/confirm', [HarvestBatchController::class, 'confirm'])->name('harvest-batches.confirm');
+        Route::post('harvest-batches/{harvestBatch}/by-products', [HarvestBatchController::class, 'storeByProduct'])->name('harvest-batches.by-products.store');
+        Route::delete('harvest-batches/{harvestBatch}/by-products/{byProduct}', [HarvestBatchController::class, 'destroyByProduct'])->name('harvest-batches.by-products.destroy');
+    });
 
     // Module 12: Packhouse & Traceability
     Route::resource('packhouse-lots', PackhouseLotController::class)->middleware(ModuleAccess::middleware('packhouse'));
@@ -142,9 +179,11 @@ Route::middleware('auth')->group(function () {
     // Module 14: Sales & Customer Contracts
     Route::middleware(ModuleAccess::middleware('sales'))->group(function () {
         Route::resource('customers', CustomerController::class);
+        Route::resource('outgrowers', OutgrowerController::class)->except('show');
         Route::resource('sales-orders', SalesOrderController::class);
         Route::post('sales-orders/{salesOrder}/lines', [SalesOrderController::class, 'addLine'])->name('sales-orders.lines.store');
         Route::delete('sales-orders/{salesOrder}/lines/{line}', [SalesOrderController::class, 'destroyLine'])->name('sales-orders.lines.destroy');
+        Route::post('sales-orders/{salesOrder}/delivery', [SalesOrderController::class, 'recordDelivery'])->name('sales-orders.delivery');
     });
 
     // Module 15: Logistics & Dispatch

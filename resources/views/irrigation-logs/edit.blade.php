@@ -2,10 +2,7 @@
 @section('title', 'Edit Irrigation Log')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('irrigation-logs.index') }}">Irrigation</a> <span>/</span>
-    <a href="{{ route('irrigation-logs.show', $irrigationLog) }}">Log #{{ $irrigationLog->id }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Irrigation Log</h1></div>
 
 <div class="card" style="max-width: 760px;">

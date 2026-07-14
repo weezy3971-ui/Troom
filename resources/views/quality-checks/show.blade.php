@@ -2,9 +2,7 @@
 @section('title', 'Quality Check')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('quality-checks.index') }}">Quality Assurance</a> <span>/</span> <span>Check #{{ $qualityCheck->id }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

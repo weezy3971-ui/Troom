@@ -2,10 +2,7 @@
 @section('title', 'Edit Project')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('projects.index') }}">Projects</a> <span>/</span>
-    <a href="{{ route('projects.show', $project) }}">{{ $project->name }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Project</h1></div>
 
 <div class="card" style="max-width: 860px;">

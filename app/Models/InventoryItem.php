@@ -8,10 +8,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InventoryItem extends Model
 {
+    /**
+     * Store stage: separates pre-harvest inputs from post-harvest packaging,
+     * label keyed by stored value.
+     */
+    public const STAGES = [
+        'pre_harvest_input'      => 'Pre-harvest input',
+        'post_harvest_packaging' => 'Post-harvest packaging',
+        'general'                => 'General',
+    ];
+
     protected $fillable = [
         'farm_id',
         'name',
         'category',
+        'stage',
         'unit',
         'reorder_level',
     ];
@@ -28,6 +39,12 @@ class InventoryItem extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(InventoryTransaction::class);
+    }
+
+    /** Human-readable label for this item's store stage. */
+    public function stageLabel(): string
+    {
+        return self::STAGES[$this->stage] ?? 'General';
     }
 
     /**

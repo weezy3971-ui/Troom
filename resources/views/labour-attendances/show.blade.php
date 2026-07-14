@@ -2,9 +2,7 @@
 @section('title', 'Labour Attendance')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('labour-attendances.index') }}">Labour</a> <span>/</span> <span>Attendance #{{ $labourAttendance->id }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>
@@ -30,13 +28,46 @@
         <div class="detail-value">{{ $labourAttendance->cropCycle?->season_name ?? '—' }}</div>
     </div>
     <div class="detail-item">
-        <div class="detail-label">Hours Worked</div>
-        <div class="detail-value">{{ number_format($labourAttendance->hours_worked, 1) }}</div>
+        <div class="detail-label">Pay Basis</div>
+        <div class="detail-value">{{ $labourAttendance->isTargetBased() ? 'Target / piece-rate' : 'Hourly' }}</div>
     </div>
-    <div class="detail-item">
-        <div class="detail-label">Rate</div>
-        <div class="detail-value">KES {{ number_format($labourAttendance->rate) }}/hr</div>
-    </div>
+    @if($labourAttendance->isTargetBased())
+        <div class="detail-item">
+            <div class="detail-label">Target Unit</div>
+            <div class="detail-value">{{ $labourAttendance->target_unit ?? '—' }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Target Qty</div>
+            <div class="detail-value">{{ $labourAttendance->target_qty !== null ? number_format($labourAttendance->target_qty, 2) : '—' }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Qty Completed</div>
+            <div class="detail-value">{{ number_format($labourAttendance->qty_completed, 2) }} {{ $labourAttendance->target_unit }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Rate per Unit</div>
+            <div class="detail-value">KES {{ number_format($labourAttendance->rate_per_unit) }}</div>
+        </div>
+    @else
+        @if($labourAttendance->checked_in_at)
+            <div class="detail-item">
+                <div class="detail-label">Checked In</div>
+                <div class="detail-value">{{ $labourAttendance->checked_in_at->format('M d, H:i') }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Checked Out</div>
+                <div class="detail-value">{{ $labourAttendance->checked_out_at?->format('M d, H:i') ?? '—' }}</div>
+            </div>
+        @endif
+        <div class="detail-item">
+            <div class="detail-label">Hours Worked</div>
+            <div class="detail-value">{{ number_format($labourAttendance->hours_worked, 1) }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Rate</div>
+            <div class="detail-value">KES {{ number_format($labourAttendance->rate) }}/hr</div>
+        </div>
+    @endif
     <div class="detail-item">
         <div class="detail-label">Cost</div>
         <div class="detail-value">KES {{ number_format($labourAttendance->cost) }}</div>

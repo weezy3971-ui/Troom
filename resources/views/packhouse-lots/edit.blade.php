@@ -2,10 +2,7 @@
 @section('title', 'Edit Packhouse Lot')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('packhouse-lots.index') }}">Packhouse</a> <span>/</span>
-    <a href="{{ route('packhouse-lots.show', $packhouseLot) }}">{{ $packhouseLot->lot_number }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Packhouse Lot</h1></div>
 
 <div class="card" style="max-width: 760px;">
@@ -31,7 +28,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="packaging_type">Packaging Type</label>
-                <input type="text" id="packaging_type" name="packaging_type" value="{{ old('packaging_type', $packhouseLot->packaging_type) }}" class="form-input">
+                <x-combobox name="packaging_type" :value="old('packaging_type', $packhouseLot->packaging_type)" :options="\App\Support\ReferenceData::packagingTypes()" placeholder="e.g. 4kg carton" />
             </div>
         </div>
         <div style="display: flex; gap: 12px; margin-top: 8px;">
