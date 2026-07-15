@@ -125,4 +125,31 @@
         </table>
     </div>
 </div>
+
+{{-- Change your own password --}}
+<div class="card" style="margin-top: 24px; max-width: 480px;">
+    <div class="card-header"><h3 class="card-title">Change Your Password</h3></div>
+    <form action="{{ route('users.password') }}" method="POST">
+        @csrf @method('PUT')
+        <div class="form-group">
+            <label class="form-label" for="current_password">Current password *</label>
+            <input type="password" id="current_password" name="current_password" class="form-input" required>
+            @error('current_password')
+                <div class="form-error">{{ $message }}</div>
+            @enderror
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="password">New password *</label>
+            <input type="password" id="password" name="password" class="form-input" minlength="8" required>
+            @error('password')
+                <div class="form-error">{{ $message }}</div>
+            @enderror
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="password_confirmation">Confirm new password *</label>
+            <input type="password" id="password_confirmation" name="password_confirmation" class="form-input" minlength="8" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Password</button>
+    </form>
+</div>
 @endsection

@@ -6,6 +6,7 @@ use App\Models\ApprovedEmail;
 use App\Models\User;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 /**
@@ -110,6 +111,25 @@ class UserController extends Controller
         ActivityLogger::log($action, $user, ucfirst($action) . " user {$user->name}");
 
         return back()->with('success', "{$user->name}'s account has been {$action}.");
+    }
+
+    /**
+     * Let the signed-in admin change their own password.
+     */
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        ActivityLogger::log('changed_password', $request->user(), 'Changed their own password');
+
+        return back()->with('success', 'Your password has been updated.');
     }
 
     /**

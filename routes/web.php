@@ -257,6 +257,7 @@ Route::middleware('auth')->group(function () {
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::post('users/approve', [UserController::class, 'approveEmail'])->name('users.approve');
         Route::delete('users/approvals/{approvedEmail}', [UserController::class, 'revokeApproval'])->name('users.approvals.revoke');
+        Route::put('users/password', [UserController::class, 'updatePassword'])->name('users.password');
         Route::put('users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
         Route::put('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
 
