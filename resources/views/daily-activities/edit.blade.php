@@ -2,10 +2,7 @@
 @section('title', 'Edit Activity')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('daily-activities.index') }}">Daily Operations</a> <span>/</span>
-    <a href="{{ route('daily-activities.show', $dailyActivity) }}">Activity #{{ $dailyActivity->id }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Activity</h1></div>
 
 <div class="card" style="max-width: 760px;">

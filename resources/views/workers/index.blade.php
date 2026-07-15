@@ -33,6 +33,8 @@
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Type</th>
+                        <th>Employee No.</th>
                         <th>Phone</th>
                         <th>Default Rate (KES/hr)</th>
                         <th>Assignments</th>
@@ -44,6 +46,12 @@
                     @foreach($workers as $worker)
                     <tr>
                         <td style="font-weight: 600; color: var(--text-primary);">{{ $worker->name }}</td>
+                        <td>
+                            <span class="badge {{ $worker->worker_type === 'permanent' ? 'badge-active' : 'badge-neutral' }}">
+                                {{ ucfirst($worker->worker_type ?? 'casual') }}
+                            </span>
+                        </td>
+                        <td>{{ $worker->employee_no ?? '—' }}</td>
                         <td>{{ $worker->phone ?? '—' }}</td>
                         <td>{{ number_format($worker->default_rate) }}</td>
                         <td>{{ $worker->assignments_count }}</td>

@@ -3,9 +3,7 @@
 
 @section('content')
 @php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'master_data'); @endphp
-<div class="breadcrumbs">
-    <a href="{{ route('farms.index') }}">Farms</a> <span>/</span> <span>{{ $farm->name }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

@@ -2,9 +2,7 @@
 @section('title', 'Register Asset')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('assets.index') }}">Assets</a> <span>/</span> <span>Register Asset</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Register Asset</h1></div>
 
 <div class="card" style="max-width: 700px;">

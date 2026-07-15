@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Block;
 use App\Models\CropCycle;
 use App\Models\HarvestBatch;
+use App\Models\HarvestByProduct;
 use App\Models\User;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -56,6 +58,8 @@ class HarvestBatchController extends Controller
             'cropCycle.harvestBatches',
             'block',
             'harvestedBy',
+            'confirmedBy',
+            'byProducts',
             'packhouseLots'
         );
         return view('harvest-batches.show', compact('harvestBatch'));
@@ -86,6 +90,45 @@ class HarvestBatchController extends Controller
 
         return redirect()->route('harvest-batches.index')
             ->with('success', 'Harvest batch deleted.');
+    }
+
+    /**
+     * Verify the weighed quantity. Records who confirmed and when.
+     */
+    public function confirm(HarvestBatch $harvestBatch)
+    {
+        ActivityLogger::as('confirmed', fn () => $harvestBatch->update([
+            'confirmed_by' => auth()->id(),
+            'confirmed_at' => now(),
+        ]));
+
+        return back()->with('success', 'Harvest weight confirmed.');
+    }
+
+    /**
+     * Record a by-product recovered from this batch (e.g. offcut leaves).
+     */
+    public function storeByProduct(Request $request, HarvestBatch $harvestBatch)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'quantity_kg' => 'required|numeric|min:0',
+            'notes' => 'nullable|string|max:255',
+        ]);
+
+        $harvestBatch->byProducts()->create($validated);
+
+        return back()->with('success', 'By-product recorded.');
+    }
+
+    public function destroyByProduct(HarvestBatch $harvestBatch, HarvestByProduct $byProduct)
+    {
+        // Ensure the by-product belongs to this batch before deleting.
+        abort_unless($byProduct->harvest_batch_id === $harvestBatch->id, 404);
+
+        $byProduct->delete();
+
+        return back()->with('success', 'By-product removed.');
     }
 
     /**

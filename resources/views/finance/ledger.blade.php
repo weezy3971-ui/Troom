@@ -2,9 +2,7 @@
 @section('title', 'General Ledger')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('finance.index') }}">Finance</a> <span>/</span> <span>General Ledger</span>
-</div>
+<x-crumb-nav />
 <div class="page-header">
     <div>
         <h1 class="page-title">General Ledger</h1>

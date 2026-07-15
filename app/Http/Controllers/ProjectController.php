@@ -263,6 +263,7 @@ class ProjectController extends Controller
         return $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:projects,code' . ($project ? ",{$project->id}" : ''),
+            'project_type' => 'required|in:construction,land_prep,training,maintenance,other',
             'description' => 'nullable|string',
             'status' => 'required|in:planned,active,completed,cancelled',
             'farm_id' => 'nullable|exists:farms,id',

@@ -2,9 +2,7 @@
 @section('title', 'Nursery Batch')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('nursery-batches.index') }}">Nursery</a> <span>/</span> <span>Batch #{{ $nurseryBatch->id }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

@@ -2,9 +2,7 @@
 @section('title', 'New Crop Cycle')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('crop-cycles.index') }}">Crop Cycles</a> <span>/</span> <span>New Crop Cycle</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">New Crop Cycle</h1></div>
 
 <div class="card" style="max-width: 700px;">

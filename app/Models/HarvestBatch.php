@@ -16,12 +16,15 @@ class HarvestBatch extends Model
         'quality_grade',
         'rejects_kg',
         'harvested_by',
+        'confirmed_by',
+        'confirmed_at',
     ];
 
     protected $casts = [
         'harvest_date' => 'date',
         'quantity_kg' => 'decimal:2',
         'rejects_kg' => 'decimal:2',
+        'confirmed_at' => 'datetime',
     ];
 
     public function cropCycle(): BelongsTo
@@ -39,9 +42,25 @@ class HarvestBatch extends Model
         return $this->belongsTo(User::class, 'harvested_by');
     }
 
+    public function confirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
     public function packhouseLots(): HasMany
     {
         return $this->hasMany(PackhouseLot::class);
+    }
+
+    public function byProducts(): HasMany
+    {
+        return $this->hasMany(HarvestByProduct::class);
+    }
+
+    /** Whether the weighed quantity has been verified by a second person. */
+    public function isConfirmed(): bool
+    {
+        return $this->confirmed_at !== null;
     }
 
     /**

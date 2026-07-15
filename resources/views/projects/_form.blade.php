@@ -1,8 +1,21 @@
+<div class="alert alert-info" style="margin-bottom: 16px;">
+    <strong>Projects are one-off work</strong> — construction, land refining, training and the like.
+    Recurring field operations (planting, weeding, spraying) belong on the crop cycle, not here.
+</div>
 <div class="form-grid">
     <div class="form-group">
         <label class="form-label" for="name">Project Name *</label>
         <input type="text" id="name" name="name" value="{{ old('name', $project?->name) }}" class="form-input" required>
         @error('name') <p class="form-error">{{ $message }}</p> @enderror
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="project_type">Project Type *</label>
+        <select id="project_type" name="project_type" class="form-select" required>
+            @foreach(['construction' => 'Construction', 'land_prep' => 'Land refining / prep', 'training' => 'Training', 'maintenance' => 'Maintenance', 'other' => 'Other'] as $val => $lbl)
+                <option value="{{ $val }}" {{ old('project_type', $project?->project_type ?? 'construction') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
+            @endforeach
+        </select>
+        @error('project_type') <p class="form-error">{{ $message }}</p> @enderror
     </div>
     <div class="form-group">
         <label class="form-label" for="code">Code *</label>

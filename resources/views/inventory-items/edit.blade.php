@@ -2,10 +2,7 @@
 @section('title', 'Edit Inventory Item')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('inventory-items.index') }}">Inventory</a> <span>/</span>
-    <a href="{{ route('inventory-items.show', $inventoryItem) }}">{{ $inventoryItem->name }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Inventory Item</h1></div>
 
 <div class="card" style="max-width: 760px;">
@@ -19,15 +16,19 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="category">Category *</label>
-                <select id="category" name="category" class="form-select" required>
-                    @foreach(['fertilizer', 'chemical', 'seed', 'spare', 'packaging', 'other'] as $cat)
-                        <option value="{{ $cat }}" {{ old('category', $inventoryItem->category) == $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
+                <x-combobox name="category" :value="old('category', $inventoryItem->category)" :options="\App\Support\ReferenceData::inventoryCategories()" :required="true" placeholder="e.g. fertilizer, packaging" />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="stage">Store Stage *</label>
+                <select id="stage" name="stage" class="form-select" required>
+                    @foreach(\App\Models\InventoryItem::STAGES as $value => $label)
+                        <option value="{{ $value }}" {{ old('stage', $inventoryItem->stage) == $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="form-group">
                 <label class="form-label" for="unit">Unit *</label>
-                <input type="text" id="unit" name="unit" value="{{ old('unit', $inventoryItem->unit) }}" class="form-input" required>
+                <x-combobox name="unit" :value="old('unit', $inventoryItem->unit)" :options="\App\Support\ReferenceData::units()" :required="true" placeholder="e.g. kg, litre, unit" />
             </div>
             <div class="form-group">
                 <label class="form-label" for="reorder_level">Reorder Level *</label>

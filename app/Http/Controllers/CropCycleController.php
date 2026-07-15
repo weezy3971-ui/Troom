@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\Crop;
 use App\Models\CropCycle;
 use App\Models\SeasonalBudget;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 
 class CropCycleController extends Controller
@@ -29,6 +30,32 @@ class CropCycleController extends Controller
 
         $cropCycles = $query->get();
         return view('crop-cycles.index', compact('cropCycles', 'search'));
+    }
+
+    /**
+     * Planting-schedule planner. A self-contained worksheet: pick a crop and a
+     * planting date, and every phase (top-dressing, flowering, first harvest, …)
+     * is recalculated client-side. Fill it in, tick tasks, then Save as PDF.
+     *
+     * Programs are curated per crop; switching crop re-renders the whole sheet
+     * without a reload, so typed header details survive the switch.
+     */
+    public function planner(Request $request)
+    {
+        $programs = \App\Support\PlannerPrograms::all();
+
+        $selected = $request->input('crop');
+        if (! $selected || ! isset($programs[$selected])) {
+            $selected = array_key_first($programs);
+        }
+
+        // Varieties are keyed by crop display name (curated ∪ what's in the DB).
+        $varietiesByCrop = \App\Support\ReferenceData::varietiesByCrop();
+
+        $blocks = Block::with('farm')->orderBy('name')->get()
+            ->map(fn ($b) => $b->farm->name . ' — ' . $b->name)->all();
+
+        return view('crop-cycles.planner', compact('programs', 'selected', 'varietiesByCrop', 'blocks'));
     }
 
     public function create()
@@ -66,8 +93,15 @@ class CropCycleController extends Controller
 
     public function show(CropCycle $cropCycle)
     {
-        $cropCycle->load('block.farm', 'crop', 'seasonalBudget', 'costAllocations');
-        return view('crop-cycles.show', compact('cropCycle'));
+        $cropCycle->load(
+            'block.farm', 'crop', 'seasonalBudget', 'costAllocations', 'plantings', 'harvestBatches', 'stages',
+            'germinationChecks.recordedBy', 'plantPopulationCounts.recordedBy', 'yieldForecasts.recordedBy'
+        );
+        $projection = (new \App\Services\YieldProjectionService($cropCycle))->summary();
+        // A schedule can only be built once a planting date and an active crop
+        // program both exist — used by the view to offer the "generate" action.
+        $canSchedule = $cropCycle->planting_date && $cropCycle->crop?->activeProgram();
+        return view('crop-cycles.show', compact('cropCycle', 'projection', 'canSchedule'));
     }
 
     public function edit(CropCycle $cropCycle)
@@ -124,9 +158,47 @@ class CropCycleController extends Controller
             return back()->with('error', 'Cannot activate: this block already has an active crop cycle.');
         }
 
-        $cropCycle->update(['status' => 'active']);
+        ActivityLogger::as('activated', fn () => $cropCycle->update(['status' => 'active']));
 
-        return back()->with('success', 'Crop cycle activated successfully.');
+        // Materialise the stage schedule from the crop's active program (if any).
+        $created = $cropCycle->materialiseSchedule();
+        $note = $created > 0 ? " {$created} program stages scheduled." : '';
+
+        return back()->with('success', 'Crop cycle activated successfully.' . $note);
+    }
+
+    /**
+     * (Re)build the stage schedule from the crop's active program. Useful when a
+     * program is added or edited after the cycle was already activated.
+     */
+    public function generateSchedule(CropCycle $cropCycle)
+    {
+        $created = $cropCycle->materialiseSchedule();
+
+        if ($created === 0) {
+            return back()->with('error', 'Cannot generate schedule: set a planting date and an active crop program first.');
+        }
+
+        return back()->with('success', "Schedule generated — {$created} stages.");
+    }
+
+    /**
+     * Tick off (or skip) a materialised stage.
+     */
+    public function updateStage(Request $request, CropCycle $cropCycle, \App\Models\CropCycleStage $stage)
+    {
+        abort_unless($stage->crop_cycle_id === $cropCycle->id, 404);
+
+        $validated = $request->validate([
+            'status' => 'required|in:pending,done,skipped',
+        ]);
+
+        $stage->update([
+            'status' => $validated['status'],
+            'completed_at' => $validated['status'] === 'done' ? now() : null,
+        ]);
+
+        return back()->with('success', 'Stage updated.');
     }
 
     /**
@@ -134,7 +206,7 @@ class CropCycleController extends Controller
      */
     public function complete(CropCycle $cropCycle)
     {
-        $cropCycle->update(['status' => 'completed']);
+        ActivityLogger::as('completed', fn () => $cropCycle->update(['status' => 'completed']));
 
         return back()->with('success', 'Crop cycle marked as completed.');
     }
@@ -144,7 +216,7 @@ class CropCycleController extends Controller
      */
     public function cancel(CropCycle $cropCycle)
     {
-        $cropCycle->update(['status' => 'cancelled']);
+        ActivityLogger::as('cancelled', fn () => $cropCycle->update(['status' => 'cancelled']));
 
         return back()->with('success', 'Crop cycle cancelled.');
     }

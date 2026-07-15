@@ -2,9 +2,7 @@
 @section('title', 'Log Fertigation')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('fertigation-logs.index') }}">Fertigation</a> <span>/</span> <span>Log Application</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Log Fertigation Application</h1></div>
 
 <div class="card" style="max-width: 760px;">

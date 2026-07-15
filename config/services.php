@@ -35,4 +35,25 @@ return [
         ],
     ],
 
+    // Shared bearer token the digital weighing scale uses to push readings to
+    // the ingest endpoint. Endpoint is disabled while this is empty.
+    'weigh_scale' => [
+        'token' => env('WEIGH_SCALE_TOKEN'),
+    ],
+
+    /*
+    | Anthropic (Claude) — powers AI-generated reports and the AI companion.
+    | Set ANTHROPIC_API_KEY in your .env. The model defaults to Haiku 4.5, the
+    | most cost-effective option (see docs/ai-companion-implementation-plan.md
+    | §5) — switch to claude-sonnet-5 or claude-opus-4-8 via ANTHROPIC_MODEL.
+    */
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5'),
+        'base_url' => env('ANTHROPIC_BASE_URL', 'https://api.anthropic.com'),
+        'version' => env('ANTHROPIC_VERSION', '2023-06-01'),
+        'max_tokens' => (int) env('ANTHROPIC_MAX_TOKENS', 2000),
+        'timeout' => (int) env('ANTHROPIC_TIMEOUT', 60),
+    ],
+
 ];

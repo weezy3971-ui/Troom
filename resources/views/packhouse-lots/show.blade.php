@@ -2,9 +2,7 @@
 @section('title', $packhouseLot->lot_number)
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('packhouse-lots.index') }}">Packhouse</a> <span>/</span> <span>{{ $packhouseLot->lot_number }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

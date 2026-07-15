@@ -6,6 +6,7 @@ use App\Models\Crop;
 use App\Models\CropCycle;
 use App\Models\NurseryBatch;
 use App\Models\Planting;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 
 class NurseryBatchController extends Controller
@@ -96,7 +97,7 @@ class NurseryBatchController extends Controller
         }
 
         $nurseryBatch->plantings()->create($validated);
-        $nurseryBatch->syncTransplantStatus();
+        ActivityLogger::as('transplanted', fn () => $nurseryBatch->syncTransplantStatus());
 
         return back()->with('success', 'Transplant recorded and planting created.');
     }

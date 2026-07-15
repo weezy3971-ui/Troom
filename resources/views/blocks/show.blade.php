@@ -7,9 +7,7 @@
     $activeCycle = $block->cropCycles->firstWhere('status', 'active');
 @endphp
 
-<div class="breadcrumbs">
-    <a href="{{ route('blocks.index') }}">Blocks</a> <span>/</span> <span>{{ $block->name }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

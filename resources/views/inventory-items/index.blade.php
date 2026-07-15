@@ -17,6 +17,14 @@
     :total="$items->count()"
 />
 
+{{-- Pre-harvest vs post-harvest store filter --}}
+<div style="display:flex; gap:8px; margin: 4px 0 16px; flex-wrap:wrap;">
+    <a href="{{ route('inventory-items.index', array_filter(['search' => $search])) }}" class="btn btn-sm {{ !$stage ? 'btn-primary' : 'btn-ghost' }}">All</a>
+    @foreach(\App\Models\InventoryItem::STAGES as $value => $label)
+        <a href="{{ route('inventory-items.index', array_filter(['search' => $search, 'stage' => $value])) }}" class="btn btn-sm {{ $stage === $value ? 'btn-primary' : 'btn-ghost' }}">{{ $label }}</a>
+    @endforeach
+</div>
+
 @if($items->isEmpty())
     <div class="card">
         <div class="empty-state">
@@ -40,6 +48,7 @@
                     <tr>
                         <th>Item</th>
                         <th>Category</th>
+                        <th>Stage</th>
                         <th>Farm</th>
                         <th>On Hand</th>
                         <th>Reorder Level</th>
@@ -54,6 +63,7 @@
                             <a href="{{ route('inventory-items.show', $item) }}" style="color: var(--olive); text-decoration: none;">{{ $item->name }}</a>
                         </td>
                         <td>{{ ucfirst($item->category) }}</td>
+                        <td><span class="badge {{ $item->stage === 'post_harvest_packaging' ? 'badge-planned' : ($item->stage === 'pre_harvest_input' ? 'badge-active' : 'badge-secondary') }}">{{ $item->stageLabel() }}</span></td>
                         <td>{{ $item->farm->name ?? '—' }}</td>
                         <td class="mono">{{ number_format($item->currentStock(), 2) }} {{ $item->unit }}</td>
                         <td class="mono">{{ number_format($item->reorder_level, 2) }}</td>

@@ -2,9 +2,7 @@
 @section('title', 'Log Spray')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('spray-logs.index') }}">Pest &amp; Disease</a> <span>/</span> <span>Log Spray</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Log Spray Event</h1></div>
 
 <div class="card" style="max-width: 760px;">

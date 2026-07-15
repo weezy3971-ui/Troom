@@ -14,6 +14,10 @@ class SalesOrder extends Model
         'crop_id',
         'order_date',
         'requested_quantity',
+        'delivered_quantity',
+        'rejected_quantity',
+        'returned_quantity',
+        'amount_repaid',
         'status',
         'delivery_date',
     ];
@@ -22,6 +26,10 @@ class SalesOrder extends Model
         'order_date' => 'date',
         'delivery_date' => 'date',
         'requested_quantity' => 'decimal:2',
+        'delivered_quantity' => 'decimal:2',
+        'rejected_quantity' => 'decimal:2',
+        'returned_quantity' => 'decimal:2',
+        'amount_repaid' => 'decimal:2',
     ];
 
     public function customer(): BelongsTo
@@ -82,5 +90,20 @@ class SalesOrder extends Model
         $underAllocated = $this->allocatedQuantity() < (float) $this->requested_quantity;
 
         return $approaching && $underAllocated;
+    }
+
+    /**
+     * Share of delivered produce that was rejected (0–1). Returns null when
+     * nothing has been delivered yet.
+     */
+    public function rejectRate(): ?float
+    {
+        $delivered = (float) $this->delivered_quantity;
+
+        if ($delivered <= 0) {
+            return null;
+        }
+
+        return (float) $this->rejected_quantity / $delivered;
     }
 }

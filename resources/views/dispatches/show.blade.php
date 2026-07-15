@@ -2,9 +2,7 @@
 @section('title', 'Dispatch #' . $dispatch->id)
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('dispatches.index') }}">Logistics</a> <span>/</span> <span>Dispatch #{{ $dispatch->id }}</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <div>

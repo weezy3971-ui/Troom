@@ -2,9 +2,7 @@
 @section('title', 'Edit Block')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('blocks.index') }}">Blocks</a> <span>/</span> <a href="{{ route('blocks.show', $block) }}">{{ $block->name }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 
 <div class="page-header">
     <h1 class="page-title">Edit Block</h1>
@@ -32,7 +30,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="soil_type">Soil Type</label>
-                <input type="text" id="soil_type" name="soil_type" value="{{ old('soil_type', $block->soil_type) }}" class="form-input">
+                <x-combobox name="soil_type" :value="old('soil_type', $block->soil_type)" :options="\App\Support\ReferenceData::soilTypes()" placeholder="e.g. Clay loam, Sandy" />
             </div>
         </div>
         <div style="display: flex; gap: 12px; margin-top: 8px;">

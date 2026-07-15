@@ -272,6 +272,42 @@
             background: var(--rail-icon-active);
         }
 
+        /* ---- Collapsible nav groups (accordion) ---- */
+        .nav-group { width: 100%; }
+        .nav-group + .nav-group { margin-top: 2px; }
+        .nav-group > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 40px;
+            padding: 0 12px;
+            border-radius: 10px;
+            color: var(--rail-icon);
+            user-select: none;
+            transition: background var(--transition), color var(--transition);
+        }
+        .nav-group > summary::-webkit-details-marker { display: none; }
+        .nav-group > summary::marker { content: ''; }
+        .nav-group > summary .icon {
+            display: flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; flex-shrink: 0;
+        }
+        .nav-group > summary .nav-group-title { flex: 1; min-width: 0; }
+        .nav-group > summary:hover { background: var(--rail-bg-hover); color: var(--rail-icon-hover); }
+        .nav-group[open] > summary { color: var(--rail-icon-hover); }
+        .nav-group > summary .nav-chevron {
+            margin-left: auto; display: flex; align-items: center;
+            opacity: 0.7; transition: transform var(--transition);
+        }
+        .nav-group[open] > summary .nav-chevron { transform: rotate(90deg); }
+        .nav-group-items {
+            margin: 2px 0 4px 22px;
+            padding-left: 8px;
+            border-left: 1px solid rgba(255,255,255,0.08);
+        }
+
         /* ---- Sidebar footer (user) ---- */
         .sidebar-footer {
             margin-top: auto;
@@ -310,6 +346,7 @@
             align-items: center;
             gap: 16px;
         }
+
 
         .topbar-title {
             font-family: var(--font-display);
@@ -962,6 +999,12 @@
         /* ============================================
            ALERTS
            ============================================ */
+        /* The HTML `hidden` attribute must beat component display rules.
+           Without this, any class that sets `display` (.alert is flex,
+           .form-grid is grid, …) silently overrides `hidden` and the element
+           stays on screen — author CSS outranks the browser's [hidden] rule. */
+        [hidden] { display: none !important; }
+
         .alert {
             padding: 13px 16px;
             border-radius: var(--radius-sm);
@@ -1145,6 +1188,25 @@
         .breadcrumbs a { color: var(--text-secondary); text-decoration: none; transition: color var(--transition); }
         .breadcrumbs a:hover { color: var(--olive); }
 
+        /* Back / forward navigation arrows embedded where breadcrumbs used to be */
+        .crumb-nav { display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+        .crumb-nav-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--olive-bg);
+            color: var(--olive);
+            cursor: pointer;
+            transition: background var(--transition), color var(--transition), border-color var(--transition);
+        }
+        .crumb-nav-btn:hover { background: var(--olive); color: #fff; border-color: var(--olive); }
+        .crumb-nav-btn .icon { display: inline-flex; }
+        .crumb-nav-btn.back .icon { transform: rotate(180deg); }
+
         /* ============================================
            EMPTY STATE
            ============================================ */
@@ -1321,12 +1383,15 @@
 
         @php $u = auth()->user(); $ma = \App\Support\ModuleAccess::class; @endphp
 
-        {{-- Overview --}}
+        {{-- Quick links (single, primary destinations) --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
                 <li><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><span class="icon"><x-icon name="dashboard" /></span><span class="nav-label">Dashboard</span></a></li>
                 @if($ma::allows($u, 'analytics'))
                 <li><a href="{{ route('analytics.index') }}" class="{{ request()->routeIs('analytics.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">Executive Dashboard</span></a></li>
+                @endif
+                @if($ma::allows($u, 'ai'))
+                <li><a href="{{ route('ai-reports.index') }}" class="{{ request()->routeIs('ai-reports.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">AI Reports</span></a></li>
                 @endif
             </ul>
         </div>
@@ -1334,89 +1399,112 @@
         <div class="sidebar-divider"></div>
 
         {{-- Master Data (readable by all roles) --}}
-        <div class="sidebar-section">
-            <ul class="sidebar-nav">
+        <details class="nav-group" {{ request()->routeIs('farms.*','blocks.*','crops.*','crop-programs.*','assets.*','crop-cycles.*','checkouts.*') ? 'open' : '' }}>
+            <summary>
+                <span class="icon"><x-icon name="blocks" /></span>
+                <span class="nav-group-title nav-label">Master Data</span>
+                <span class="nav-chevron"><x-icon name="chevron" size="14" /></span>
+            </summary>
+            <ul class="sidebar-nav nav-group-items">
                 <li><a href="{{ route('farms.index') }}" class="{{ request()->routeIs('farms.*') ? 'active' : '' }}"><span class="icon"><x-icon name="farm" /></span><span class="nav-label">Farms</span></a></li>
                 <li><a href="{{ route('blocks.index') }}" class="{{ request()->routeIs('blocks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="blocks" /></span><span class="nav-label">Blocks</span></a></li>
                 <li><a href="{{ route('crops.index') }}" class="{{ request()->routeIs('crops.*') ? 'active' : '' }}"><span class="icon"><x-icon name="crops" /></span><span class="nav-label">Crops</span></a></li>
+                @if($ma::allows($u,'crop_cycles'))<li><a href="{{ route('crop-programs.index') }}" class="{{ request()->routeIs('crop-programs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Crop Programs</span></a></li>@endif
+                <li><a href="{{ route('crop-cycles.index') }}" class="{{ request()->routeIs('crop-cycles.*') && ! request()->routeIs('crop-cycles.planner') ? 'active' : '' }}"><span class="icon"><x-icon name="cycles" /></span><span class="nav-label">Crop Cycles</span></a></li>
+                <li><a href="{{ route('crop-cycles.planner') }}" class="{{ request()->routeIs('crop-cycles.planner') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Planting Planner</span></a></li>
                 <li><a href="{{ route('assets.index') }}" class="{{ request()->routeIs('assets.*') ? 'active' : '' }}"><span class="icon"><x-icon name="assets" /></span><span class="nav-label">Assets</span></a></li>
+                @if($ma::allows($u,'checkouts'))<li><a href="{{ route('checkouts.index') }}" class="{{ request()->routeIs('checkouts.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Checkouts</span></a></li>@endif
             </ul>
-        </div>
-
-        <div class="sidebar-divider"></div>
-
-        {{-- Planning (crop cycles readable by all roles) --}}
-        <div class="sidebar-section">
-            <ul class="sidebar-nav">
-                <li><a href="{{ route('crop-cycles.index') }}" class="{{ request()->routeIs('crop-cycles.*') ? 'active' : '' }}"><span class="icon"><x-icon name="cycles" /></span><span class="nav-label">Crop Cycles</span></a></li>
-            </ul>
-        </div>
+        </details>
 
         @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour') || $ma::allows($u,'projects'); @endphp
         @if($fieldOps)
-        <div class="sidebar-divider"></div>
         {{-- Field Operations --}}
-        <div class="sidebar-section">
-            <ul class="sidebar-nav">
+        <details class="nav-group" {{ request()->routeIs('nursery-batches.*','daily-activities.*','irrigation-logs.*','fertigation-logs.*','spray-logs.*','labour-attendances.*','weigh-scale-readings.*','projects.*','workers.*') ? 'open' : '' }}>
+            <summary>
+                <span class="icon"><x-icon name="operations" /></span>
+                <span class="nav-group-title nav-label">Field Operations</span>
+                <span class="nav-chevron"><x-icon name="chevron" size="14" /></span>
+            </summary>
+            <ul class="sidebar-nav nav-group-items">
                 @if($ma::allows($u,'nursery'))<li><a href="{{ route('nursery-batches.index') }}" class="{{ request()->routeIs('nursery-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="nursery" /></span><span class="nav-label">Nursery</span></a></li>@endif
                 @if($ma::allows($u,'daily_ops'))<li><a href="{{ route('daily-activities.index') }}" class="{{ request()->routeIs('daily-activities.*') ? 'active' : '' }}"><span class="icon"><x-icon name="operations" /></span><span class="nav-label">Daily Operations</span></a></li>@endif
                 @if($ma::allows($u,'irrigation'))<li><a href="{{ route('irrigation-logs.index') }}" class="{{ request()->routeIs('irrigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="irrigation" /></span><span class="nav-label">Irrigation</span></a></li>@endif
                 @if($ma::allows($u,'fertigation'))<li><a href="{{ route('fertigation-logs.index') }}" class="{{ request()->routeIs('fertigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="fertigation" /></span><span class="nav-label">Fertigation</span></a></li>@endif
                 @if($ma::allows($u,'pest'))<li><a href="{{ route('spray-logs.index') }}" class="{{ request()->routeIs('spray-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="pest" /></span><span class="nav-label">Pest &amp; Disease</span></a></li>@endif
                 @if($ma::allows($u,'labour'))<li><a href="{{ route('labour-attendances.index') }}" class="{{ request()->routeIs('labour-attendances.*') ? 'active' : '' }}"><span class="icon"><x-icon name="labour" /></span><span class="nav-label">Labour</span></a></li>@endif
+                @if($ma::allows($u,'weighing'))<li><a href="{{ route('weigh-scale-readings.index') }}" class="{{ request()->routeIs('weigh-scale-readings.*') ? 'active' : '' }}"><span class="icon"><x-icon name="harvest" /></span><span class="nav-label">Weigh Scale</span></a></li>@endif
                 @if($ma::allows($u,'projects'))<li><a href="{{ route('projects.index') }}" class="{{ request()->routeIs('projects.*') || request()->routeIs('workers.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Projects</span></a></li>@endif
             </ul>
-        </div>
+        </details>
         @endif
 
         @php $postHarvest = $ma::allows($u,'inventory') || $ma::allows($u,'harvest') || $ma::allows($u,'packhouse') || $ma::allows($u,'quality'); @endphp
         @if($postHarvest)
-        <div class="sidebar-divider"></div>
         {{-- Post-Harvest --}}
-        <div class="sidebar-section">
-            <ul class="sidebar-nav">
+        <details class="nav-group" {{ request()->routeIs('inventory-items.*','procurement-requests.*','harvest-batches.*','packhouse-lots.*','trace.lookup','quality-checks.*') ? 'open' : '' }}>
+            <summary>
+                <span class="icon"><x-icon name="inventory" /></span>
+                <span class="nav-group-title nav-label">Post-Harvest</span>
+                <span class="nav-chevron"><x-icon name="chevron" size="14" /></span>
+            </summary>
+            <ul class="sidebar-nav nav-group-items">
                 @if($ma::allows($u,'inventory'))<li><a href="{{ route('inventory-items.index') }}" class="{{ request()->routeIs('inventory-items.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Inventory</span></a></li>@endif
+                @if($ma::allows($u,'inventory'))<li><a href="{{ route('procurement-requests.index') }}" class="{{ request()->routeIs('procurement-requests.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Procurement</span></a></li>@endif
                 @if($ma::allows($u,'harvest'))<li><a href="{{ route('harvest-batches.index') }}" class="{{ request()->routeIs('harvest-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="harvest" /></span><span class="nav-label">Harvest</span></a></li>@endif
                 @if($ma::allows($u,'packhouse'))<li><a href="{{ route('packhouse-lots.index') }}" class="{{ request()->routeIs('packhouse-lots.*') || request()->routeIs('trace.lookup') ? 'active' : '' }}"><span class="icon"><x-icon name="packhouse" /></span><span class="nav-label">Packhouse</span></a></li>@endif
                 @if($ma::allows($u,'quality'))<li><a href="{{ route('quality-checks.index') }}" class="{{ request()->routeIs('quality-checks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="quality" /></span><span class="nav-label">Quality</span></a></li>@endif
             </ul>
-        </div>
+        </details>
         @endif
 
         @php $commercial = $ma::allows($u,'sales') || $ma::allows($u,'logistics') || $ma::allows($u,'finance'); @endphp
         @if($commercial)
-        <div class="sidebar-divider"></div>
         {{-- Commercial --}}
-        <div class="sidebar-section">
-            <ul class="sidebar-nav">
+        <details class="nav-group" {{ request()->routeIs('customers.*','sales-orders.*','outgrowers.*','dispatches.*','finance.*') ? 'open' : '' }}>
+            <summary>
+                <span class="icon"><x-icon name="sales" /></span>
+                <span class="nav-group-title nav-label">Commercial</span>
+                <span class="nav-chevron"><x-icon name="chevron" size="14" /></span>
+            </summary>
+            <ul class="sidebar-nav nav-group-items">
                 @if($ma::allows($u,'sales'))<li><a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') || request()->routeIs('sales-orders.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Sales</span></a></li>@endif
+                @if($ma::allows($u,'sales'))<li><a href="{{ route('outgrowers.index') }}" class="{{ request()->routeIs('outgrowers.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Outgrowers</span></a></li>@endif
                 @if($ma::allows($u,'logistics'))<li><a href="{{ route('dispatches.index') }}" class="{{ request()->routeIs('dispatches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="logistics" /></span><span class="nav-label">Logistics</span></a></li>@endif
                 @if($ma::allows($u,'finance'))<li><a href="{{ route('finance.index') }}" class="{{ request()->routeIs('finance.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Finance</span></a></li>@endif
             </ul>
-        </div>
+        </details>
         @endif
 
         @if($ma::allows($u,'stables'))
-        <div class="sidebar-divider"></div>
         {{-- Stables --}}
-        <div class="sidebar-section">
-            <ul class="sidebar-nav">
+        <details class="nav-group" {{ request()->routeIs('rides.*','horses.*','guides.*') ? 'open' : '' }}>
+            <summary>
+                <span class="icon"><x-icon name="horse" /></span>
+                <span class="nav-group-title nav-label">Stables</span>
+                <span class="nav-chevron"><x-icon name="chevron" size="14" /></span>
+            </summary>
+            <ul class="sidebar-nav nav-group-items">
                 <li><a href="{{ route('rides.index') }}" class="{{ request()->routeIs('rides.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Horse Rides</span></a></li>
-                <li><a href="{{ route('horses.index') }}" class="{{ request()->routeIs('horses.*') ? 'active' : '' }}"><span class="icon"><x-icon name="assets" /></span><span class="nav-label">Horses</span></a></li>
+                <li><a href="{{ route('horses.index') }}" class="{{ request()->routeIs('horses.*') ? 'active' : '' }}"><span class="icon"><x-icon name="horse" /></span><span class="nav-label">Horses</span></a></li>
                 <li><a href="{{ route('guides.index') }}" class="{{ request()->routeIs('guides.*') ? 'active' : '' }}"><span class="icon"><x-icon name="labour" /></span><span class="nav-label">Guides</span></a></li>
             </ul>
-        </div>
+        </details>
         @endif
 
         @if($ma::allows($u,'admin'))
-        <div class="sidebar-divider"></div>
         {{-- Administration --}}
-        <div class="sidebar-section">
-            <ul class="sidebar-nav">
+        <details class="nav-group" {{ request()->routeIs('users.*','activity-logs.*') ? 'open' : '' }}>
+            <summary>
+                <span class="icon"><x-icon name="settings" /></span>
+                <span class="nav-group-title nav-label">Administration</span>
+                <span class="nav-chevron"><x-icon name="chevron" size="14" /></span>
+            </summary>
+            <ul class="sidebar-nav nav-group-items">
                 <li><a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}"><span class="icon"><x-icon name="settings" /></span><span class="nav-label">Users &amp; Roles</span></a></li>
                 <li><a href="{{ route('activity-logs.index') }}" class="{{ request()->routeIs('activity-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">Audit Log</span></a></li>
             </ul>
-        </div>
+        </details>
         @endif
 
         {{-- Settings & Log Out live in the top-right user menu, not the sidebar. --}}
@@ -1572,6 +1660,63 @@
     </div>
 
     <script>
+    /* ============================================================
+       Tidy text entries — capitalise each word on leaving a field.
+       ============================================================
+       Runs on focusout (not while typing, which would fight the cursor) and
+       only touches the FIRST letter of each word, leaving the rest of the word
+       alone. That preserves deliberate casing: DAP/CAN/NPK stay uppercase,
+       McDonald and F1 survive; only "french bean" → "French Bean".
+
+       Deliberately skipped, because title-casing these corrupts them or reads
+       wrong: emails, passwords, codes, phone/ID numbers, units (kg not Kg),
+       search boxes, and free-text notes/descriptions (they're sentences, not
+       labels). Textareas are skipped entirely for the same reason.
+
+       Opt any single field out with data-no-capitalize.
+    */
+    (function () {
+        var SKIP_TYPES = ['email','password','number','tel','url','search','date','datetime-local',
+                          'time','month','week','range','color','file','hidden','checkbox','radio','submit','button'];
+        // Matched against the field's name, on whole-word (underscore) boundaries.
+        var SKIP_NAMES = /(^|_)(email|password|password_confirmation|code|phone|pay_phone|url|token|search|note|notes|description|reference|external_id|national_id|employee_no|traceability_code|client_uuid|unit)($|_)/i;
+
+        function capitalizeWords(value) {
+            // Only a lowercase letter at a word boundary is touched.
+            return value.replace(/(^|[\s\-\/(])([a-z])/g, function (_m, boundary, letter) {
+                return boundary + letter.toUpperCase();
+            });
+        }
+
+        function shouldSkip(el) {
+            if (!el || el.tagName !== 'INPUT') return true;          // textareas are prose
+            if (SKIP_TYPES.indexOf((el.type || '').toLowerCase()) !== -1) return true;
+            if (el.hasAttribute('data-no-capitalize')) return true;
+            if (el.name && SKIP_NAMES.test(el.name)) return true;
+            return false;
+        }
+
+        // focusout (not blur) so it bubbles and covers dynamically added inputs.
+        document.addEventListener('focusout', function (e) {
+            var el = e.target;
+            if (shouldSkip(el) || !el.value) return;
+            var tidied = capitalizeWords(el.value);
+            if (tidied === el.value) return;
+            el.value = tidied;
+            // 'change' (not 'input') — 'input' would re-open combobox menus on blur.
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        // Helps mobile keyboards start each word capitalised in the first place.
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('input').forEach(function (el) {
+                if (!shouldSkip(el) && !el.hasAttribute('autocapitalize')) {
+                    el.setAttribute('autocapitalize', 'words');
+                }
+            });
+        });
+    })();
+
     document.addEventListener('DOMContentLoaded', function() {
         // User dropdown — close on outside click or Escape
         var userMenu = document.getElementById('user-menu-toggle');

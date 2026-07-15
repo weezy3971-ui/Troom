@@ -73,6 +73,61 @@ class CropCycle extends Model
         return $this->hasMany(LabourAttendance::class);
     }
 
+    public function germinationChecks(): HasMany
+    {
+        return $this->hasMany(GerminationCheck::class);
+    }
+
+    public function plantPopulationCounts(): HasMany
+    {
+        return $this->hasMany(PlantPopulationCount::class);
+    }
+
+    public function yieldForecasts(): HasMany
+    {
+        return $this->hasMany(YieldForecast::class);
+    }
+
+    public function stages(): HasMany
+    {
+        return $this->hasMany(CropCycleStage::class)->orderBy('due_date')->orderBy('sequence');
+    }
+
+    /**
+     * Build the stage schedule for this cycle from its crop's active program,
+     * with each due date = planting_date + the stage's offset_days. Existing
+     * stages are cleared first so this is safe to re-run. Returns the number of
+     * stages created (0 if there's no planting date or no active program).
+     */
+    public function materialiseSchedule(): int
+    {
+        if (! $this->planting_date) {
+            return 0;
+        }
+
+        $program = $this->crop?->activeProgram();
+
+        if (! $program || $program->stages->isEmpty()) {
+            return 0;
+        }
+
+        $this->stages()->delete();
+
+        foreach ($program->stages as $stage) {
+            $this->stages()->create([
+                'crop_program_stage_id' => $stage->id,
+                'sequence' => $stage->sequence,
+                'name' => $stage->name,
+                'activity_type' => $stage->activity_type,
+                'due_date' => $this->planting_date->copy()->addDays($stage->offset_days),
+                'status' => 'pending',
+                'notes' => $stage->default_inputs,
+            ]);
+        }
+
+        return $program->stages->count();
+    }
+
     /**
      * Total cost booked against this cycle across all allocation sources.
      */

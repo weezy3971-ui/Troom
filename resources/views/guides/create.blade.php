@@ -2,9 +2,7 @@
 @section('title', 'Add Guide')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('guides.index') }}">Guides</a> <span>/</span> <span>Add Guide</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Add Guide</h1></div>
 
 <div class="card" style="max-width: 620px;">

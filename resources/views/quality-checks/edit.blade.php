@@ -2,10 +2,7 @@
 @section('title', 'Edit Quality Check')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('quality-checks.index') }}">Quality Assurance</a> <span>/</span>
-    <a href="{{ route('quality-checks.show', $qualityCheck) }}">Check #{{ $qualityCheck->id }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Quality Check</h1></div>
 
 <div class="card" style="max-width: 760px;">

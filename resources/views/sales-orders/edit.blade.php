@@ -2,10 +2,7 @@
 @section('title', 'Edit Sales Order')
 
 @section('content')
-<div class="breadcrumbs">
-    <a href="{{ route('sales-orders.index') }}">Sales Orders</a> <span>/</span>
-    <a href="{{ route('sales-orders.show', $salesOrder) }}">#{{ $salesOrder->id }}</a> <span>/</span> <span>Edit</span>
-</div>
+<x-crumb-nav />
 <div class="page-header"><h1 class="page-title">Edit Sales Order</h1></div>
 
 <div class="card" style="max-width: 760px;">
