@@ -91,6 +91,9 @@ class LabourAttendanceController extends Controller
             'attendance_date' => 'required|date',
             'worker_id' => 'nullable|exists:workers,id',
             'worker_name' => 'required|string|max:255',
+            'worker_type' => 'nullable|in:casual,permanent',
+            'worker_phone' => 'nullable|string|max:50',
+            'worker_national_id' => 'nullable|string|max:50',
             'block_id' => 'nullable|exists:blocks,id',
             'crop_cycle_id' => 'nullable|exists:crop_cycles,id',
             'task' => 'required|string|max:255',
@@ -116,6 +119,19 @@ class LabourAttendanceController extends Controller
      */
     private function normalise(array $validated): array
     {
+        // When a roster worker is chosen, borrow their type / phone / ID for any
+        // fields left blank (a manually typed value still wins).
+        if (! empty($validated['worker_id'])) {
+            $worker = Worker::find($validated['worker_id']);
+            if ($worker) {
+                $validated['worker_name'] = $validated['worker_name'] ?: $worker->name;
+                $validated['worker_type'] = $validated['worker_type'] ?? $worker->worker_type;
+                $validated['worker_phone'] = $validated['worker_phone'] ?? $worker->phone;
+                $validated['worker_national_id'] = $validated['worker_national_id'] ?? $worker->national_id;
+            }
+        }
+
+
         if (($validated['pay_basis'] ?? 'hourly') === 'target') {
             $validated['hours_worked'] = 0;
             $validated['rate'] = 0;

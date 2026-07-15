@@ -8,6 +8,7 @@ use App\Models\CropCycleStage;
 use App\Models\InventoryItem;
 use App\Models\ProcurementRequest;
 use App\Models\SalesOrder;
+use App\Models\WeighScaleReading;
 
 /**
  * Aggregates the proactive alert conditions the spec defines across modules
@@ -91,6 +92,18 @@ class AlertService
                         . $pr->needed_by->format('M d') . " and is still {$pr->status}.",
                 ];
             }
+        }
+
+        // Module 8c — weigh_scale_reading (new readings awaiting review)
+        $newWeighings = WeighScaleReading::unacknowledged()->count();
+        if ($newWeighings > 0) {
+            $alerts[] = [
+                'type' => 'weigh_scale_reading',
+                'severity' => 'info',
+                'module' => 'Weigh Scale',
+                'message' => "{$newWeighings} new weigh-scale reading" . ($newWeighings === 1 ? '' : 's')
+                    . ' awaiting review.',
+            ];
         }
 
         // Module 9 — pump_failure

@@ -1,7 +1,9 @@
 # AI Reports & AI Companion — Implementation Plan
 
-**Status:** Proposal · **Date:** 2026-07-14 · **Author:** Brian Kamau
+**Status:** Phases 0–2 implemented · **Date:** 2026-07-14 · **Author:** Brian Kamau
 **Source:** Demo meeting recording (`AI COMPANION.m4a`, transcribed) + meeting notes
+
+> **Implementation note (2026-07-14):** Phase 0 (AI foundation), Phase 1 (AI-generated reports) and Phase 2 (AI dashboard narrative) are built and verified end-to-end. Phase 2 adds `kpi_narratives` + `GenerateKpiNarrative`, refreshed daily at 06:00 via `routes/console.php` and again after each KPI recompute — never on page load, which is what keeps running cost near-zero. The dashboard panel hides itself when no completed narrative exists, so the dashboard is unaffected when AI is unconfigured. The provider call uses Laravel's HTTP client (Guzzle, already installed) rather than the `anthropic-ai/sdk` package — Composer wasn't available on the build machine, and the call is isolated in `AiClient::generate()` so the SDK can be swapped in later without touching the rest of the app. Model defaults to `claude-haiku-4-5` (config-driven via `ANTHROPIC_MODEL`). **Add `ANTHROPIC_API_KEY` to `.env` to enable generation** — until then the flow degrades gracefully with a clear message. Report generation currently runs synchronously (`dispatchSync`); switch to `dispatch()` once a queue worker runs.
 
 ---
 

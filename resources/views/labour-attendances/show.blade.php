@@ -20,6 +20,18 @@
 
 <div class="detail-grid">
     <div class="detail-item">
+        <div class="detail-label">Worker Type</div>
+        <div class="detail-value">{{ $labourAttendance->worker_type ? ($labourAttendance->worker_type === 'permanent' ? 'In-house (permanent)' : 'Casual') : '—' }}</div>
+    </div>
+    <div class="detail-item">
+        <div class="detail-label">Phone</div>
+        <div class="detail-value">{{ $labourAttendance->worker_phone ?? '—' }}</div>
+    </div>
+    <div class="detail-item">
+        <div class="detail-label">National ID</div>
+        <div class="detail-value">{{ $labourAttendance->worker_national_id ?? '—' }}</div>
+    </div>
+    <div class="detail-item">
         <div class="detail-label">Block</div>
         <div class="detail-value">{{ $labourAttendance->block?->name ?? '—' }}</div>
     </div>

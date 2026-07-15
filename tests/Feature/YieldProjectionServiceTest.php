@@ -131,4 +131,50 @@ class YieldProjectionServiceTest extends TestCase
         $this->assertNull($service->plantedArea());
         $this->assertNull($service->projectedYieldKg());
     }
+
+    public function test_measured_germination_and_population_override_defaults(): void
+    {
+        $cycle = $this->makeCycle([
+            'expected_yield_per_bed_kg' => 10,
+            'expected_germination_rate' => 0.85, // crop default
+        ]);
+        $this->addPlanting($cycle, ['bed_count' => 90]);
+
+        // Before any readings: uses crop default germination, full population.
+        $base = new YieldProjectionService($cycle->fresh());
+        $this->assertSame('assumed', $base->germinationSource());
+        $this->assertSame('assumed', $base->populationSource());
+
+        // Record a germination check (86%) and two stand counts; latest = 85%.
+        $cycle->germinationChecks()->create(['check_date' => '2026-01-06', 'sample_size' => 200, 'germinated_count' => 172, 'germination_rate' => 0.86]);
+        $cycle->plantPopulationCounts()->create(['count_date' => '2026-01-10', 'population_rate' => 0.90]);
+        $cycle->plantPopulationCounts()->create(['count_date' => '2026-01-20', 'population_rate' => 0.85]);
+
+        $service = new YieldProjectionService($cycle->fresh());
+        $this->assertSame('measured', $service->germinationSource());
+        $this->assertSame('measured', $service->populationSource());
+        $this->assertEqualsWithDelta(0.86, $service->germinationRate(), 0.001);
+        $this->assertEqualsWithDelta(0.85, $service->populationRate(), 0.001); // latest count wins
+        // 90 beds × 10 kg × 0.86 × 0.85
+        $this->assertEqualsWithDelta(657.9, $service->projectedYieldKg(), 0.1);
+    }
+
+    public function test_pre_harvest_forecast_and_variance(): void
+    {
+        $cycle = $this->makeCycle(['expected_yield_per_bed_kg' => 10]);
+        $this->addPlanting($cycle, ['bed_count' => 90]);
+        $cycle->yieldForecasts()->create([
+            'forecast_date' => '2026-01-05', 'sample_bed_count' => 10,
+            'total_bed_count' => 90, 'sample_yield_kg' => 70, 'projected_total_kg' => 630,
+        ]);
+        HarvestBatch::create([
+            'crop_cycle_id' => $cycle->id, 'block_id' => $cycle->block_id,
+            'harvest_date' => '2026-01-08', 'quantity_kg' => 650, 'rejects_kg' => 0,
+        ]);
+
+        $service = new YieldProjectionService($cycle->fresh());
+        $this->assertEqualsWithDelta(630.0, $service->preHarvestForecastKg(), 0.01);
+        // (650 - 630) / 630 ≈ 0.0317
+        $this->assertEqualsWithDelta(0.0317, $service->forecastVariance(), 0.001);
+    }
 }

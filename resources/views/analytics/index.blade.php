@@ -57,13 +57,29 @@
             @if($latestDate) · as of {{ \Carbon\Carbon::parse($latestDate)->format('M d, Y') }} @else · not yet computed @endif
         </p>
     </div>
-    <form action="{{ route('analytics.recompute') }}" method="POST">
-        @csrf
-        <button type="submit" class="btn btn-primary" title="Recompute snapshots" aria-label="Recompute snapshots" style="padding:9px 11px;">
-            <x-icon name="cycles" size="18" />
-        </button>
-    </form>
+    <div class="actions">
+        @if(\App\Support\ModuleAccess::allows(auth()->user(), 'ai'))
+        <a href="{{ route('ai-reports.create') }}" class="btn btn-secondary">Generate Report</a>
+        @endif
+        <form action="{{ route('analytics.recompute') }}" method="POST">
+            @csrf
+            <button type="submit" class="btn btn-primary" title="Recompute snapshots" aria-label="Recompute snapshots" style="padding:9px 11px;">
+                <x-icon name="cycles" size="18" />
+            </button>
+        </form>
+    </div>
 </div>
+
+{{-- AI Insights — written by AI on a schedule / after each recompute, never on page load. --}}
+@if(\App\Support\ModuleAccess::allows(auth()->user(), 'ai') && $narrative?->isCompleted())
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 class="card-title">AI Insights</h3>
+        <span class="badge badge-active">Updated {{ $narrative->narrative_date->format('M d') }}</span>
+    </div>
+    <p style="margin:0; color:var(--text-primary); line-height:1.7;">{{ $narrative->content }}</p>
+</div>
+@endif
 
 @if($snapshots->isEmpty())
     <div class="card">

@@ -999,6 +999,12 @@
         /* ============================================
            ALERTS
            ============================================ */
+        /* The HTML `hidden` attribute must beat component display rules.
+           Without this, any class that sets `display` (.alert is flex,
+           .form-grid is grid, …) silently overrides `hidden` and the element
+           stays on screen — author CSS outranks the browser's [hidden] rule. */
+        [hidden] { display: none !important; }
+
         .alert {
             padding: 13px 16px;
             border-radius: var(--radius-sm);
@@ -1384,6 +1390,9 @@
                 @if($ma::allows($u, 'analytics'))
                 <li><a href="{{ route('analytics.index') }}" class="{{ request()->routeIs('analytics.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">Executive Dashboard</span></a></li>
                 @endif
+                @if($ma::allows($u, 'ai'))
+                <li><a href="{{ route('ai-reports.index') }}" class="{{ request()->routeIs('ai-reports.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">AI Reports</span></a></li>
+                @endif
             </ul>
         </div>
 
@@ -1411,7 +1420,7 @@
         @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour') || $ma::allows($u,'projects'); @endphp
         @if($fieldOps)
         {{-- Field Operations --}}
-        <details class="nav-group" {{ request()->routeIs('nursery-batches.*','daily-activities.*','irrigation-logs.*','fertigation-logs.*','spray-logs.*','labour-attendances.*','projects.*','workers.*') ? 'open' : '' }}>
+        <details class="nav-group" {{ request()->routeIs('nursery-batches.*','daily-activities.*','irrigation-logs.*','fertigation-logs.*','spray-logs.*','labour-attendances.*','weigh-scale-readings.*','projects.*','workers.*') ? 'open' : '' }}>
             <summary>
                 <span class="icon"><x-icon name="operations" /></span>
                 <span class="nav-group-title nav-label">Field Operations</span>
@@ -1424,6 +1433,7 @@
                 @if($ma::allows($u,'fertigation'))<li><a href="{{ route('fertigation-logs.index') }}" class="{{ request()->routeIs('fertigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="fertigation" /></span><span class="nav-label">Fertigation</span></a></li>@endif
                 @if($ma::allows($u,'pest'))<li><a href="{{ route('spray-logs.index') }}" class="{{ request()->routeIs('spray-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="pest" /></span><span class="nav-label">Pest &amp; Disease</span></a></li>@endif
                 @if($ma::allows($u,'labour'))<li><a href="{{ route('labour-attendances.index') }}" class="{{ request()->routeIs('labour-attendances.*') ? 'active' : '' }}"><span class="icon"><x-icon name="labour" /></span><span class="nav-label">Labour</span></a></li>@endif
+                @if($ma::allows($u,'weighing'))<li><a href="{{ route('weigh-scale-readings.index') }}" class="{{ request()->routeIs('weigh-scale-readings.*') ? 'active' : '' }}"><span class="icon"><x-icon name="harvest" /></span><span class="nav-label">Weigh Scale</span></a></li>@endif
                 @if($ma::allows($u,'projects'))<li><a href="{{ route('projects.index') }}" class="{{ request()->routeIs('projects.*') || request()->routeIs('workers.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Projects</span></a></li>@endif
             </ul>
         </details>
@@ -1650,6 +1660,63 @@
     </div>
 
     <script>
+    /* ============================================================
+       Tidy text entries — capitalise each word on leaving a field.
+       ============================================================
+       Runs on focusout (not while typing, which would fight the cursor) and
+       only touches the FIRST letter of each word, leaving the rest of the word
+       alone. That preserves deliberate casing: DAP/CAN/NPK stay uppercase,
+       McDonald and F1 survive; only "french bean" → "French Bean".
+
+       Deliberately skipped, because title-casing these corrupts them or reads
+       wrong: emails, passwords, codes, phone/ID numbers, units (kg not Kg),
+       search boxes, and free-text notes/descriptions (they're sentences, not
+       labels). Textareas are skipped entirely for the same reason.
+
+       Opt any single field out with data-no-capitalize.
+    */
+    (function () {
+        var SKIP_TYPES = ['email','password','number','tel','url','search','date','datetime-local',
+                          'time','month','week','range','color','file','hidden','checkbox','radio','submit','button'];
+        // Matched against the field's name, on whole-word (underscore) boundaries.
+        var SKIP_NAMES = /(^|_)(email|password|password_confirmation|code|phone|pay_phone|url|token|search|note|notes|description|reference|external_id|national_id|employee_no|traceability_code|client_uuid|unit)($|_)/i;
+
+        function capitalizeWords(value) {
+            // Only a lowercase letter at a word boundary is touched.
+            return value.replace(/(^|[\s\-\/(])([a-z])/g, function (_m, boundary, letter) {
+                return boundary + letter.toUpperCase();
+            });
+        }
+
+        function shouldSkip(el) {
+            if (!el || el.tagName !== 'INPUT') return true;          // textareas are prose
+            if (SKIP_TYPES.indexOf((el.type || '').toLowerCase()) !== -1) return true;
+            if (el.hasAttribute('data-no-capitalize')) return true;
+            if (el.name && SKIP_NAMES.test(el.name)) return true;
+            return false;
+        }
+
+        // focusout (not blur) so it bubbles and covers dynamically added inputs.
+        document.addEventListener('focusout', function (e) {
+            var el = e.target;
+            if (shouldSkip(el) || !el.value) return;
+            var tidied = capitalizeWords(el.value);
+            if (tidied === el.value) return;
+            el.value = tidied;
+            // 'change' (not 'input') — 'input' would re-open combobox menus on blur.
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        // Helps mobile keyboards start each word capitalised in the first place.
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('input').forEach(function (el) {
+                if (!shouldSkip(el) && !el.hasAttribute('autocapitalize')) {
+                    el.setAttribute('autocapitalize', 'words');
+                }
+            });
+        });
+    })();
+
     document.addEventListener('DOMContentLoaded', function() {
         // User dropdown — close on outside click or Escape
         var userMenu = document.getElementById('user-menu-toggle');

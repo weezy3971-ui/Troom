@@ -190,6 +190,9 @@
     @else
     @php
         $germPct = round($projection['germination_rate'] * 100);
+        $popPct = round($projection['population_rate'] * 100);
+        $germMeasured = $projection['germination_source'] === 'measured';
+        $popMeasured = $projection['population_source'] === 'measured';
     @endphp
         <div class="stats-grid" style="margin-bottom: 0;">
             <div class="stat-card">
@@ -199,8 +202,12 @@
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Germination (assumed)</div>
+                <div class="stat-label">Germination ({{ $germMeasured ? 'measured' : 'assumed' }})</div>
                 <div class="stat-value" style="font-size: 20px;">{{ $germPct }}%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Plant Population ({{ $popMeasured ? 'measured' : 'assumed' }})</div>
+                <div class="stat-value" style="font-size: 20px;">{{ $popPct }}%</div>
             </div>
             <div class="stat-card" style="border-color: rgba(99,102,241,0.3);">
                 <div class="stat-label">Projected Yield</div>
@@ -213,6 +220,22 @@
             </div>
             @endif
         </div>
+
+        @if($projection['pre_harvest_forecast'] !== null)
+        @php
+            $fVar = $projection['forecast_variance'];
+            $fAhead = $fVar !== null && $fVar >= 0;
+        @endphp
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+            <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">Pre-harvest Sample Forecast</h4>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted);">
+                <span>Latest sampling walk projects <strong style="color: var(--text);">{{ number_format($projection['pre_harvest_forecast']) }} kg</strong></span>
+                @if($fVar !== null)
+                <span style="color: {{ $fAhead ? 'var(--olive)' : 'var(--danger-text)' }}; font-weight: 600;">{{ $fAhead ? '▲ +' : '▼ ' }}{{ number_format($fVar * 100, 1) }}% vs actual</span>
+                @endif
+            </div>
+        </div>
+        @endif
 
         @if($projection['actual_yield'] > 0)
         @php
@@ -235,8 +258,8 @@
 
         <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 16px;">
             Projection = {{ $projection['basis'] === 'per_bed' ? 'beds × expected yield/bed' : 'area × expected yield/acre' }}
-            × {{ $germPct }}% germination{{ $projection['price_per_kg'] > 0 ? ', valued at KES ' . number_format($projection['price_per_kg'], 2) . '/kg' : '' }}.
-            Germination and plant population are crop-default assumptions in this phase.
+            × {{ $germPct }}% germination × {{ $popPct }}% population{{ $projection['price_per_kg'] > 0 ? ', valued at KES ' . number_format($projection['price_per_kg'], 2) . '/kg' : '' }}.
+            @if($germMeasured || $popMeasured)Rates use the latest field readings below.@else Germination and population are crop-default assumptions until you record field readings below.@endif
         </p>
     @endif
 </div>
@@ -313,6 +336,172 @@
                 </tbody>
             </table>
         </div>
+    @endif
+</div>
+
+{{-- ============ In-season crop monitoring ============ --}}
+
+{{-- Germination checks --}}
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header"><h3 class="card-title">Germination Checks</h3></div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Date</th><th>Day</th><th>Sample</th><th>Germinated</th><th>Rate</th><th>Notes</th>@if($canWrite)<th></th>@endif</tr>
+            </thead>
+            <tbody>
+                @forelse($cropCycle->germinationChecks->sortByDesc('check_date') as $g)
+                <tr>
+                    <td>{{ $g->check_date->format('M d, Y') }}</td>
+                    <td class="mono">{{ $g->days_after_sowing !== null ? 'D+' . $g->days_after_sowing : '—' }}</td>
+                    <td class="mono">{{ $g->sample_size }}</td>
+                    <td class="mono">{{ $g->germinated_count }}</td>
+                    <td class="mono"><strong>{{ number_format($g->germination_rate * 100, 1) }}%</strong></td>
+                    <td style="color: var(--text-muted);">{{ $g->notes ?? '—' }}</td>
+                    @if($canWrite)
+                    <td style="text-align:right;">
+                        <form action="{{ route('crop-cycles.germination.destroy', [$cropCycle, $g]) }}" method="POST" data-confirm="Remove this germination check?">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn-ghost btn-sm">Remove</button>
+                        </form>
+                    </td>
+                    @endif
+                </tr>
+                @empty
+                <tr><td colspan="{{ $canWrite ? 7 : 6 }}" style="text-align:center; color: var(--text-muted); padding: 20px;">No germination checks recorded.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    @if($canWrite)
+    <div style="padding: 16px 22px; border-top: 1px solid var(--border);">
+        <form action="{{ route('crop-cycles.germination.store', $cropCycle) }}" method="POST">
+            @csrf
+            <div class="form-grid" style="margin-bottom: 12px;">
+                <div class="form-group" style="margin:0;"><label class="form-label" for="g_date">Check date *</label>
+                    <input type="date" id="g_date" name="check_date" value="{{ old('check_date', now()->toDateString()) }}" class="form-input" required></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="g_days">Days after sowing</label>
+                    <input type="number" id="g_days" name="days_after_sowing" value="{{ old('days_after_sowing') }}" class="form-input" min="0" placeholder="e.g. 5"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="g_sample">Sample size *</label>
+                    <input type="number" id="g_sample" name="sample_size" value="{{ old('sample_size') }}" class="form-input" min="1" required></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="g_germ">Germinated *</label>
+                    <input type="number" id="g_germ" name="germinated_count" value="{{ old('germinated_count') }}" class="form-input" min="0" required></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="g_notes">Notes</label>
+                    <input type="text" id="g_notes" name="notes" value="{{ old('notes') }}" class="form-input" placeholder="optional"></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">+ Record Germination Check</button>
+        </form>
+    </div>
+    @endif
+</div>
+
+{{-- Plant population (stand) counts --}}
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header"><h3 class="card-title">Plant Population Counts</h3></div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Date</th><th>Day</th><th>Population</th><th>Sample beds</th><th>Plants</th><th>Notes</th>@if($canWrite)<th></th>@endif</tr>
+            </thead>
+            <tbody>
+                @forelse($cropCycle->plantPopulationCounts->sortByDesc('count_date') as $p)
+                <tr>
+                    <td>{{ $p->count_date->format('M d, Y') }}</td>
+                    <td class="mono">{{ $p->days_after_planting !== null ? 'D+' . $p->days_after_planting : '—' }}</td>
+                    <td class="mono"><strong>{{ number_format($p->population_rate * 100, 1) }}%</strong></td>
+                    <td class="mono">{{ $p->sample_bed_count ?? '—' }}</td>
+                    <td class="mono">{{ $p->plants_counted ?? '—' }}</td>
+                    <td style="color: var(--text-muted);">{{ $p->notes ?? '—' }}</td>
+                    @if($canWrite)
+                    <td style="text-align:right;">
+                        <form action="{{ route('crop-cycles.population.destroy', [$cropCycle, $p]) }}" method="POST" data-confirm="Remove this population count?">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn-ghost btn-sm">Remove</button>
+                        </form>
+                    </td>
+                    @endif
+                </tr>
+                @empty
+                <tr><td colspan="{{ $canWrite ? 7 : 6 }}" style="text-align:center; color: var(--text-muted); padding: 20px;">No population counts recorded.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    @if($canWrite)
+    <div style="padding: 16px 22px; border-top: 1px solid var(--border);">
+        <form action="{{ route('crop-cycles.population.store', $cropCycle) }}" method="POST">
+            @csrf
+            <div class="form-grid" style="margin-bottom: 12px;">
+                <div class="form-group" style="margin:0;"><label class="form-label" for="p_date">Count date *</label>
+                    <input type="date" id="p_date" name="count_date" value="{{ old('count_date', now()->toDateString()) }}" class="form-input" required></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="p_days">Days after planting</label>
+                    <input type="number" id="p_days" name="days_after_planting" value="{{ old('days_after_planting') }}" class="form-input" min="0"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="p_pct">Population (%) *</label>
+                    <input type="number" step="0.1" id="p_pct" name="population_pct" value="{{ old('population_pct') }}" class="form-input" min="0" max="100" required placeholder="e.g. 85"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="p_beds">Sample beds</label>
+                    <input type="number" id="p_beds" name="sample_bed_count" value="{{ old('sample_bed_count') }}" class="form-input" min="0"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="p_plants">Plants counted</label>
+                    <input type="number" id="p_plants" name="plants_counted" value="{{ old('plants_counted') }}" class="form-input" min="0"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="p_notes">Notes</label>
+                    <input type="text" id="p_notes" name="notes" value="{{ old('notes') }}" class="form-input" placeholder="optional"></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">+ Record Population Count</button>
+        </form>
+    </div>
+    @endif
+</div>
+
+{{-- Pre-harvest yield forecast (sampling) --}}
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header"><h3 class="card-title">Pre-harvest Yield Sampling</h3></div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Date</th><th>Sample beds</th><th>Total beds</th><th>Sample yield</th><th>Projected total</th><th>Notes</th>@if($canWrite)<th></th>@endif</tr>
+            </thead>
+            <tbody>
+                @forelse($cropCycle->yieldForecasts->sortByDesc('forecast_date') as $f)
+                <tr>
+                    <td>{{ $f->forecast_date->format('M d, Y') }}</td>
+                    <td class="mono">{{ $f->sample_bed_count }}</td>
+                    <td class="mono">{{ $f->total_bed_count }}</td>
+                    <td class="mono">{{ number_format($f->sample_yield_kg, 2) }} kg</td>
+                    <td class="mono"><strong>{{ number_format($f->projected_total_kg, 2) }} kg</strong></td>
+                    <td style="color: var(--text-muted);">{{ $f->notes ?? '—' }}</td>
+                    @if($canWrite)
+                    <td style="text-align:right;">
+                        <form action="{{ route('crop-cycles.forecast.destroy', [$cropCycle, $f]) }}" method="POST" data-confirm="Remove this forecast?">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn-ghost btn-sm">Remove</button>
+                        </form>
+                    </td>
+                    @endif
+                </tr>
+                @empty
+                <tr><td colspan="{{ $canWrite ? 7 : 6 }}" style="text-align:center; color: var(--text-muted); padding: 20px;">No pre-harvest samples recorded.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    @if($canWrite)
+    <div style="padding: 16px 22px; border-top: 1px solid var(--border);">
+        <form action="{{ route('crop-cycles.forecast.store', $cropCycle) }}" method="POST">
+            @csrf
+            <div class="form-grid" style="margin-bottom: 12px;">
+                <div class="form-group" style="margin:0;"><label class="form-label" for="f_date">Sample date *</label>
+                    <input type="date" id="f_date" name="forecast_date" value="{{ old('forecast_date', now()->toDateString()) }}" class="form-input" required></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="f_sbeds">Sample beds walked *</label>
+                    <input type="number" id="f_sbeds" name="sample_bed_count" value="{{ old('sample_bed_count') }}" class="form-input" min="1" required placeholder="e.g. 10"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="f_tbeds">Total beds *</label>
+                    <input type="number" id="f_tbeds" name="total_bed_count" value="{{ old('total_bed_count') }}" class="form-input" min="1" required placeholder="e.g. 90"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="f_kg">Sample yield (kg) *</label>
+                    <input type="number" step="0.01" id="f_kg" name="sample_yield_kg" value="{{ old('sample_yield_kg') }}" class="form-input" min="0" required placeholder="kg from the sample beds"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" for="f_notes">Notes</label>
+                    <input type="text" id="f_notes" name="notes" value="{{ old('notes') }}" class="form-input" placeholder="optional"></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">+ Record Pre-harvest Sample</button>
+        </form>
+    </div>
     @endif
 </div>
 @endsection

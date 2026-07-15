@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateKpiNarrative;
 use App\Models\ChartOfAccount;
+use App\Models\KpiNarrative;
 use App\Models\KpiSnapshot;
 use App\Models\LedgerEntry;
+use App\Services\Ai\AiClient;
 use App\Services\AlertService;
 use App\Services\KpiSnapshotService;
 
@@ -12,6 +15,10 @@ class AnalyticsController extends Controller
 {
     public function index(AlertService $alertService)
     {
+        // Read-only: the AI commentary is precomputed on a schedule / after a
+        // recompute, never generated on page load.
+        $narrative = KpiNarrative::current();
+
         $latestDate = KpiSnapshot::max('snapshot_date');
 
         $snapshots = $latestDate
@@ -29,7 +36,7 @@ class AnalyticsController extends Controller
 
         $pnl = $this->profitAndLoss();
 
-        return view('analytics.index', compact('snapshots', 'latestDate', 'alerts', 'history', 'pnl'));
+        return view('analytics.index', compact('snapshots', 'latestDate', 'alerts', 'history', 'pnl', 'narrative'));
     }
 
     /**
@@ -81,9 +88,15 @@ class AnalyticsController extends Controller
         ];
     }
 
-    public function recompute(KpiSnapshotService $service)
+    public function recompute(KpiSnapshotService $service, AiClient $ai)
     {
         $service->recompute();
+
+        // Refresh the AI commentary against the new figures. Skipped silently
+        // when no API key is set so the dashboard still works without AI.
+        if ($ai->isConfigured()) {
+            GenerateKpiNarrative::dispatchSync();
+        }
 
         return redirect()->route('analytics.index')
             ->with('success', 'KPI snapshots recomputed.');

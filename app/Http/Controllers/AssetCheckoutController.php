@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\AssetCheckout;
 use App\Models\Worker;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -99,10 +100,10 @@ class AssetCheckoutController extends Controller
                 ->with('error', 'This item was already checked in.');
         }
 
-        $checkout->update([
+        ActivityLogger::as('checked_in', fn () => $checkout->update([
             'returned_at' => now(),
             'checked_in_by' => $request->user()?->id,
-        ]);
+        ]));
 
         return redirect()->back()
             ->with('success', "{$checkout->asset->name} checked in.");

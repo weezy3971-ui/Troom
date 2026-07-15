@@ -73,6 +73,21 @@ class CropCycle extends Model
         return $this->hasMany(LabourAttendance::class);
     }
 
+    public function germinationChecks(): HasMany
+    {
+        return $this->hasMany(GerminationCheck::class);
+    }
+
+    public function plantPopulationCounts(): HasMany
+    {
+        return $this->hasMany(PlantPopulationCount::class);
+    }
+
+    public function yieldForecasts(): HasMany
+    {
+        return $this->hasMany(YieldForecast::class);
+    }
+
     public function stages(): HasMany
     {
         return $this->hasMany(CropCycleStage::class)->orderBy('due_date')->orderBy('sequence');

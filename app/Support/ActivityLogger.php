@@ -16,9 +16,40 @@ use Illuminate\Support\Str;
 class ActivityLogger
 {
     /**
-     * Attributes that are noise in an audit trail and never worth recording.
+     * Attributes that are noise in an audit trail, plus government ID numbers —
+     * the trail records who changed what, and doesn't need to copy a worker's
+     * national ID out of their record to do it.
      */
-    protected const IGNORED = ['updated_at', 'created_at', 'password', 'remember_token'];
+    protected const IGNORED = [
+        'updated_at', 'created_at', 'password', 'remember_token',
+        'national_id', 'worker_national_id',
+    ];
+
+    /**
+     * Domain action currently in effect, set by as().
+     */
+    protected static ?string $override = null;
+
+    /**
+     * Record model updates made inside $callback under a domain action name
+     * rather than the generic "updated" — so checking a tool back in reads
+     * "Checked in Asset Checkout: Daniel Mutua", not "Updated Asset Checkout".
+     *
+     * Only updates are relabelled. Records *created* inside the callback keep
+     * their own "created" action, so wrapping a block that does both stays
+     * accurate.
+     */
+    public static function as(string $action, callable $callback): mixed
+    {
+        $previous = self::$override;
+        self::$override = $action;
+
+        try {
+            return $callback();
+        } finally {
+            self::$override = $previous;
+        }
+    }
 
     /**
      * Record an arbitrary activity.
@@ -46,11 +77,19 @@ class ActivityLogger
             return;
         }
 
+        // Keep the attribute diff against the real action before relabelling.
+        $properties = self::changes($action, $model);
+
+        if ($action === 'updated' && self::$override) {
+            $action = self::$override;
+        }
+
         $type = Str::headline(class_basename($model));
         $label = self::label($model);
-        $description = ucfirst($action) . ' ' . $type . ($label ? ": {$label}" : '');
+        $verb = ucfirst(str_replace('_', ' ', $action));
+        $description = $verb . ' ' . $type . ($label ? ": {$label}" : '');
 
-        self::log($action, $model, $description, self::changes($action, $model));
+        self::log($action, $model, $description, $properties);
     }
 
     /**
@@ -59,7 +98,19 @@ class ActivityLogger
      */
     public static function label(Model $model): ?string
     {
-        foreach (['name', 'season_name', 'lot_number', 'traceability_code', 'title', 'reference', 'email'] as $field) {
+        $fields = [
+            // Generic naming fields
+            'name', 'season_name', 'title', 'reference',
+            // Traceable records
+            'lot_number', 'traceability_code', 'receipt_number',
+            // People-centric records (labour, custody, rides)
+            'worker_name', 'holder_name', 'customer_name',
+            // Activity-centric records with no name of their own
+            'activity_type', 'chemical_used', 'task',
+            'email',
+        ];
+
+        foreach ($fields as $field) {
             if (! empty($model->{$field})) {
                 return (string) $model->{$field};
             }

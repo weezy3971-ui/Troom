@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AiReportController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AssetController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CropController;
 use App\Http\Controllers\CropCycleController;
+use App\Http\Controllers\CropMonitoringController;
 use App\Http\Controllers\CropProgramController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DailyActivityController;
@@ -21,6 +23,7 @@ use App\Http\Controllers\HarvestBatchController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\IrrigationLogController;
 use App\Http\Controllers\LabourAttendanceController;
+use App\Http\Controllers\WeighScaleReadingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NurseryBatchController;
 use App\Http\Controllers\OutgrowerController;
@@ -95,6 +98,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('crop-programs', CropProgramController::class);
         Route::post('crop-programs/{cropProgram}/stages', [CropProgramController::class, 'storeStage'])->name('crop-programs.stages.store');
         Route::delete('crop-programs/{cropProgram}/stages/{stage}', [CropProgramController::class, 'destroyStage'])->name('crop-programs.stages.destroy');
+
+        // In-season crop monitoring — germination checks, stand counts, pre-harvest sampling
+        Route::post('crop-cycles/{cropCycle}/germination', [CropMonitoringController::class, 'storeGermination'])->name('crop-cycles.germination.store');
+        Route::delete('crop-cycles/{cropCycle}/germination/{germinationCheck}', [CropMonitoringController::class, 'destroyGermination'])->name('crop-cycles.germination.destroy');
+        Route::post('crop-cycles/{cropCycle}/population', [CropMonitoringController::class, 'storePopulation'])->name('crop-cycles.population.store');
+        Route::delete('crop-cycles/{cropCycle}/population/{plantPopulationCount}', [CropMonitoringController::class, 'destroyPopulation'])->name('crop-cycles.population.destroy');
+        Route::post('crop-cycles/{cropCycle}/forecast', [CropMonitoringController::class, 'storeForecast'])->name('crop-cycles.forecast.store');
+        Route::delete('crop-cycles/{cropCycle}/forecast/{yieldForecast}', [CropMonitoringController::class, 'destroyForecast'])->name('crop-cycles.forecast.destroy');
     });
 
     // ---- Phase 2: Field Operations ----
@@ -122,6 +133,15 @@ Route::middleware('auth')->group(function () {
 
     // Module 8: Labour & Attendance (hourly time via optional check-in/out, or target/piece-rate)
     Route::resource('labour-attendances', LabourAttendanceController::class)->middleware(ModuleAccess::middleware('labour'));
+
+    // Module 8c: Weigh scale notifications (digital scale feed — who weighed what)
+    Route::middleware(ModuleAccess::middleware('weighing'))->group(function () {
+        Route::get('weigh-scale-readings', [WeighScaleReadingController::class, 'index'])->name('weigh-scale-readings.index');
+        Route::get('weigh-scale-readings/create', [WeighScaleReadingController::class, 'create'])->name('weigh-scale-readings.create');
+        Route::post('weigh-scale-readings', [WeighScaleReadingController::class, 'store'])->name('weigh-scale-readings.store');
+        Route::post('weigh-scale-readings/{weighScaleReading}/acknowledge', [WeighScaleReadingController::class, 'acknowledge'])->name('weigh-scale-readings.acknowledge');
+        Route::delete('weigh-scale-readings/{weighScaleReading}', [WeighScaleReadingController::class, 'destroy'])->name('weigh-scale-readings.destroy');
+    });
 
     // Module 8b: Projects, task-splitting & labour assignment
     Route::middleware(ModuleAccess::middleware('projects'))->group(function () {
@@ -210,6 +230,16 @@ Route::middleware('auth')->group(function () {
     Route::middleware(ModuleAccess::middleware('analytics'))->group(function () {
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
         Route::post('analytics/recompute', [AnalyticsController::class, 'recompute'])->name('analytics.recompute');
+    });
+
+    // Module 18: AI-generated reports
+    Route::middleware(ModuleAccess::middleware('ai'))->group(function () {
+        Route::get('ai-reports', [AiReportController::class, 'index'])->name('ai-reports.index');
+        Route::get('ai-reports/create', [AiReportController::class, 'create'])->name('ai-reports.create');
+        Route::post('ai-reports', [AiReportController::class, 'store'])->name('ai-reports.store');
+        Route::get('ai-reports/{aiReport}', [AiReportController::class, 'show'])->name('ai-reports.show');
+        Route::post('ai-reports/{aiReport}/regenerate', [AiReportController::class, 'regenerate'])->name('ai-reports.regenerate');
+        Route::delete('ai-reports/{aiReport}', [AiReportController::class, 'destroy'])->name('ai-reports.destroy');
     });
 
     // Notifications & Settings

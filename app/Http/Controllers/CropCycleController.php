@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\Crop;
 use App\Models\CropCycle;
 use App\Models\SeasonalBudget;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 
 class CropCycleController extends Controller
@@ -32,18 +33,29 @@ class CropCycleController extends Controller
     }
 
     /**
-     * French bean planting-schedule planner. A self-contained worksheet: pick a
-     * planting date and every phase (top-dressing, flowering, first harvest, …)
+     * Planting-schedule planner. A self-contained worksheet: pick a crop and a
+     * planting date, and every phase (top-dressing, flowering, first harvest, …)
      * is recalculated client-side. Fill it in, tick tasks, then Save as PDF.
+     *
+     * Programs are curated per crop; switching crop re-renders the whole sheet
+     * without a reload, so typed header details survive the switch.
      */
-    public function planner()
+    public function planner(Request $request)
     {
-        $varieties = \App\Support\ReferenceData::VARIETIES['French Bean'];
+        $programs = \App\Support\PlannerPrograms::all();
+
+        $selected = $request->input('crop');
+        if (! $selected || ! isset($programs[$selected])) {
+            $selected = array_key_first($programs);
+        }
+
+        // Varieties are keyed by crop display name (curated ∪ what's in the DB).
+        $varietiesByCrop = \App\Support\ReferenceData::varietiesByCrop();
+
         $blocks = Block::with('farm')->orderBy('name')->get()
             ->map(fn ($b) => $b->farm->name . ' — ' . $b->name)->all();
-        $buyers = \App\Models\Customer::orderBy('name')->pluck('name')->all();
 
-        return view('crop-cycles.planner', compact('varieties', 'blocks', 'buyers'));
+        return view('crop-cycles.planner', compact('programs', 'selected', 'varietiesByCrop', 'blocks'));
     }
 
     public function create()
@@ -81,7 +93,10 @@ class CropCycleController extends Controller
 
     public function show(CropCycle $cropCycle)
     {
-        $cropCycle->load('block.farm', 'crop', 'seasonalBudget', 'costAllocations', 'plantings', 'harvestBatches', 'stages');
+        $cropCycle->load(
+            'block.farm', 'crop', 'seasonalBudget', 'costAllocations', 'plantings', 'harvestBatches', 'stages',
+            'germinationChecks.recordedBy', 'plantPopulationCounts.recordedBy', 'yieldForecasts.recordedBy'
+        );
         $projection = (new \App\Services\YieldProjectionService($cropCycle))->summary();
         // A schedule can only be built once a planting date and an active crop
         // program both exist — used by the view to offer the "generate" action.
@@ -143,7 +158,7 @@ class CropCycleController extends Controller
             return back()->with('error', 'Cannot activate: this block already has an active crop cycle.');
         }
 
-        $cropCycle->update(['status' => 'active']);
+        ActivityLogger::as('activated', fn () => $cropCycle->update(['status' => 'active']));
 
         // Materialise the stage schedule from the crop's active program (if any).
         $created = $cropCycle->materialiseSchedule();
@@ -191,7 +206,7 @@ class CropCycleController extends Controller
      */
     public function complete(CropCycle $cropCycle)
     {
-        $cropCycle->update(['status' => 'completed']);
+        ActivityLogger::as('completed', fn () => $cropCycle->update(['status' => 'completed']));
 
         return back()->with('success', 'Crop cycle marked as completed.');
     }
@@ -201,7 +216,7 @@ class CropCycleController extends Controller
      */
     public function cancel(CropCycle $cropCycle)
     {
-        $cropCycle->update(['status' => 'cancelled']);
+        ActivityLogger::as('cancelled', fn () => $cropCycle->update(['status' => 'cancelled']));
 
         return back()->with('success', 'Crop cycle cancelled.');
     }

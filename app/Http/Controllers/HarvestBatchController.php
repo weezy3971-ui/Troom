@@ -7,6 +7,7 @@ use App\Models\CropCycle;
 use App\Models\HarvestBatch;
 use App\Models\HarvestByProduct;
 use App\Models\User;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -96,10 +97,10 @@ class HarvestBatchController extends Controller
      */
     public function confirm(HarvestBatch $harvestBatch)
     {
-        $harvestBatch->update([
+        ActivityLogger::as('confirmed', fn () => $harvestBatch->update([
             'confirmed_by' => auth()->id(),
             'confirmed_at' => now(),
-        ]);
+        ]));
 
         return back()->with('success', 'Harvest weight confirmed.');
     }

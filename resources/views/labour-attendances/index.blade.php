@@ -55,7 +55,13 @@
                         <td style="font-weight: 600; color: var(--text-primary);">
                             <a href="{{ route('labour-attendances.show', $attendance) }}" style="color: var(--accent-hover); text-decoration: none;">{{ $attendance->attendance_date->format('M d, Y') }}</a>
                         </td>
-                        <td>{{ $attendance->worker_name }}</td>
+                        <td>
+                            {{ $attendance->worker_name }}
+                            @if($attendance->worker_type)
+                                <span class="badge {{ $attendance->worker_type === 'permanent' ? 'badge-active' : 'badge-neutral' }}" style="margin-left:4px;">{{ $attendance->worker_type === 'permanent' ? 'In-house' : 'Casual' }}</span>
+                            @endif
+                            @if($attendance->worker_phone)<div class="page-subtitle" style="margin:0; font-weight:400;">{{ $attendance->worker_phone }}</div>@endif
+                        </td>
                         <td>{{ $attendance->task }}</td>
                         <td>{{ $attendance->block?->name ?? '—' }}</td>
                         <td>

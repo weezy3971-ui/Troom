@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'French Bean Planting Planner')
+@section('title', 'Planting Planner')
 
 @section('content')
 <style>
@@ -34,6 +34,15 @@
 
     .planner-stack { display: grid; gap: 20px; }
 
+    /* Crop picker sits above the sheet — prominent, since it re-dates everything. */
+    .crop-picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .crop-picker select { max-width: 320px; }
+
+    .pl-sources { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+    .pl-sources li { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; }
+    .pl-sources a { color: var(--olive); text-decoration: none; }
+    .pl-sources a:hover { text-decoration: underline; }
+
     /* ---- Print / Save-as-PDF: strip the app chrome, keep only the worksheet ---- */
     @media print {
         @page { size: A4; margin: 12mm; }
@@ -43,13 +52,17 @@
         table.sched tbody tr.is-plant, table.sched tbody tr.is-harvest {
             background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         table.sched tbody tr, table.sched thead th { break-inside: avoid; }
+        /* The unverified banner must survive printing — it's a safety notice.
+           :not([hidden]) so a verified crop's hidden banner stays hidden: this
+           rule outranks the global [hidden] rule on specificity alone. */
+        .alert.print-keep:not([hidden]) { display: block !important; border: 1px solid #bbb; }
     }
 </style>
 
 <div class="page-header">
     <div>
-        <h1 class="page-title">French Bean Planting Planner</h1>
-        <p class="page-subtitle">Set a planting date and the full crop cycle re-dates itself. Tick tasks, add notes, then save as PDF.</p>
+        <h1 class="page-title" id="plTitle">{{ $programs[$selected]['title'] }}</h1>
+        <p class="page-subtitle">Choose a crop and a planting date — the full cycle re-dates itself. Tick tasks, add notes, then save as PDF.</p>
     </div>
     <div class="actions no-print">
         <a href="{{ route('crop-cycles.index') }}" class="btn btn-secondary">← Crop Cycles</a>
@@ -58,6 +71,24 @@
 </div>
 
 <div class="planner-stack">
+
+    {{-- Crop picker --}}
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Which crop?</h3></div>
+        <div class="crop-picker">
+            <select id="plCrop" class="form-select" onchange="plRenderAll()" aria-label="Choose crop">
+                @foreach($programs as $slug => $program)
+                    <option value="{{ $slug }}" {{ $slug === $selected ? 'selected' : '' }}>{{ $program['crop'] }}</option>
+                @endforeach
+            </select>
+            <span class="page-subtitle" style="margin:0;" id="plDayZeroHint"></span>
+        </div>
+    </div>
+
+    {{-- Shown only for programs that haven't been agronomist-verified --}}
+    <div class="alert alert-warning print-keep" id="plUnverified" hidden>
+        <div><strong>UNVERIFIED PLAN</strong> — <span id="plUnverifiedText"></span></div>
+    </div>
 
     {{-- Header details --}}
     <div class="card">
@@ -69,23 +100,19 @@
             </div>
             <div class="form-group" style="margin:0;">
                 <label class="form-label">Variety</label>
-                <x-combobox name="planner_variety" :options="$varieties" placeholder="e.g. Serengeti (extra-fine)" />
+                <x-combobox name="planner_variety" :options="[]" placeholder="Variety" />
             </div>
             <div class="form-group" style="margin:0;">
                 <label class="form-label">Area (acres)</label>
                 <input type="text" class="form-input" placeholder="e.g. 1.0">
             </div>
             <div class="form-group" style="margin:0;">
-                <label class="form-label">Planting date (Day 0)</label>
-                <input type="date" class="form-input" id="plantDate" value="{{ now()->addDay()->toDateString() }}" onchange="renderSchedule()">
+                <label class="form-label" id="plDateLabel">Planting date (Day 0)</label>
+                <input type="date" class="form-input" id="plantDate" value="{{ now()->addDay()->toDateString() }}" onchange="plRenderSchedule()">
             </div>
             <div class="form-group" style="margin:0;">
                 <label class="form-label">Prepared by</label>
                 <input type="text" class="form-input" value="{{ auth()->user()->name }}">
-            </div>
-            <div class="form-group" style="margin:0;">
-                <label class="form-label">Exporter / buyer</label>
-                <x-combobox name="planner_buyer" :options="$buyers" placeholder="Contract / market" />
             </div>
         </div>
     </div>
@@ -93,15 +120,7 @@
     {{-- Readiness checklist --}}
     <div class="card">
         <div class="card-header"><h3 class="card-title">Before you plant — readiness check</h3></div>
-        <ul class="planner-check">
-            <li><input type="checkbox"> Land ploughed &amp; harrowed to a fine tilth; drip lines laid</li>
-            <li><input type="checkbox"> Certified seed in hand (~30 kg/acre)</li>
-            <li><input type="checkbox"> DAP basal fertiliser ready (~80 kg/acre)</li>
-            <li><input type="checkbox"> <span class="must">Irrigation working</span> — the dry season has no rain to save the crop</li>
-            <li><input type="checkbox"> Well-rotted manure / compost worked in</li>
-            <li><input type="checkbox"> Soil test done (target pH 6.5–7.5)</li>
-            <li><input type="checkbox"> Exporter contract &amp; compliance (GLOBALG.A.P / KEPHIS) in motion</li>
-        </ul>
+        <ul class="planner-check" id="plChecklist"></ul>
     </div>
 
     {{-- The dated schedule --}}
@@ -123,46 +142,44 @@
         </div>
     </div>
 
-    {{-- Agronomy notes --}}
-    <div class="alert alert-warning no-print">
-        <div><strong>WEATHER</strong> — In the cool, cloudy Kenyan dry season (roughly Jun–Aug) growth can run a few days slower, so treat the first-harvest date as the earliest, not the guaranteed, start.</div>
-    </div>
-    <div class="alert alert-error no-print">
-        <div><strong>TWO DATES DECIDE THE CROP</strong> — During <b>flowering</b>, thrips scar pods (→ export rejection) and moisture must stay even. And stop residual sprays early enough that the <b>pre-harvest interval clears before the first pick</b>.</div>
-    </div>
+    {{-- Agronomy notes (per crop) --}}
+    <div id="plNotes"></div>
 
-    <p class="page-subtitle" style="max-width:70ch;">Typical ranges for Kenyan export French beans; they vary by variety, altitude and buyer spec. Defer to your exporter's protocol, current KEPHIS/EU rules and a local soil test.</p>
+    <p class="page-subtitle" style="max-width:70ch;" id="plFooter"></p>
+
+    {{-- Where these figures come from — kept on the printed sheet, like the source list on the French Bean doc. --}}
+    <div class="card" id="plSourcesCard">
+        <div class="card-header"><h3 class="card-title">Sources</h3></div>
+        <ul class="pl-sources" id="plSources"></ul>
+    </div>
 
 </div>
 
 <script>
-    // [label, task(html), startOffsetDays, endOffsetDays|null, rowClass]
-    var PLANNER_ROWS = [
-        ["Plant", "Sow at <b>30&times;15 cm</b>, DAP in the furrow (off the seed), irrigate in.", 0, null, "is-plant"],
-        ["Germination &amp; emergence", "Emergence in 5&ndash;8 days. Keep soil damp. <b>Scout bean fly</b> from day one.", 3, 8, ""],
-        ["Gap-fill", "Replant blanks to keep a uniform plant stand.", 9, null, ""],
-        ["1st top-dress (CAN)", "At 2&ndash;3 leaf stage: CAN ~60 kg/acre (split). <b>Weed now.</b>", 14, 18, ""],
-        ["Vegetative growth", "Steady water ~50 mm/week. Scout aphids &amp; whitefly.", 8, 30, ""],
-        ["Flowering", "<b>2nd top-dress (CAN)</b> as flowers open. Even moisture + <b>thrips control</b> are critical.", 30, 40, ""],
-        ["Pod fill", "Finish sprays &mdash; respect pre-harvest intervals. Watch rust / anthracnose.", 40, 48, ""],
-        ["First harvest", "First pick around day 45&ndash;50. Pick young, straight, string-free pods.", 45, 50, "is-harvest"],
-        ["Harvest window", "Rolling ~3 weeks. Fine: pick 2&times;/week &middot; extra-fine: 3&times;/week. Early-morning picks.", 45, 70, "is-harvest"],
-        ["Close-out &amp; rotation", "Uproot, sanitise residues, rotate to a <b>non-legume</b> next.", 75, 90, ""]
-    ];
+    var PL_PROGRAMS  = @json($programs);
+    var PL_VARIETIES = @json($varietiesByCrop);
+
     var PL_DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
     var PL_MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
     function plAddDays(base, n) { return new Date(base.getTime() + n * 86400000); }
     function plFmt(d) { return PL_DOW[d.getUTCDay()] + " " + d.getUTCDate() + " " + PL_MON[d.getUTCMonth()] + " " + d.getUTCFullYear(); }
+    function plCurrent() { return PL_PROGRAMS[document.getElementById("plCrop").value]; }
 
-    function renderSchedule() {
+    // Day 0 differs by crop: nursery crops are dated from transplant, not sowing.
+    function plDayZeroLabel(p) {
+        return p.day_zero === "transplant" ? "Transplant date (Day 0)" : "Planting date (Day 0)";
+    }
+
+    function plRenderSchedule() {
+        var p = plCurrent();
         var v = document.getElementById("plantDate").value;
         var tbody = document.getElementById("schedRows");
         tbody.innerHTML = "";
         if (!v) return;
-        var p = v.split("-");
-        var base = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
-        PLANNER_ROWS.forEach(function (r) {
+        var parts = v.split("-");
+        var base = new Date(Date.UTC(+parts[0], +parts[1] - 1, +parts[2]));
+        p.rows.forEach(function (r) {
             var start = plAddDays(base, r[2]);
             var dateStr = (r[3] === null) ? plFmt(start) : plFmt(start) + " &ndash; " + plFmt(plAddDays(base, r[3]));
             var dayStr = (r[3] === null) ? "Day " + r[2] : "Day " + r[2] + "&ndash;" + r[3];
@@ -177,6 +194,90 @@
             tbody.appendChild(tr);
         });
     }
-    renderSchedule();
+
+    function plRenderChecklist(p) {
+        var ul = document.getElementById("plChecklist");
+        ul.innerHTML = "";
+        p.checklist.forEach(function (item) {
+            var li = document.createElement("li");
+            li.innerHTML = '<input type="checkbox"> ' + item.text;
+            ul.appendChild(li);
+        });
+    }
+
+    function plRenderSources(p) {
+        var ul = document.getElementById("plSources");
+        ul.innerHTML = "";
+        (p.sources || []).forEach(function (s) {
+            var li = document.createElement("li");
+            var a = document.createElement("a");
+            a.href = s.url;
+            a.target = "_blank";
+            a.rel = "noopener";
+            a.textContent = s.label;
+            li.appendChild(document.createTextNode("› "));
+            li.appendChild(a);
+            ul.appendChild(li);
+        });
+        document.getElementById("plSourcesCard").hidden = !(p.sources && p.sources.length);
+    }
+
+    function plRenderNotes(p) {
+        var box = document.getElementById("plNotes");
+        box.innerHTML = "";
+        p.notes.forEach(function (n) {
+            var div = document.createElement("div");
+            div.className = "alert alert-" + n.type + " no-print";
+            div.innerHTML = "<div><strong>" + n.title + "</strong> &mdash; " + n.body + "</div>";
+            box.appendChild(div);
+        });
+    }
+
+    // Repoint the variety combobox at the chosen crop's list (free text still allowed).
+    function plRenderVarieties(p) {
+        var input = document.getElementById("planner_variety");
+        var menu = input.closest("[data-combobox]").querySelector("[data-combobox-menu]");
+        var list = PL_VARIETIES[p.crop] || [];
+        menu.innerHTML = "";
+        list.forEach(function (name) {
+            var opt = document.createElement("div");
+            opt.className = "combobox-option";
+            opt.setAttribute("role", "option");
+            opt.dataset.value = name;
+            opt.textContent = name;
+            menu.appendChild(opt);
+        });
+        input.value = "";
+        input.placeholder = p.variety_placeholder;
+    }
+
+    function plRenderAll() {
+        var p = plCurrent();
+        document.getElementById("plTitle").textContent = p.title;
+        document.getElementById("plDateLabel").textContent = plDayZeroLabel(p);
+        document.getElementById("plDayZeroHint").textContent =
+            p.day_zero === "transplant"
+                ? "Day 0 = transplant (this crop is nursery-raised first)."
+                : "Day 0 = sowing (direct-sown crop).";
+
+        var banner = document.getElementById("plUnverified");
+        if (p.verified) {
+            banner.hidden = true;
+        } else {
+            banner.hidden = false;
+            document.getElementById("plUnverifiedText").innerHTML =
+                "This " + p.crop + " plan is an indicative baseline, not a verified protocol. " +
+                "Confirm spacing, fertiliser rates and the spray programme with your agronomist before planting to it.";
+        }
+
+        plRenderVarieties(p);
+        plRenderChecklist(p);
+        plRenderNotes(p);
+        plRenderSources(p);
+        plRenderSchedule();
+        document.getElementById("plFooter").textContent = p.footer;
+    }
+
+    plRenderAll();
 </script>
 @endsection

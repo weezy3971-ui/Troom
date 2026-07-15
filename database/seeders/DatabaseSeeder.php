@@ -12,8 +12,11 @@ use App\Models\CropCycle;
 use App\Models\Customer;
 use App\Models\Dispatch;
 use App\Models\Farm;
+use App\Models\GerminationCheck;
 use App\Models\HarvestBatch;
 use App\Models\HarvestByProduct;
+use App\Models\PlantPopulationCount;
+use App\Models\YieldForecast;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Models\NurseryBatch;
@@ -85,7 +88,7 @@ class DatabaseSeeder extends Seeder
         // Projection template fields (seeds/bed, yield/bed, price/kg, germination)
         // feed the yield & revenue projection engine.
         $bean     = Crop::create(['name' => 'French Bean',        'variety' => 'Samantha',          'crop_type' => 'Vegetable', 'days_to_maturity' => 55, 'expected_yield_per_acre' => 4000,
-            'seeds_per_bed' => 1000, 'expected_yield_per_bed_kg' => 7,  'reference_price_per_kg' => 120, 'expected_germination_rate' => 0.85]);
+            'seeds_per_bed' => 1000, 'expected_yield_per_bed_kg' => 10, 'reference_price_per_kg' => 120, 'expected_germination_rate' => 0.85]);
         $capsicum = Crop::create(['name' => 'Capsicum',           'variety' => 'California Wonder',  'crop_type' => 'Vegetable', 'days_to_maturity' => 75, 'expected_yield_per_acre' => 12000,
             'seeds_per_bed' => 200,  'expected_yield_per_bed_kg' => 30, 'reference_price_per_kg' => 90,  'expected_germination_rate' => 0.90,
             'default_labour_budget' => 130000, 'default_input_budget' => 80000, 'default_irrigation_budget' => 35000, 'default_overhead_budget' => 20000]);
@@ -185,6 +188,23 @@ class DatabaseSeeder extends Seeder
 
         $managuNursery = NurseryBatch::create(['crop_id' => $managu->id, 'sow_date' => '2026-08-10', 'expected_ready_date' => '2026-09-01', 'quantity' => 45000, 'status' => 'ready']);
         Planting::create(['nursery_batch_id' => $managuNursery->id, 'crop_cycle_id' => $cycle5->id, 'quantity' => 40000, 'bed_count' => 50, 'seeds_sown' => 40000, 'area_acres' => 1.0, 'planting_date' => '2026-09-01']);
+
+        // ---- In-season crop monitoring (refines the yield projection) ----
+        $agronomist = User::where('role', 'agronomist')->first();
+
+        // French bean cycle (completed): a full monitoring trail — germination check,
+        // three declining stand counts, and a pre-harvest sample that forecast ~630 kg
+        // against the 650 kg actually harvested.
+        GerminationCheck::create(['crop_cycle_id' => $cycle4->id, 'check_date' => '2025-11-20', 'days_after_sowing' => 5, 'sample_size' => 200, 'germinated_count' => 172, 'germination_rate' => 0.860, 'notes' => 'Even emergence, scouted bean fly', 'recorded_by' => $agronomist?->id]);
+        PlantPopulationCount::create(['crop_cycle_id' => $cycle4->id, 'count_date' => '2025-12-01', 'days_after_planting' => 16, 'population_rate' => 0.930, 'sample_bed_count' => 10, 'plants_counted' => 930, 'recorded_by' => $agronomist?->id]);
+        PlantPopulationCount::create(['crop_cycle_id' => $cycle4->id, 'count_date' => '2025-12-18', 'days_after_planting' => 33, 'population_rate' => 0.880, 'sample_bed_count' => 10, 'plants_counted' => 880, 'notes' => 'Some loss after spray round', 'recorded_by' => $agronomist?->id]);
+        PlantPopulationCount::create(['crop_cycle_id' => $cycle4->id, 'count_date' => '2026-01-02', 'days_after_planting' => 48, 'population_rate' => 0.850, 'sample_bed_count' => 10, 'plants_counted' => 850, 'recorded_by' => $agronomist?->id]);
+        YieldForecast::create(['crop_cycle_id' => $cycle4->id, 'forecast_date' => '2026-01-05', 'sample_bed_count' => 10, 'total_bed_count' => 90, 'sample_yield_kg' => 70, 'projected_total_kg' => 630, 'notes' => 'Walked 10 of 90 beds @ ~7 kg/bed', 'recorded_by' => $agronomist?->id]);
+
+        // Active cycles: an early germination + stand count so their projection reads "measured".
+        GerminationCheck::create(['crop_cycle_id' => $cycle1->id, 'check_date' => '2026-03-06', 'days_after_sowing' => 5, 'sample_size' => 150, 'germinated_count' => 138, 'germination_rate' => 0.920, 'recorded_by' => $agronomist?->id]);
+        PlantPopulationCount::create(['crop_cycle_id' => $cycle1->id, 'count_date' => '2026-03-25', 'days_after_planting' => 24, 'population_rate' => 0.950, 'sample_bed_count' => 8, 'recorded_by' => $agronomist?->id]);
+        GerminationCheck::create(['crop_cycle_id' => $cycle3->id, 'check_date' => '2026-05-20', 'days_after_sowing' => 5, 'sample_size' => 200, 'germinated_count' => 176, 'germination_rate' => 0.880, 'recorded_by' => $agronomist?->id]);
 
         // ---- Seasonal Budgets ----
         SeasonalBudget::create([

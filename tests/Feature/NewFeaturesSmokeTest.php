@@ -33,7 +33,8 @@ class NewFeaturesSmokeTest extends TestCase
         $this->actingAs($this->owner());
 
         foreach ([
-            '/worker-attendances',
+            '/weigh-scale-readings',
+            '/weigh-scale-readings/create',
             '/crop-programs',
             '/procurement-requests',
             '/outgrowers',
@@ -95,6 +96,114 @@ class NewFeaturesSmokeTest extends TestCase
             'pay_basis' => 'target',
             'cost' => 600.00,
         ]);
+    }
+
+    public function test_labour_picks_roster_worker_and_backfills_identity(): void
+    {
+        $this->actingAs($this->owner());
+
+        $worker = Worker::create([
+            'name' => 'Jane Doe', 'worker_type' => 'permanent', 'phone' => '0700111222',
+            'national_id' => '12345678', 'default_rate' => 100, 'is_active' => true,
+        ]);
+
+        // Only worker_id + name + type sent; phone/ID should backfill from roster.
+        $this->post('/labour-attendances', [
+            'attendance_date' => '2026-07-14',
+            'worker_id' => $worker->id,
+            'worker_name' => 'Jane Doe',
+            'worker_type' => 'permanent',
+            'task' => 'Scouting',
+            'pay_basis' => 'hourly',
+            'hours_worked' => 4,
+            'rate' => 100,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('labour_attendances', [
+            'worker_id' => $worker->id,
+            'worker_type' => 'permanent',
+            'worker_phone' => '0700111222',
+            'worker_national_id' => '12345678',
+        ]);
+    }
+
+    public function test_labour_hourly_derives_hours_from_check_in_out(): void
+    {
+        $this->actingAs($this->owner());
+
+        $this->post('/labour-attendances', [
+            'attendance_date' => '2026-07-14',
+            'worker_name' => 'Permanent B',
+            'task' => 'Irrigation',
+            'pay_basis' => 'hourly',
+            'checked_in_at' => '2026-07-14T08:00',
+            'checked_out_at' => '2026-07-14T17:00',
+            'rate' => 100,
+        ])->assertRedirect();
+
+        // 9 hours × 100 = 900, hours derived from the check-in/out pair.
+        $this->assertDatabaseHas('labour_attendances', [
+            'worker_name' => 'Permanent B',
+            'hours_worked' => 9.00,
+            'cost' => 900.00,
+        ]);
+    }
+
+    public function test_planner_renders_for_every_crop(): void
+    {
+        $this->actingAs($this->owner());
+
+        // Default (no crop param) falls back to the first program.
+        $this->get('/crop-cycles/planner')->assertOk()->assertSee('French Bean Planting Planner');
+
+        foreach (\App\Support\PlannerPrograms::all() as $slug => $program) {
+            $this->get('/crop-cycles/planner?crop=' . $slug)
+                ->assertOk()
+                ->assertSee($program['title']);
+        }
+
+        // An unknown crop falls back rather than erroring.
+        $this->get('/crop-cycles/planner?crop=not-a-crop')->assertOk();
+    }
+
+    public function test_weigh_scale_device_ingest_requires_token_and_creates_reading(): void
+    {
+        config(['services.weigh_scale.token' => 'scale-secret']);
+
+        // No token → rejected.
+        $this->postJson('/api/weigh-scale/readings', [
+            'weighed_by_name' => 'Op 1', 'item' => 'Beans', 'weight' => 12.5,
+        ])->assertStatus(401);
+
+        // Correct token → reading created (source = device).
+        $this->withToken('scale-secret')->postJson('/api/weigh-scale/readings', [
+            'device_name' => 'Scale-01', 'external_id' => 'r-100',
+            'weighed_by_name' => 'Op 1', 'item' => 'Beans', 'weight' => 12.5, 'unit' => 'kg',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('weigh_scale_readings', [
+            'external_id' => 'r-100', 'weighed_by_name' => 'Op 1', 'source' => 'device',
+        ]);
+
+        // Idempotent: same external_id doesn't duplicate.
+        $this->withToken('scale-secret')->postJson('/api/weigh-scale/readings', [
+            'device_name' => 'Scale-01', 'external_id' => 'r-100',
+            'weighed_by_name' => 'Op 1', 'item' => 'Beans', 'weight' => 12.5,
+        ])->assertOk();
+
+        $this->assertSame(1, \App\Models\WeighScaleReading::where('external_id', 'r-100')->count());
+    }
+
+    public function test_weigh_scale_acknowledge(): void
+    {
+        $this->actingAs($this->owner());
+        $reading = \App\Models\WeighScaleReading::create([
+            'weighed_by_name' => 'Op 2', 'item' => 'Crate', 'weight' => 8, 'unit' => 'kg',
+            'weighed_at' => now(), 'source' => 'device',
+        ]);
+
+        $this->post("/weigh-scale-readings/{$reading->id}/acknowledge")->assertRedirect();
+        $this->assertNotNull($reading->fresh()->acknowledged_at);
     }
 
     public function test_procurement_receive_posts_inventory(): void

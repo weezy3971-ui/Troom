@@ -22,7 +22,40 @@ class YieldProjectionService
 
     public function __construct(private readonly CropCycle $cropCycle)
     {
-        $this->cropCycle->loadMissing('crop', 'block', 'plantings', 'harvestBatches');
+        $this->cropCycle->loadMissing(
+            'crop', 'block', 'plantings', 'harvestBatches',
+            'germinationChecks', 'plantPopulationCounts', 'yieldForecasts'
+        );
+    }
+
+    /** Most recent germination check for this cycle, if any. */
+    public function latestGerminationCheck()
+    {
+        return $this->cropCycle->germinationChecks->sortByDesc('check_date')->first();
+    }
+
+    /** Most recent plant-population (stand) count for this cycle, if any. */
+    public function latestPopulationCount()
+    {
+        return $this->cropCycle->plantPopulationCounts->sortByDesc('count_date')->first();
+    }
+
+    /** Most recent pre-harvest yield forecast for this cycle, if any. */
+    public function latestForecast()
+    {
+        return $this->cropCycle->yieldForecasts->sortByDesc('forecast_date')->first();
+    }
+
+    /** 'measured' when a real germination reading exists, else 'assumed'. */
+    public function germinationSource(): string
+    {
+        return $this->latestGerminationCheck() ? 'measured' : 'assumed';
+    }
+
+    /** 'measured' when a real stand count exists, else 'assumed'. */
+    public function populationSource(): string
+    {
+        return $this->latestPopulationCount() ? 'measured' : 'assumed';
     }
 
     /** Total beds planted across this cycle's plantings (null if none recorded). */
@@ -47,21 +80,59 @@ class YieldProjectionService
         return $area > 0 ? $area : null;
     }
 
-    /** Assumed germination rate as a fraction (crop default, else house default). */
+    /**
+     * Germination rate as a fraction. Uses the latest field reading when one
+     * exists; otherwise falls back to the crop default, then the house default.
+     */
     public function germinationRate(): float
     {
+        if ($check = $this->latestGerminationCheck()) {
+            return (float) $check->germination_rate;
+        }
+
         $rate = (float) ($this->cropCycle->crop->expected_germination_rate ?? 0);
 
         return $rate > 0 ? $rate : self::DEFAULT_GERMINATION_RATE;
     }
 
     /**
-     * Surviving plant population as a fraction. Phase 1 assumes a full stand;
-     * later phases derive this from the latest recorded stand count.
+     * Surviving plant population as a fraction, from the latest stand count.
+     * Defaults to a full stand (1.0) until a count is recorded.
      */
     public function populationRate(): float
     {
+        if ($count = $this->latestPopulationCount()) {
+            return (float) $count->population_rate;
+        }
+
         return 1.0;
+    }
+
+    /**
+     * Pre-harvest sample forecast in kg (sample yield/bed × total beds), from the
+     * latest recorded sampling walk. Null until a forecast is recorded.
+     */
+    public function preHarvestForecastKg(): ?float
+    {
+        $forecast = $this->latestForecast();
+
+        return $forecast ? (float) $forecast->projected_total_kg : null;
+    }
+
+    /**
+     * Actual-vs-forecast variance as a fraction of the forecast
+     * (positive = beat the forecast). Null until both figures exist.
+     */
+    public function forecastVariance(): ?float
+    {
+        $forecast = $this->preHarvestForecastKg();
+        $actual = $this->actualYieldKg();
+
+        if ($forecast === null || $forecast <= 0 || $actual <= 0) {
+            return null;
+        }
+
+        return round(($actual - $forecast) / $forecast, 4);
     }
 
     /**
@@ -151,17 +222,21 @@ class YieldProjectionService
     public function summary(): array
     {
         return [
-            'basis'             => $this->basis(),
-            'planted_beds'      => $this->plantedBeds(),
-            'planted_area'      => $this->plantedArea(),
-            'germination_rate'  => $this->germinationRate(),
-            'population_rate'   => $this->populationRate(),
-            'projected_yield'   => $this->projectedYieldKg(),
-            'projected_revenue' => $this->projectedRevenue(),
-            'actual_yield'      => $this->actualYieldKg(),
-            'actual_revenue'    => $this->actualRevenue(),
-            'yield_variance'    => $this->yieldVariance(),
-            'price_per_kg'      => (float) ($this->cropCycle->crop->reference_price_per_kg ?? 0),
+            'basis'                => $this->basis(),
+            'planted_beds'         => $this->plantedBeds(),
+            'planted_area'         => $this->plantedArea(),
+            'germination_rate'     => $this->germinationRate(),
+            'germination_source'   => $this->germinationSource(),
+            'population_rate'      => $this->populationRate(),
+            'population_source'    => $this->populationSource(),
+            'projected_yield'      => $this->projectedYieldKg(),
+            'projected_revenue'    => $this->projectedRevenue(),
+            'pre_harvest_forecast' => $this->preHarvestForecastKg(),
+            'forecast_variance'    => $this->forecastVariance(),
+            'actual_yield'         => $this->actualYieldKg(),
+            'actual_revenue'       => $this->actualRevenue(),
+            'yield_variance'       => $this->yieldVariance(),
+            'price_per_kg'         => (float) ($this->cropCycle->crop->reference_price_per_kg ?? 0),
         ];
     }
 }

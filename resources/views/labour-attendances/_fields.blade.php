@@ -7,17 +7,56 @@
     <div class="form-group">
         <label class="form-label" for="worker_id">Worker (roster)</label>
         <select id="worker_id" name="worker_id" class="form-select" data-worker-select>
-            <option value="">— Ad-hoc / type name below —</option>
-            @foreach($workers as $worker)
-                <option value="{{ $worker->id }}" data-name="{{ $worker->name }}" {{ old('worker_id', $a?->worker_id) == $worker->id ? 'selected' : '' }}>{{ $worker->name }} ({{ ucfirst($worker->worker_type ?? 'casual') }})</option>
-            @endforeach
+            <option value="">— Ad-hoc / type details below —</option>
+            @php
+                $permanent = $workers->where('worker_type', 'permanent');
+                $casual = $workers->where('worker_type', '!=', 'permanent');
+            @endphp
+            @if($casual->isNotEmpty())
+                <optgroup label="Casual">
+                    @foreach($casual as $worker)
+                        <option value="{{ $worker->id }}"
+                            data-name="{{ $worker->name }}" data-type="{{ $worker->worker_type ?? 'casual' }}"
+                            data-phone="{{ $worker->phone }}" data-id="{{ $worker->national_id }}"
+                            {{ old('worker_id', $a?->worker_id) == $worker->id ? 'selected' : '' }}>{{ $worker->name }}</option>
+                    @endforeach
+                </optgroup>
+            @endif
+            @if($permanent->isNotEmpty())
+                <optgroup label="In-house (permanent)">
+                    @foreach($permanent as $worker)
+                        <option value="{{ $worker->id }}"
+                            data-name="{{ $worker->name }}" data-type="permanent"
+                            data-phone="{{ $worker->phone }}" data-id="{{ $worker->national_id }}"
+                            {{ old('worker_id', $a?->worker_id) == $worker->id ? 'selected' : '' }}>{{ $worker->name }}</option>
+                    @endforeach
+                </optgroup>
+            @endif
         </select>
         @error('worker_id') <p class="form-error">{{ $message }}</p> @enderror
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="worker_type">Worker Type *</label>
+        <select id="worker_type" name="worker_type" class="form-select" required>
+            <option value="casual" {{ old('worker_type', $a?->worker_type ?? 'casual') === 'casual' ? 'selected' : '' }}>Casual</option>
+            <option value="permanent" {{ old('worker_type', $a?->worker_type) === 'permanent' ? 'selected' : '' }}>In-house (permanent)</option>
+        </select>
+        @error('worker_type') <p class="form-error">{{ $message }}</p> @enderror
     </div>
     <div class="form-group">
         <label class="form-label" for="worker_name">Worker Name *</label>
         <input type="text" id="worker_name" name="worker_name" value="{{ old('worker_name', $a?->worker_name) }}" class="form-input" required>
         @error('worker_name') <p class="form-error">{{ $message }}</p> @enderror
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="worker_phone">Phone</label>
+        <input type="text" id="worker_phone" name="worker_phone" value="{{ old('worker_phone', $a?->worker_phone) }}" class="form-input">
+        @error('worker_phone') <p class="form-error">{{ $message }}</p> @enderror
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="worker_national_id">National ID</label>
+        <input type="text" id="worker_national_id" name="worker_national_id" value="{{ old('worker_national_id', $a?->worker_national_id) }}" class="form-input">
+        @error('worker_national_id') <p class="form-error">{{ $message }}</p> @enderror
     </div>
     <div class="form-group">
         <label class="form-label" for="task">Task *</label>
@@ -117,10 +156,18 @@
         if (basis) { basis.addEventListener('change', toggle); toggle(); }
 
         if (workerSelect && nameInput) {
+            var typeSelect = document.getElementById('worker_type');
+            var phoneInput = document.getElementById('worker_phone');
+            var idInput = document.getElementById('worker_national_id');
             workerSelect.addEventListener('change', function () {
                 var opt = workerSelect.options[workerSelect.selectedIndex];
-                var name = opt ? opt.getAttribute('data-name') : '';
+                if (!opt || !opt.value) return;
+                var name = opt.getAttribute('data-name');
                 if (name) nameInput.value = name;
+                var type = opt.getAttribute('data-type');
+                if (type && typeSelect) typeSelect.value = type;
+                if (phoneInput) phoneInput.value = opt.getAttribute('data-phone') || '';
+                if (idInput) idInput.value = opt.getAttribute('data-id') || '';
             });
         }
     })();

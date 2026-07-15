@@ -72,10 +72,18 @@
                     @foreach($logs as $log)
                     @php
                         $color = match($log->action) {
-                            'created'  => 'active',
-                            'deleted'  => 'down',
-                            'updated'  => 'sown',
-                            default    => 'neutral',
+                            'created'                          => 'active',
+                            'deleted', 'revoked_approval'      => 'down',
+                            'updated'                          => 'sown',
+                            // Domain transitions
+                            'activated', 'assigned', 'ordered' => 'planned',
+                            'completed', 'confirmed',
+                            'checked_in', 'received',
+                            'delivered', 'approved_email'      => 'completed',
+                            'cancelled'                        => 'cancelled',
+                            'transplanted'                     => 'transplanted',
+                            'acknowledged'                     => 'ready',
+                            default                            => 'neutral',
                         };
                     @endphp
                     <tr>
@@ -83,7 +91,7 @@
                             {{ $log->created_at->format('M d, H:i') }}
                         </td>
                         <td style="font-weight:500;">{{ $log->user->name ?? 'System' }}</td>
-                        <td><span class="badge badge-{{ $color }}">{{ ucfirst($log->action) }}</span></td>
+                        <td><span class="badge badge-{{ $color }}">{{ ucwords(str_replace('_', ' ', $log->action)) }}</span></td>
                         <td style="color:var(--text-secondary);">{{ $log->subjectLabel() ?? '—' }}</td>
                         <td style="max-width:420px; color:var(--text-secondary); font-size:13.5px;">{{ $log->description }}</td>
                     </tr>

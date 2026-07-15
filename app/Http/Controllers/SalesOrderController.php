@@ -8,6 +8,7 @@ use App\Models\Outgrower;
 use App\Models\PackhouseLot;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderLine;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -144,12 +145,12 @@ class SalesOrderController extends Controller
             'amount_repaid' => 'nullable|numeric|min:0',
         ]);
 
-        $salesOrder->update([
+        ActivityLogger::as('delivered', fn () => $salesOrder->update([
             'delivered_quantity' => $validated['delivered_quantity'],
             'rejected_quantity' => $validated['rejected_quantity'] ?? 0,
             'returned_quantity' => $validated['returned_quantity'] ?? 0,
             'amount_repaid' => $validated['amount_repaid'] ?? 0,
-        ]);
+        ]));
 
         return redirect()->route('sales-orders.show', $salesOrder)
             ->with('success', 'Delivery outcome recorded.');

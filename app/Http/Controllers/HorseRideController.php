@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Guide;
 use App\Models\Horse;
 use App\Models\HorseRide;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -135,11 +136,11 @@ class HorseRideController extends Controller
             ]);
         }
 
-        $ride->update([
+        ActivityLogger::as('assigned', fn () => $ride->update([
             'horse_id' => $horse->id,
             'guide_id' => $validated['guide_id'],
             'status' => 'assigned',
-        ]);
+        ]));
 
         return redirect()->route('rides.show', $ride)
             ->with('success', "{$horse->name} and guide assigned to this ride.");
@@ -147,7 +148,7 @@ class HorseRideController extends Controller
 
     public function cancel(HorseRide $ride)
     {
-        $ride->update(['status' => 'cancelled']);
+        ActivityLogger::as('cancelled', fn () => $ride->update(['status' => 'cancelled']));
 
         return redirect()->route('rides.show', $ride)
             ->with('success', 'Ride cancelled. The horse is freed.');

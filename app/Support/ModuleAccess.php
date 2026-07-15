@@ -24,6 +24,7 @@ class ModuleAccess
         'fertigation' => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
         'pest'        => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
         'labour'      => ['horticulture_manager', 'farm_supervisor'],
+        'weighing'    => ['horticulture_manager', 'farm_supervisor', 'packhouse_supervisor'],
         'projects'    => ['horticulture_manager', 'farm_supervisor'],
         'checkouts'   => ['horticulture_manager', 'storekeeper', 'farm_supervisor'],
         'stables'     => ['horticulture_manager', 'stable_manager'],
@@ -37,6 +38,8 @@ class ModuleAccess
         // Executive Dashboard is finance-facing: Finance Officer & MD only
         // (owner is always allowed as super-admin).
         'analytics'   => ['finance_officer', 'md'],
+        // AI reports & companion — executive-facing, same audience as analytics.
+        'ai'          => ['finance_officer', 'md', 'horticulture_manager'],
         // User administration & audit trail (owner always allowed via CheckRole).
         'admin'       => ['horticulture_manager'],
     ];

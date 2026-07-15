@@ -8,6 +8,7 @@ use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Models\ProcurementRequest;
 use App\Models\ProcurementRequestLine;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 
 class ProcurementRequestController extends Controller
@@ -112,7 +113,10 @@ class ProcurementRequestController extends Controller
             return back()->with('error', 'Only a requested order can be marked ordered.');
         }
 
-        $procurementRequest->update(['status' => 'ordered', 'ordered_at' => now()]);
+        ActivityLogger::as('ordered', fn () => $procurementRequest->update([
+            'status' => 'ordered',
+            'ordered_at' => now(),
+        ]));
 
         return back()->with('success', 'Marked as ordered.');
     }
@@ -147,7 +151,10 @@ class ProcurementRequestController extends Controller
             ]);
         }
 
-        $procurementRequest->update(['status' => 'received', 'received_at' => now()]);
+        ActivityLogger::as('received', fn () => $procurementRequest->update([
+            'status' => 'received',
+            'received_at' => now(),
+        ]));
 
         return back()->with('success', 'Marked as received. Linked items added to inventory.');
     }
