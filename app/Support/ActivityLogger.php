@@ -106,7 +106,7 @@ class ActivityLogger
             // People-centric records (labour, custody, rides)
             'worker_name', 'holder_name', 'customer_name',
             // Activity-centric records with no name of their own
-            'activity_type', 'chemical_used', 'task',
+            'activity_type', 'chemical_used', 'task', 'category',
             'email',
         ];
 

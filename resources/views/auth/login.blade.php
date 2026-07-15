@@ -156,6 +156,7 @@
             Have an approved email? <a href="{{ route('register') }}" style="color: var(--accent-hover); text-decoration: none; font-weight: 600;">Create your account</a>
         </div>
 
+        @unless(app()->isProduction())
         <div class="demo-hint">
             <div class="demo-toggle" onclick="toggleDemo()">
                 <strong>Demo access</strong>
@@ -219,6 +220,7 @@
                 <div class="demo-all-pass">All accounts — password: <code>password</code></div>
             </div>
         </div>
+        @endunless
 
         <script>
         function toggleDemo() {

@@ -13,7 +13,7 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start;">
+<div class="cols-2" style="display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start;">
     {{-- Profile --}}
     <div class="card">
         <div class="card-header"><h3 class="card-title">Profile</h3></div>

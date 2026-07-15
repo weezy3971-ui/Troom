@@ -43,7 +43,7 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+<div class="cols-2" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px;">
     <div class="card" style="padding: 0;">
         <div class="card-header" style="padding: 18px 22px 0;">
             <h3 class="card-title">Quality Checks</h3>

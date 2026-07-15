@@ -45,7 +45,7 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start;">
+<div class="cols-2" style="display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start;">
     {{-- Allocated lines --}}
     <div class="card" style="padding: 0;">
         <div class="card-header" style="padding: 18px 22px 0;"><h3 class="card-title">Allocated Sources</h3></div>

@@ -139,7 +139,7 @@
     </div>
 
     {{-- Spray / Fertigation History --}}
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+    <div class="cols-2" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-bottom: 16px;">
         <div class="card" style="padding: 0;">
             <div class="card-header" style="padding: 16px 20px 0;">
                 <h3 class="card-title">🧪 Spray History</h3>

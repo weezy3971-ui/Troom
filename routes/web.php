@@ -16,6 +16,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DailyActivityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DispatchController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FarmController;
 use App\Http\Controllers\FertigationLogController;
 use App\Http\Controllers\FinanceController;
@@ -48,9 +49,9 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
@@ -64,6 +65,10 @@ Route::middleware('auth')->group(function () {
 
     // Global quick-search
     Route::get('/search', [SearchController::class, 'index'])->name('search');
+
+    // Expenses — open to every role; anyone in the field can log ad-hoc spend
+    // (tools, fuel, fines, casual labour paid in cash, etc).
+    Route::resource('expenses', ExpenseController::class);
 
     // Module 1: Master Data — readable by all roles (spec), writable by managers.
     // Write routes (create/store/edit/update/destroy) are registered before the

@@ -44,6 +44,9 @@
         'planning' => '<path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M11 14h2M11 18h2"/>',
         'horse' => '<path d="M8.5 20.5c-3-1.6-4.5-5-4.5-8.5a8 8 0 0 1 16 0c0 3.5-1.5 6.9-4.5 8.5"/><circle cx="6.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/><circle cx="17.5" cy="9.5" r=".6" fill="currentColor" stroke="none"/><circle cx="6.8" cy="13.5" r=".6" fill="currentColor" stroke="none"/><circle cx="17.2" cy="13.5" r=".6" fill="currentColor" stroke="none"/>',
         'chevron' => '<path d="m9 18 6-6-6-6"/>',
+        'menu' => '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>',
+        'close' => '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+        'expenses' => '<path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2Z"/><path d="M16 13a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"/>',
     ];
 
     $useSolid = $solid && isset($solidIcons[$name]);

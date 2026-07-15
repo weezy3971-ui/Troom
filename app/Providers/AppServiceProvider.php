@@ -72,6 +72,9 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Guide::class,
         \App\Models\HorseRide::class,
 
+        // Finance
+        \App\Models\Expense::class,
+
         // Reporting
         \App\Models\AiReport::class,
 

@@ -81,7 +81,7 @@
 </div>
 
 @if($ma::allows($u, 'crop_cycles') || $ma::allows($u, 'master_data'))
-<div class="dashboard-cols" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+<div class="dashboard-cols" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px;">
     {{-- Recent Crop Cycles --}}
     <div class="card">
         <div class="card-header">

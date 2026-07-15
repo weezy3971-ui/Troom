@@ -37,7 +37,7 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start;">
+<div class="cols-2" style="display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start;">
     {{-- Record movement --}}
     <div class="card">
         <div class="card-header"><h3 class="card-title">Record Movement</h3></div>

@@ -141,13 +141,38 @@
             display: flex;
             flex-direction: column;
             align-items: stretch;
-            z-index: 100;
+            z-index: 250;
             padding: 0 12px;
             overflow-y: auto;
             overflow-x: hidden;
             scrollbar-width: none;
+            /* Inert on desktop (transform never changes there); this is what
+               lets the mobile media query slide the drawer in/out smoothly. */
+            transition: transform var(--transition);
         }
         .sidebar::-webkit-scrollbar { display: none; }
+
+        /* ---- Mobile-only controls (hidden on desktop by default) ----
+           !important: both buttons also carry .icon-btn, whose own
+           `display: inline-flex` is declared later in this stylesheet and
+           would otherwise win the cascade (equal specificity, later source
+           order) and leave them visible — and clickable but functionally
+           inert — on desktop. */
+        .menu-toggle-btn, .sidebar-close-btn { display: none !important; }
+        .sidebar-overlay { display: none; }
+
+        /* .sidebar-close-btn sits on the dark rail, not the light card
+           background .icon-btn assumes — give it its own on-dark styling. */
+        .sidebar-close-btn {
+            margin-left: auto;
+            border-color: rgba(255, 255, 255, 0.14);
+            color: var(--rail-icon);
+        }
+        .sidebar-close-btn:hover {
+            background: var(--rail-bg-hover);
+            color: var(--rail-icon-hover);
+            border-color: rgba(255, 255, 255, 0.24);
+        }
 
         /* ---- Brand mark ---- */
         .sidebar-brand {
@@ -345,6 +370,8 @@
             display: flex;
             align-items: center;
             gap: 16px;
+            flex: 1;
+            min-width: 0; /* lets .topbar-title actually shrink/ellipsis instead of overflowing */
         }
 
 
@@ -354,9 +381,13 @@
             font-weight: 600;
             color: var(--text-primary);
             letter-spacing: -0.3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
         }
 
-        .topbar-actions { display: flex; align-items: center; gap: 12px; }
+        .topbar-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
         .role-badge {
             padding: 4px 10px;
@@ -861,6 +892,7 @@
             overflow-x: auto;
             border-radius: var(--radius);
             border: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch; /* momentum scrolling for wide tables on iOS */
         }
 
         table { width: 100%; border-collapse: collapse; }
@@ -1245,7 +1277,7 @@
         /* ============================================
            ACTIONS
            ============================================ */
-        .actions { display: flex; gap: 8px; align-items: center; }
+        .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .actions form { display: inline; }
 
         /* ============================================
@@ -1260,14 +1292,108 @@
         }
 
         /* ============================================
-           RESPONSIVE
-           ============================================ */
+           RESPONSIVE — handheld / tablet
+           ============================================
+           The sidebar used to just `display: none` below 768px with nothing
+           to replace it — there was no way to navigate at all on a phone.
+           It's now an off-canvas drawer: hidden off-screen by default, slid
+           in with `body.sidebar-open`, dismissed by the overlay, the ✕
+           button, or Escape (wired in the script block below). */
         @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .topbar { left: 0; padding: 0 16px; }
+            /* ---- Sidebar → drawer ---- */
+            .sidebar {
+                width: min(var(--rail-width), 84vw);
+                transform: translateX(-100%);
+                box-shadow: var(--shadow-lg);
+            }
+            body.sidebar-open .sidebar { transform: translateX(0); }
+            .sidebar-close-btn { display: inline-flex !important; }
+
+            .sidebar-overlay {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 240;
+                background: rgba(15, 23, 18, 0.5);
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity var(--transition), visibility 0ms var(--transition);
+            }
+            body.sidebar-open .sidebar-overlay {
+                opacity: 1;
+                visibility: visible;
+                transition: opacity var(--transition), visibility 0ms;
+            }
+            /* Lock background scroll while the drawer is open. */
+            body.sidebar-open { overflow: hidden; }
+
+            /* ---- Topbar ---- */
+            .topbar { left: 0; padding: 0 12px; gap: 8px; }
+            .menu-toggle-btn { display: inline-flex !important; flex-shrink: 0; }
             .main-content { margin-left: 0; padding: 16px; }
+
+            /* ---- Notification / user dropdowns → full-width sheet ----
+               Fixed 340px/280px panels anchored `right: 0` on a topbar icon
+               run off the left edge of a 320–375px phone screen and force
+               the whole page to scroll horizontally. Anchoring to the
+               viewport instead keeps them fully on-screen at any width. */
+            .notif-dropdown, .user-dropdown {
+                position: fixed;
+                top: calc(var(--topbar-height) + 8px);
+                left: 12px;
+                right: 12px;
+                width: auto;
+            }
+            .notif-dropdown-body { max-height: 50vh; }
+
+            /* ---- Touch targets (44px is the accepted minimum) ---- */
+            .btn:not(.btn-sm) { padding: 12px 16px; font-size: 14px; }
+            .icon-btn, .menu-toggle-btn, .sidebar-close-btn { width: 40px; height: 40px; }
+            .sidebar-nav a, .nav-group > summary { height: 46px; }
+
+            /* ---- Inputs at 16px: below that, iOS Safari zooms the page in
+               on focus, which is disorienting on a data-entry-heavy form. --*/
+            .form-input, .form-select, .form-textarea,
+            .search-bar .search-input, .search-bar .filter-select {
+                font-size: 16px;
+            }
+
+            /* ---- Page header: stack title above actions so buttons get
+               the full width to wrap into, instead of being squeezed into
+               a thin strip beside a long title. ---- */
+            .page-header { flex-direction: column; align-items: stretch; }
+            .page-header .actions { width: 100%; }
+
+            /* ---- Reclaim padding for narrow screens ---- */
+            .card { padding: 16px; }
+            thead th { padding: 8px 10px; font-size: 10px; }
+            tbody td { padding: 10px; font-size: 12.5px; }
+
+            /* ---- Fewer columns before stat tiles get unreadably narrow ----
+               !important: several pages set grid-template-columns inline
+               (e.g. analytics/index.blade.php's P&L tiles), and an inline
+               style always wins over an external class rule regardless of
+               media query — without !important this override would silently
+               do nothing on exactly the pages that most need it. */
+            .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+            /* ---- Two-up dashboard/detail layouts (each side usually holds
+               its own table, or a hard-coded 320/340px sidebar column that
+               can never fit a phone width at all) stack to one column. Also
+               !important for the same inline-style-wins-by-default reason —
+               these are the exact views (finance, inventory item, sales
+               order, settings) that pair a fixed px track with content. ---- */
+            .dashboard-cols, .cols-2 { grid-template-columns: 1fr !important; }
+
             .kpi-bar { gap: 6px; }
             .kpi-chip { padding: 6px 10px; }
+        }
+
+        @media (max-width: 420px) {
+            /* Narrower still: even 2 columns truncates KPI labels ("ACTIVE
+               CRO…"). !important for the same inline-style-wins reason as
+               the 768px block above. */
+            .stats-grid { grid-template-columns: 1fr !important; }
         }
 
         /* ============================================
@@ -1377,6 +1503,9 @@
         <div class="sidebar-brand">
             <div class="logo"><x-icon name="crops" size="20" /></div>
             <span class="brand-name">Trooms</span>
+            <button type="button" class="icon-btn sidebar-close-btn" aria-label="Close menu" onclick="document.body.classList.remove('sidebar-open')">
+                <x-icon name="close" size="16" />
+            </button>
         </div>
 
         <div class="sidebar-divider"></div>
@@ -1393,6 +1522,7 @@
                 @if($ma::allows($u, 'ai'))
                 <li><a href="{{ route('ai-reports.index') }}" class="{{ request()->routeIs('ai-reports.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">AI Reports</span></a></li>
                 @endif
+                <li><a href="{{ route('expenses.index') }}" class="{{ request()->routeIs('expenses.*') ? 'active' : '' }}"><span class="icon"><x-icon name="expenses" /></span><span class="nav-label">Expenses</span></a></li>
             </ul>
         </div>
 
@@ -1510,9 +1640,15 @@
         {{-- Settings & Log Out live in the top-right user menu, not the sidebar. --}}
     </aside>
 
+    {{-- Tap-outside-to-close backdrop for the mobile drawer (below 768px only). --}}
+    <div class="sidebar-overlay" onclick="document.body.classList.remove('sidebar-open')"></div>
+
     {{-- ---- Topbar ---- --}}
     <header class="topbar">
         <div class="topbar-left">
+            <button type="button" class="icon-btn menu-toggle-btn" aria-label="Open menu" title="Menu" onclick="document.body.classList.add('sidebar-open')">
+                <x-icon name="menu" size="18" />
+            </button>
             <div class="topbar-title">@yield('title', 'Dashboard')</div>
         </div>
         <div class="topbar-actions">
@@ -1745,6 +1881,13 @@
                 if (e.key === 'Escape') notifWrap.classList.remove('open');
             });
         }
+
+        // Mobile sidebar drawer — Escape closes it (overlay tap and the ✕
+        // button are wired inline on their own elements). A plain page nav
+        // via a sidebar link resets the class automatically on the next load.
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') document.body.classList.remove('sidebar-open');
+        });
 
 
         // In-app confirm modal — intercepts any form with a data-confirm attribute
