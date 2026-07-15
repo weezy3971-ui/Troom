@@ -7,7 +7,9 @@
     <div class="form-group">
         <label class="form-label" for="worker_id">Worker (roster)</label>
         <select id="worker_id" name="worker_id" class="form-select" data-worker-select>
-            <option value="">— Ad-hoc / type details below —</option>
+            {{-- Blank "none selected" option — must stay, or the browser
+                 auto-selects the first worker and misattributes the entry. --}}
+            <option value=""></option>
             @php
                 $permanent = $workers->where('worker_type', 'permanent');
                 $casual = $workers->where('worker_type', '!=', 'permanent');

@@ -17,7 +17,9 @@
             <div class="form-group">
                 <label class="form-label" for="weighed_by_worker_id">Weighed By (roster)</label>
                 <select id="weighed_by_worker_id" name="weighed_by_worker_id" class="form-select" data-worker-select>
-                    <option value="">— Ad-hoc / type name —</option>
+                    {{-- Blank "none selected" option — must stay, or the browser
+                         auto-selects the first worker and misattributes the reading. --}}
+                    <option value=""></option>
                     @foreach($workers as $worker)
                         <option value="{{ $worker->id }}" data-name="{{ $worker->name }}" {{ old('weighed_by_worker_id') == $worker->id ? 'selected' : '' }}>{{ $worker->name }} ({{ ucfirst($worker->worker_type ?? 'casual') }})</option>
                     @endforeach
