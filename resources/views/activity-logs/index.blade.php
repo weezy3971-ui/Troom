@@ -40,6 +40,10 @@
                 @endforeach
             </select>
         </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="date">Date</label>
+            <input type="date" id="date" name="date" value="{{ request('date') }}" class="form-input">
+        </div>
         <div class="form-group" style="margin-bottom:0; display:flex; gap:8px;">
             <button type="submit" class="btn btn-primary">Filter</button>
             <a href="{{ route('activity-logs.index', $showAll ? ['all'=>1] : []) }}" class="btn btn-ghost">Reset</a>

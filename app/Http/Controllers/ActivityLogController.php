@@ -45,6 +45,10 @@ class ActivityLogController extends Controller
             $query->where('description', 'like', "%{$search}%");
         }
 
+        if ($date = $request->input('date')) {
+            $query->whereDate('created_at', $date);
+        }
+
         $logs = $query->paginate(50)->withQueryString();
 
         $users = User::orderBy('name')->get();
