@@ -1,58 +1,43 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Trooms ERP
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Horticulture management system — from nursery to dispatch, one farm system.
 
-## About Laravel
+Trooms ERP tracks a horticulture operation end-to-end: crop planning and budgets, nursery batches, daily field operations (irrigation, fertigation, spraying), labour and attendance, harvest and packhouse traceability, sales and dispatch, inventory and procurement, and a native finance ledger — plus an executive dashboard with AI-generated reports and KPI narratives. It also includes a separate Stables module (horses, guides, rides) for operations that run agritourism alongside farming.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Backend**: Laravel 13 (PHP 8.3+)
+- **Frontend**: Blade views, Tailwind CSS 4, Vite — no SPA framework
+- **Database**: SQLite by default (see `.env.example`); swap `DB_CONNECTION` for MySQL/Postgres in production
+- **Queue**: database driver — used for AI report generation and KPI narrative jobs
+- **AI**: Anthropic Claude, called directly via `App\Services\Ai\AiClient` (no SDK dependency). Optional — the app runs fine without an `ANTHROPIC_API_KEY`, AI features just stay disabled
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Access Control
 
-## Learning Laravel
+- **Roles**: `owner`, `md`, `horticulture_manager`, `agronomist`, `farm_supervisor`, `finance_officer`, `sales_officer`, `storekeeper`, `quality_officer`, `packhouse_supervisor`, `driver`, `stable_manager` (`app/Models/User.php`)
+- **Module gating**: each module (master data, crop cycles, nursery, finance, AI, admin, etc.) is access-controlled per role via `App\Support\ModuleAccess` middleware, not just per-route policies
+- **Invite-only registration**: nobody can self-register unless an owner/admin first approves their email under Users. Once approved, they visit `/register` and set their own password
+- **Activity log**: every significant action is recorded to an audit trail, visible to owner/horticulture_manager under Activity Logs
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Getting Started
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Before sending the project to someone else**, set up the admin login yourself:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+1. `cp .env.example .env` and set `SEED_ADMIN_PASSWORD` to the password you want to give them.
+2. Run `composer setup` — this installs dependencies, generates the app key, migrates the database, and seeds the owner account (`admin@trooms.co.ke`) with that password, plus starter data (chart of accounts, etc.).
+3. Send them the project (including the seeded database) along with the login: `admin@trooms.co.ke` / the password you chose. They don't need to touch `.env` or run the seeder themselves — the account already exists in the database you're sending.
+4. Once they're in, they can change the password from Account Settings any time — that's a normal password update and does not require re-seeding, and it won't get reset if `composer setup` or the seeder ever runs again on that same database.
+5. To onboard other people: the owner approves their email under Users, then each person visits `/register` and sets their own password. That account and password are theirs from then on; nothing about the seeder affects them.
 
-## Agentic Development
+The seeder is safe to re-run (`php artisan db:seed`) — it skips the owner account if it already exists, so it will never silently overwrite anyone's password.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Local development
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm install
+composer dev   # runs the PHP server, queue listener, and Vite dev server together
 ```
-
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

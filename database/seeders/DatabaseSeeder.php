@@ -13,33 +13,50 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ---- Owner ----
-        $password = env('SEED_ADMIN_PASSWORD', str()->random(20));
+        $owner = User::where('email', 'admin@trooms.co.ke')->first();
 
-        $owner = User::create([
-            'name' => 'Farm Admin',
-            'email' => 'admin@trooms.co.ke',
-            'role' => 'owner',
-            'password' => Hash::make($password),
-        ]);
+        if ($owner) {
+            $this->command->info("Owner {$owner->email} already exists — leaving password untouched.");
+        } else {
+            $password = env('SEED_ADMIN_PASSWORD');
 
-        if (! env('SEED_ADMIN_PASSWORD')) {
-            $this->command->warn("Generated password for {$owner->email}: {$password}");
+            if (! $password) {
+                if (app()->isProduction()) {
+                    throw new \RuntimeException('SEED_ADMIN_PASSWORD must be set before seeding the owner account in production.');
+                }
+                $password = str()->random(20);
+            }
+
+            $owner = User::create([
+                'name' => 'Farm Admin',
+                'email' => 'admin@trooms.co.ke',
+                'role' => 'owner',
+                'password' => Hash::make($password),
+            ]);
+
+            if (! env('SEED_ADMIN_PASSWORD')) {
+                $this->command->warn("Generated password for {$owner->email}: {$password}");
+            }
         }
 
         // ---- Chart of Accounts ----
-        ChartOfAccount::insert([
-            ['code' => '1000', 'name' => 'Cash & Bank',           'type' => 'asset',   'created_at' => now(), 'updated_at' => now()],
-            ['code' => '4000', 'name' => 'Produce Sales',         'type' => 'income',  'created_at' => now(), 'updated_at' => now()],
-            ['code' => '5000', 'name' => 'Farm Operating Costs',  'type' => 'expense', 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        foreach ([
+            ['code' => '1000', 'name' => 'Cash & Bank',           'type' => 'asset'],
+            ['code' => '4000', 'name' => 'Produce Sales',         'type' => 'income'],
+            ['code' => '5000', 'name' => 'Farm Operating Costs',  'type' => 'expense'],
+        ] as $account) {
+            ChartOfAccount::firstOrCreate(['code' => $account['code']], $account);
+        }
 
         // ---- Approved email for owner ----
-        ApprovedEmail::create([
-            'email' => $owner->email,
-            'role'  => $owner->role,
-            'invited_by' => $owner->id,
-            'registered_at' => now(),
-        ]);
+        ApprovedEmail::firstOrCreate(
+            ['email' => $owner->email],
+            [
+                'role' => $owner->role,
+                'invited_by' => $owner->id,
+                'registered_at' => now(),
+            ]
+        );
 
         $this->call(StableSeeder::class);
     }

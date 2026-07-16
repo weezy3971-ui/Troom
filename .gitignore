@@ -28,9 +28,16 @@ Thumbs.db
 
 # Non-project files
 /_non-project
+_tmp_*
 
 # AI tool configs
 /.agents
 /.claude
 /.planning
 skills-lock.json
+
+.vercel
+.env*.local
+/vercel.json
+/.vercelignore
+/api
