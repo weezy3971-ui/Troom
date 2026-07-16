@@ -21,16 +21,6 @@ Trooms ERP tracks a horticulture operation end-to-end: crop planning and budgets
 
 ## Getting Started
 
-**Before sending the project to someone else**, set up the admin login yourself:
-
-1. `cp .env.example .env` and set `SEED_ADMIN_PASSWORD` to the password you want to give them.
-2. Run `composer setup` — this installs dependencies, generates the app key, migrates the database, and seeds the owner account (`admin@trooms.co.ke`) with that password, plus starter data (chart of accounts, etc.).
-3. Send them the project (including the seeded database) along with the login: `admin@trooms.co.ke` / the password you chose. They don't need to touch `.env` or run the seeder themselves — the account already exists in the database you're sending.
-4. Once they're in, they can change the password from Account Settings any time — that's a normal password update and does not require re-seeding, and it won't get reset if `composer setup` or the seeder ever runs again on that same database.
-5. To onboard other people: the owner approves their email under Users, then each person visits `/register` and sets their own password. That account and password are theirs from then on; nothing about the seeder affects them.
-
-The seeder is safe to re-run (`php artisan db:seed`) — it skips the owner account if it already exists, so it will never silently overwrite anyone's password.
-
 ### Local development
 
 ```bash
