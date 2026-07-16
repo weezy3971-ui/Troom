@@ -7,7 +7,15 @@
         <h1 class="page-title">Irrigation Logs</h1>
         <p class="page-subtitle">Schedule and log irrigation sessions per block</p>
     </div>
-    <a href="{{ route('irrigation-logs.create') }}" class="btn btn-primary">+ Log Session</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Irrigation">
+            <p><strong>Log each irrigation session</strong> — select the block, pump used, and duration.</p>
+            <p><strong>Water volume</strong> is optional but useful for tracking consumption and costs.</p>
+            <p>If a crop program has irrigation stages, overdue sessions will raise notifications.</p>
+            <p><strong>Quick steps:</strong> Click "+ Log Session" → pick the block and pump → enter duration and volume → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('irrigation-logs.create') }}" class="btn btn-primary">+ Log Session</a>
+    </div>
 </div>
 
 <x-search-bar

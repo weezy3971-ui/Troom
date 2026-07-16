@@ -7,7 +7,14 @@
         <h1 class="page-title">Quality Assurance</h1>
         <p class="page-subtitle">Independent verification of packed lots before dispatch</p>
     </div>
-    <a href="{{ route('quality-checks.create') }}" class="btn btn-primary">+ New Check</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Quality Assurance">
+            <p><strong>Inspect packed lots</strong> to ensure they meet export requirements and crop parameters.</p>
+            <p><strong>Result:</strong> Pass or Fail. Failed lots cannot be assigned to sales orders or dispatched.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Check" → pick the packed lot → enter results → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('quality-checks.create') }}" class="btn btn-primary">+ New Check</a>
+    </div>
 </div>
 
 <x-search-bar

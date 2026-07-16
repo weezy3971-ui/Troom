@@ -8,7 +8,14 @@
         <h1 class="page-title">Assets & Equipment</h1>
         <p class="page-subtitle">Pumps, vehicles, and farm equipment</p>
     </div>
-    @if($canWrite)<a href="{{ route('assets.create') }}" class="btn btn-primary">+ Register Asset</a>@endif
+    <div class="actions">
+        <x-help-panel title="Tips — Assets">
+            <p><strong>Register assets</strong> to track their usage, maintenance, and checkouts.</p>
+            <p><strong>Checkouts</strong> allow you to assign equipment (like tools or sprayers) to workers.</p>
+            <p><strong>Quick steps:</strong> Click "+ Register Asset" → pick the farm and type → enter purchase details → click "Save".</p>
+        </x-help-panel>
+        @if($canWrite)<a href="{{ route('assets.create') }}" class="btn btn-primary">+ Register Asset</a>@endif
+    </div>
 </div>
 
 <x-search-bar

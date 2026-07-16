@@ -8,6 +8,13 @@
         <p class="page-subtitle">Auto-populated double-entry ledger tying cost and margin to real transactions</p>
     </div>
     <div class="actions">
+        <x-help-panel title="Tips — Finance">
+            <p>The ledger is <strong>auto-populated</strong> from cost allocations and sales — you don't post journal entries by hand.</p>
+            <p><strong>Post New Transactions</strong> pulls any unposted allocations into the double-entry ledger.</p>
+            <p><strong>Balanced</strong> should always read "Yes" — if not, check for a missing or duplicate posting.</p>
+            <p>Use <strong>Full Ledger</strong> to see every entry rather than just the recent ones shown here.</p>
+            <p><strong>Quick steps:</strong> Click "Post New Transactions" to push pending allocations into the ledger → click "Full Ledger" to review every entry.</p>
+        </x-help-panel>
         <a href="{{ route('finance.ledger') }}" class="btn btn-secondary">Full Ledger</a>
         <form action="{{ route('finance.post') }}" method="POST">
             @csrf

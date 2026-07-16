@@ -11,7 +11,16 @@
         <h1 class="page-title">Expenses</h1>
         <p class="page-subtitle">Field spend — tools, fuel, fines, casual labour, and everything else</p>
     </div>
-    <a href="{{ route('expenses.create') }}" class="btn btn-primary">+ Log Expense</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Expenses">
+            <p><strong>Log expenses as they happen</strong> — fuel, tools, casual labour, fines, anything.</p>
+            <p><strong>Category</strong> groups spend for reporting. Pick the closest match; the system totals each category.</p>
+            <p><strong>Link to a farm</strong> so the expense shows in that farm's cost analysis.</p>
+            <p>Expense data feeds into the finance dashboard and crop-cycle cost tracking.</p>
+            <p><strong>Quick steps:</strong> Click "+ Log Expense" → pick a category and farm → enter the amount → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('expenses.create') }}" class="btn btn-primary">+ Log Expense</a>
+    </div>
 </div>
 
 <div class="stat-card" style="max-width: 280px; margin-bottom: 20px;">

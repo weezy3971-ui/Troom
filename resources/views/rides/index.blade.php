@@ -15,6 +15,12 @@
         <p class="page-subtitle">Bookings, receipts and horse/guide assignment</p>
     </div>
     <div class="actions">
+        <x-help-panel title="Tips — Rides">
+            <p><strong>Book a ride</strong> to generate a receipt and track revenue.</p>
+            <p><strong>Assign a horse and guide:</strong> you can do this when creating the ride, or leave it pending assignment and update it later.</p>
+            <p><strong>Status</strong> updates automatically based on assignment and completion.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Ride" → enter the customer and time → pick a horse and guide (or leave pending) → click "Save".</p>
+        </x-help-panel>
         <a href="{{ route('horses.index') }}" class="btn btn-ghost">Horses</a>
         <a href="{{ route('guides.index') }}" class="btn btn-ghost">Guides</a>
         <a href="{{ route('rides.create') }}" class="btn btn-primary">+ New Ride</a>

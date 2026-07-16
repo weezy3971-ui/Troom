@@ -7,7 +7,15 @@
         <h1 class="page-title">Outgrowers</h1>
         <p class="page-subtitle">External growers used to top up an order when in-house lots fall short</p>
     </div>
-    <a href="{{ route('outgrowers.create') }}" class="btn btn-primary">+ Add Outgrower</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Outgrowers">
+            <p><strong>Outgrowers</strong> are external suppliers. When your farm can't fill an order, you source from them.</p>
+            <p><strong>Reliability rating</strong> (1–5 stars) helps decide who to call first.</p>
+            <p>When creating a sales order line, you can assign it to an outgrower instead of an in-house lot.</p>
+            <p><strong>Quick steps:</strong> Click "+ Add Outgrower" → enter name, contact, and specialization → set a reliability rating → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('outgrowers.create') }}" class="btn btn-primary">+ Add Outgrower</a>
+    </div>
 </div>
 
 <x-search-bar

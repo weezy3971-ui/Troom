@@ -42,6 +42,5 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(StableSeeder::class);
-        $this->call(ToolAssetSeeder::class);
     }
 }

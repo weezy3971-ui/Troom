@@ -7,7 +7,15 @@
         <h1 class="page-title">Sales Orders</h1>
         <p class="page-subtitle">Orders drawn against customer contracts</p>
     </div>
-    <a href="{{ route('sales-orders.create') }}" class="btn btn-primary">+ New Order</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Sales Orders">
+            <p><strong>Create an order</strong> for a customer, specifying the crop, quantity needed, and delivery date.</p>
+            <p><strong>Allocate lots:</strong> assign packhouse lots or outgrower supply to each order line to fulfil the quantity.</p>
+            <p><strong>"At risk"</strong> means the delivery date is approaching but the order isn't fully allocated yet.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Order" → pick the customer and crop → set quantity and delivery date → click "Save", then allocate lots.</p>
+        </x-help-panel>
+        <a href="{{ route('sales-orders.create') }}" class="btn btn-primary">+ New Order</a>
+    </div>
 </div>
 
 <x-search-bar

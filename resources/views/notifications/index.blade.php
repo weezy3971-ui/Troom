@@ -7,7 +7,15 @@
         <h1 class="page-title">Notifications</h1>
         <p class="page-subtitle">Proactive alerts aggregated from across every module</p>
     </div>
-    <a href="{{ route('analytics.index') }}" class="btn btn-secondary">Executive Dashboard</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Notifications">
+            <p>Alerts here are generated automatically when a module crosses a threshold — no configuration needed.</p>
+            <p>Each alert shows which <strong>module</strong> it came from, so you know where to go to resolve it.</p>
+            <p>Visit the <strong>Executive Dashboard</strong> for the full KPI picture behind these alerts.</p>
+            <p><strong>Quick steps:</strong> Click an alert's module badge → it takes you to the section where you can resolve it.</p>
+        </x-help-panel>
+        <a href="{{ route('analytics.index') }}" class="btn btn-secondary">Executive Dashboard</a>
+    </div>
 </div>
 
 @if(empty($alerts))

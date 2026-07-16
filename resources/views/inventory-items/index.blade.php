@@ -7,7 +7,16 @@
         <h1 class="page-title">Inventory &amp; Stores</h1>
         <p class="page-subtitle">Stock of inputs and spares across farms</p>
     </div>
-    <a href="{{ route('inventory-items.create') }}" class="btn btn-primary">+ New Item</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Inventory">
+            <p><strong>Register items</strong> you keep in stock — fertilisers, chemicals, packaging, spare parts.</p>
+            <p><strong>Pre-harvest vs Post-harvest:</strong> use the stage filter to separate field inputs from packing materials.</p>
+            <p><strong>Reorder level</strong> triggers a "Low stock" badge when on-hand drops below it.</p>
+            <p>Procurement receipts automatically increase stock; usage logs decrease it.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Item" → enter name, stage, and reorder level → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('inventory-items.create') }}" class="btn btn-primary">+ New Item</a>
+    </div>
 </div>
 
 <x-search-bar

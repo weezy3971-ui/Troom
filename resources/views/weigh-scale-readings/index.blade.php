@@ -7,7 +7,15 @@
         <h1 class="page-title">Weigh Scale Notifications</h1>
         <p class="page-subtitle">Live feed from the digital scale — who weighed what, and the weight</p>
     </div>
-    <a href="{{ route('weigh-scale-readings.create') }}" class="btn btn-primary">+ Manual Reading</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Weigh Scale">
+            <p><strong>Live feed:</strong> Readings pushed by the integrated digital scale appear here automatically.</p>
+            <p><strong>Acknowledge</strong> readings after reviewing them to clear them from the 'New' filter.</p>
+            <p><strong>Manual readings</strong> can be added if the scale integration is offline.</p>
+            <p><strong>Quick steps:</strong> Click "New" to see unreviewed readings → click "Acknowledge" on each once you've confirmed the weight.</p>
+        </x-help-panel>
+        <a href="{{ route('weigh-scale-readings.create') }}" class="btn btn-primary">+ Manual Reading</a>
+    </div>
 </div>
 
 <div style="display:flex; gap:8px; margin-bottom:16px;">

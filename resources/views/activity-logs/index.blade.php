@@ -7,11 +7,19 @@
         <h1 class="page-title">Activity Log</h1>
         <p class="page-subtitle">Business operations performed by your team</p>
     </div>
-    @if($showAll)
-        <a href="{{ route('activity-logs.index', request()->except('all')) }}" class="btn btn-ghost btn-sm">Hide auth events</a>
-    @else
-        <a href="{{ route('activity-logs.index', array_merge(request()->query(), ['all' => 1])) }}" class="btn btn-ghost btn-sm">Show all (incl. sign-ins)</a>
-    @endif
+    <div class="actions">
+        <x-help-panel title="Tips — Activity Log">
+            <p>Every create, update, delete, and status change across the app is recorded here automatically — there's nothing to set up.</p>
+            <p>Use the <strong>filters</strong> above to narrow by team member, action type, or date.</p>
+            <p>Sign-ins and other auth events are hidden by default — toggle <strong>"Show all"</strong> to include them.</p>
+            <p><strong>Quick steps:</strong> Pick a team member, action, or date in the filter bar → click "Filter" → click "Reset" to clear.</p>
+        </x-help-panel>
+        @if($showAll)
+            <a href="{{ route('activity-logs.index', request()->except('all')) }}" class="btn btn-ghost btn-sm">Hide auth events</a>
+        @else
+            <a href="{{ route('activity-logs.index', array_merge(request()->query(), ['all' => 1])) }}" class="btn btn-ghost btn-sm">Show all (incl. sign-ins)</a>
+        @endif
+    </div>
 </div>
 
 {{-- Filters --}}

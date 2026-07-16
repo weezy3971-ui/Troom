@@ -58,6 +58,13 @@
         </p>
     </div>
     <div class="actions">
+        <x-help-panel title="Tips — Executive Dashboard">
+            <p>KPIs are <strong>precomputed snapshots</strong>, not live queries — click the refresh icon to recompute them with the latest data.</p>
+            <p>The sparkline next to each figure shows its recent trend at a glance.</p>
+            <p><strong>Profit &amp; Loss</strong> reads directly from the ledger — post transactions in Finance to see it populate.</p>
+            <p><strong>Active Alerts</strong> flags anything outside normal thresholds across modules.</p>
+            <p><strong>Quick steps:</strong> Click the refresh icon next to "Generate Report" to recompute → wait for the KPI cards to update.</p>
+        </x-help-panel>
         @if(\App\Support\ModuleAccess::allows(auth()->user(), 'ai'))
         <a href="{{ route('ai-reports.create') }}" class="btn btn-secondary">Generate Report</a>
         @endif

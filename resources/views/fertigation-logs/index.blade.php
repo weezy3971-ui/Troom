@@ -7,7 +7,15 @@
         <h1 class="page-title">Fertigation Logs</h1>
         <p class="page-subtitle">Nutrient applications per crop cycle — each generates a cost allocation</p>
     </div>
-    <a href="{{ route('fertigation-logs.create') }}" class="btn btn-primary">+ Log Application</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Fertigation">
+            <p><strong>Log each nutrient application</strong> — select the crop cycle, nutrient type, quantity, and method.</p>
+            <p><strong>Cost</strong> is recorded per application and rolls up to the crop cycle's cost breakdown.</p>
+            <p>If a crop program has fertigation stages, the schedule will flag when an application is due.</p>
+            <p><strong>Quick steps:</strong> Click "+ Log Application" → pick the crop cycle and nutrient → enter quantity and method → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('fertigation-logs.create') }}" class="btn btn-primary">+ Log Application</a>
+    </div>
 </div>
 
 <x-search-bar

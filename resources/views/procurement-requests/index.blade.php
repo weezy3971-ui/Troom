@@ -7,7 +7,15 @@
         <h1 class="page-title">Procurement Requests</h1>
         <p class="page-subtitle">What's needed, whether it was ordered and received — receipts post to inventory automatically</p>
     </div>
-    <a href="{{ route('procurement-requests.create') }}" class="btn btn-primary">+ New Request</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Procurement">
+            <p><strong>Raise a request</strong> when you need inputs for the farm. You can request multiple items on a single request.</p>
+            <p><strong>Link to a crop cycle:</strong> If the items are for a specific cycle, link it so costs are tracked.</p>
+            <p><strong>Receiving items</strong> automatically increments inventory stock.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Request" → add items and quantities → click "Save", then mark it "Ordered" and later "Received".</p>
+        </x-help-panel>
+        <a href="{{ route('procurement-requests.create') }}" class="btn btn-primary">+ New Request</a>
+    </div>
 </div>
 
 <div style="display:flex; gap:8px; margin-bottom:16px;">

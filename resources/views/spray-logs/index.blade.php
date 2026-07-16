@@ -7,7 +7,15 @@
         <h1 class="page-title">Spray Logs</h1>
         <p class="page-subtitle">Spray program and pre-harvest interval tracking</p>
     </div>
-    <a href="{{ route('spray-logs.create') }}" class="btn btn-primary">+ Log Spray</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Spray Logs">
+            <p><strong>Log every spray</strong> against a crop cycle — include the chemical, target pest, and PHI (pre-harvest interval) days.</p>
+            <p><strong>PHI Status</strong> shows whether the withholding period is still active. Harvesting is blocked while PHI is active.</p>
+            <p>This is an export compliance requirement — auditors check the spray register.</p>
+            <p><strong>Quick steps:</strong> Click "+ Log Spray" → pick the crop cycle and chemical → enter the PHI days → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('spray-logs.create') }}" class="btn btn-primary">+ Log Spray</a>
+    </div>
 </div>
 
 <x-search-bar

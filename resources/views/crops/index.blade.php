@@ -8,7 +8,15 @@
         <h1 class="page-title">Crop Catalogue</h1>
         <p class="page-subtitle">Manage crop varieties and their expected yields</p>
     </div>
-    @if($canWrite)<a href="{{ route('crops.create') }}" class="btn btn-primary">+ Add Crop</a>@endif
+    <div class="actions">
+        <x-help-panel title="Tips — Crops">
+            <p><strong>Add a crop variety</strong> for each distinct thing you grow — e.g. "French Beans — Serengeti".</p>
+            <p><strong>Days to Maturity</strong> and <strong>Yield/Acre</strong> feed into crop-cycle projections and planting plans.</p>
+            <p><strong>Crop Programs</strong> (stage schedules) link to a crop, so set up the crop first, then define the program.</p>
+            <p><strong>Quick steps:</strong> Click "+ Add Crop" → enter name, variety, days to maturity, and yield/acre → click "Save".</p>
+        </x-help-panel>
+        @if($canWrite)<a href="{{ route('crops.create') }}" class="btn btn-primary">+ Add Crop</a>@endif
+    </div>
 </div>
 
 <x-search-bar

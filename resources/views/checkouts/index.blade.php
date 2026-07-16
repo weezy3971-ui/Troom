@@ -7,7 +7,15 @@
         <h1 class="page-title">Asset Checkouts</h1>
         <p class="page-subtitle">Who has which tool or asset, when it went out, and whether it's back</p>
     </div>
-    <a href="{{ route('checkouts.create') }}" class="btn btn-primary">+ Check Out Asset</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Asset Checkouts">
+            <p><strong>Check out tools</strong> to workers so there's a record of who took them and when they are due back.</p>
+            <p><strong>Check in:</strong> Record when the asset is returned to the store.</p>
+            <p><strong>Overdue:</strong> Badges will flag items that have not been returned by their expected time.</p>
+            <p><strong>Quick steps:</strong> Click "+ Check Out Asset" → pick the asset and holder → set an expected return → click "Save", then click "Check In" when it's back.</p>
+        </x-help-panel>
+        <a href="{{ route('checkouts.create') }}" class="btn btn-primary">+ Check Out Asset</a>
+    </div>
 </div>
 
 <div style="display:flex; gap:8px; margin-bottom:16px;">

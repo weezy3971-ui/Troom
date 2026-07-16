@@ -7,7 +7,15 @@
         <h1 class="page-title">Nursery Batches</h1>
         <p class="page-subtitle">Track seedlings from sowing through to field-ready</p>
     </div>
-    <a href="{{ route('nursery-batches.create') }}" class="btn btn-primary">+ New Batch</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Nursery Batches">
+            <p>Sow a batch to start tracking seedlings from <strong>Sown → Growing → Ready → Transplanted</strong>.</p>
+            <p><strong>Remaining</strong> quantity drops as seedlings are transplanted out to blocks.</p>
+            <p>Once transplanted, a batch feeds into a crop cycle in the field.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Batch" → pick the crop and sow date → enter quantity → click "Save", then update its status as it grows.</p>
+        </x-help-panel>
+        <a href="{{ route('nursery-batches.create') }}" class="btn btn-primary">+ New Batch</a>
+    </div>
 </div>
 
 <x-search-bar

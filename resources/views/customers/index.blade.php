@@ -7,7 +7,14 @@
         <h1 class="page-title">Customers</h1>
         <p class="page-subtitle">Customer relationships and contract terms</p>
     </div>
-    <a href="{{ route('customers.create') }}" class="btn btn-primary">+ New Customer</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Customers">
+            <p><strong>Register each buyer</strong> with a name and contact. Optionally set a <strong>price list</strong> for contract pricing.</p>
+            <p>Sales orders are created against a customer — register the customer first.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Customer" → fill in name, contact, and price list → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('customers.create') }}" class="btn btn-primary">+ New Customer</a>
+    </div>
 </div>
 
 <x-search-bar

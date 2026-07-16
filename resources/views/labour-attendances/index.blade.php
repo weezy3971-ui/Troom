@@ -7,7 +7,15 @@
         <h1 class="page-title">Labour &amp; Attendance</h1>
         <p class="page-subtitle">Daily labour deployment and cost per block and task</p>
     </div>
-    <a href="{{ route('labour-attendances.create') }}" class="btn btn-primary">+ Record Attendance</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Labour">
+            <p><strong>Record attendance</strong> each day for every worker who shows up — pick the task, block, and pay basis.</p>
+            <p><strong>Hourly basis:</strong> enter hours worked × rate. <strong>Target basis:</strong> enter quantity done × rate per unit (e.g. 50 kg × KES 5).</p>
+            <p>Cost is calculated automatically and rolls up to the crop cycle's cost tracker.</p>
+            <p><strong>Quick steps:</strong> Click "+ Record Attendance" → pick the worker, task, and block → enter hours or quantity → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('labour-attendances.create') }}" class="btn btn-primary">+ Record Attendance</a>
+    </div>
 </div>
 
 <x-search-bar

@@ -7,7 +7,15 @@
         <h1 class="page-title">Workers</h1>
         <p class="page-subtitle">Labour roster available for project task assignment</p>
     </div>
-    <a href="{{ route('workers.create') }}" class="btn btn-primary">+ Add Worker</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Workers">
+            <p><strong>Add each worker</strong> by name and phone. Set a <strong>default hourly rate</strong> — it auto-fills when recording attendance.</p>
+            <p><strong>Permanent vs Casual:</strong> permanent workers appear on the payroll; casuals are paid per-session.</p>
+            <p><strong>Deactivate</strong> a worker instead of deleting — their history stays intact.</p>
+            <p><strong>Quick steps:</strong> Click "+ Add Worker" → enter name, phone, and rate → choose Permanent or Casual → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('workers.create') }}" class="btn btn-primary">+ Add Worker</a>
+    </div>
 </div>
 
 <x-search-bar

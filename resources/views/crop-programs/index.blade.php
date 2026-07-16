@@ -7,7 +7,15 @@
         <h1 class="page-title">Crop Stage Programs</h1>
         <p class="page-subtitle">Reusable per-crop protocols — stages, timing and inputs, materialised onto each cycle</p>
     </div>
-    <a href="{{ route('crop-programs.create') }}" class="btn btn-primary">+ New Program</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Crop Programs">
+            <p><strong>Define a template</strong> of stages for a crop (e.g. Pre-plant, Vegetative, Flowering).</p>
+            <p><strong>Attach inputs</strong> like irrigation or fertigation to stages.</p>
+            <p>When a crop cycle becomes active, this program generates its <strong>Stage Schedule</strong>.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Program" → pick the crop → add stages with timing and inputs → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('crop-programs.create') }}" class="btn btn-primary">+ New Program</a>
+    </div>
 </div>
 
 <x-search-bar

@@ -8,7 +8,15 @@
         <h1 class="page-title">Blocks</h1>
         <p class="page-subtitle">Farm subdivisions where crops are planted</p>
     </div>
-    @if($canWrite)<a href="{{ route('blocks.create') }}" class="btn btn-primary">+ Add Block</a>@endif
+    <div class="actions">
+        <x-help-panel title="Tips — Blocks">
+            <p><strong>A block</strong> is a specific area within a farm where a single crop cycle runs — e.g. "Block A" or "Greenhouse 2".</p>
+            <p><strong>Soil type</strong> helps match crops to the right block and plan fertigation.</p>
+            <p><strong>One active crop cycle per block</strong> at a time — finish or cancel the current one before starting another.</p>
+            <p><strong>Quick steps:</strong> Click "+ Add Block" → pick the farm → enter name and soil type → click "Save".</p>
+        </x-help-panel>
+        @if($canWrite)<a href="{{ route('blocks.create') }}" class="btn btn-primary">+ Add Block</a>@endif
+    </div>
 </div>
 
 <x-search-bar

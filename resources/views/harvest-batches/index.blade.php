@@ -7,7 +7,16 @@
         <h1 class="page-title">Harvest Management</h1>
         <p class="page-subtitle">Harvest events — where field production becomes trackable output</p>
     </div>
-    <a href="{{ route('harvest-batches.create') }}" class="btn btn-primary">+ Log Harvest</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Harvest">
+            <p><strong>Log a harvest</strong> each time produce is picked from a block — select the crop cycle and enter the weight.</p>
+            <p><strong>Grade</strong> (A/B/C) classifies quality. Rejects are weighed separately so net saleable is accurate.</p>
+            <p><strong>Weight confirmation</strong> means a second person verifies the scale reading.</p>
+            <p>Harvests feed into packhouse lots and yield projections on the crop cycle.</p>
+            <p><strong>Quick steps:</strong> Click "+ Log Harvest" → pick the crop cycle and grade → enter the weight → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('harvest-batches.create') }}" class="btn btn-primary">+ Log Harvest</a>
+    </div>
 </div>
 
 <x-search-bar

@@ -8,6 +8,11 @@
         <p class="page-subtitle">Staff who lead horse rides</p>
     </div>
     <div class="actions">
+        <x-help-panel title="Tips — Guides">
+            <p><strong>Add guides</strong> so they can be assigned to customer rides.</p>
+            <p><strong>Inactive guides</strong> will not appear in the assignment dropdown.</p>
+            <p><strong>Quick steps:</strong> Click "+ Add Guide" → enter name and phone → click "Save".</p>
+        </x-help-panel>
         <a href="{{ route('horses.index') }}" class="btn btn-ghost">Horses</a>
         <a href="{{ route('rides.index') }}" class="btn btn-ghost">Rides</a>
         <a href="{{ route('guides.create') }}" class="btn btn-primary">+ Add Guide</a>

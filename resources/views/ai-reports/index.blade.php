@@ -7,7 +7,15 @@
         <h1 class="page-title">AI Reports</h1>
         <p class="page-subtitle">Narrative reports written by AI from your live farm data</p>
     </div>
-    <a href="{{ route('ai-reports.create') }}" class="btn btn-primary">+ Generate Report</a>
+    <div class="actions">
+        <x-help-panel title="Tips — AI Reports">
+            <p><strong>Generate Report</strong> creates a narrative summary written by AI from your live KPIs, trends, and alerts.</p>
+            <p>Pick a <strong>period</strong> to focus the report, or leave it open to summarize everything to date.</p>
+            <p>Reports need <code>ANTHROPIC_API_KEY</code> configured — check the banner above if generation is unavailable.</p>
+            <p><strong>Quick steps:</strong> Click "+ Generate Report" → optionally set a period → click "Generate" and wait for it to complete.</p>
+        </x-help-panel>
+        <a href="{{ route('ai-reports.create') }}" class="btn btn-primary">+ Generate Report</a>
+    </div>
 </div>
 
 @unless($configured)

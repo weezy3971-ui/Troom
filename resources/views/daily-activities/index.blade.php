@@ -7,7 +7,15 @@
         <h1 class="page-title">Daily Farm Operations</h1>
         <p class="page-subtitle">The core field activity log</p>
     </div>
-    <a href="{{ route('daily-activities.create') }}" class="btn btn-primary">+ Log Activity</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Daily Operations">
+            <p><strong>Log field activities</strong> such as scouting, weeding, or general maintenance.</p>
+            <p><strong>Compliance:</strong> Certain activities may trigger compliance checks which auditors will review.</p>
+            <p>This builds a history of what happened on each block during a crop cycle.</p>
+            <p><strong>Quick steps:</strong> Click "+ Log Activity" → pick the type, block, and crop cycle → add a description → click "Save".</p>
+        </x-help-panel>
+        <a href="{{ route('daily-activities.create') }}" class="btn btn-primary">+ Log Activity</a>
+    </div>
 </div>
 
 <x-search-bar

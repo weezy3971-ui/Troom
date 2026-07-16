@@ -7,7 +7,15 @@
         <h1 class="page-title">Logistics &amp; Dispatch</h1>
         <p class="page-subtitle">Delivery of sales orders to customers</p>
     </div>
-    <a href="{{ route('dispatches.create') }}" class="btn btn-primary">+ Schedule Dispatch</a>
+    <div class="actions">
+        <x-help-panel title="Tips — Dispatch">
+            <p><strong>Schedule a dispatch</strong> once a sales order is ready to ship — assign a vehicle, driver, and route.</p>
+            <p><strong>Status flow:</strong> Scheduled → In Transit → Delivered. Update the status as the delivery progresses.</p>
+            <p>Each dispatch links back to the sales order it fulfils.</p>
+            <p><strong>Quick steps:</strong> Click "+ Schedule Dispatch" → pick the sales order, vehicle, and driver → click "Save", then update status as it ships.</p>
+        </x-help-panel>
+        <a href="{{ route('dispatches.create') }}" class="btn btn-primary">+ Schedule Dispatch</a>
+    </div>
 </div>
 
 <x-search-bar

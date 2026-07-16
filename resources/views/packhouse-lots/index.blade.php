@@ -8,6 +8,12 @@
         <p class="page-subtitle">Graded, packed lots with traceable codes</p>
     </div>
     <div class="actions">
+        <x-help-panel title="Tips — Packhouse & Traceability">
+            <p>Pack accepted produce from a harvest batch into a <strong>lot</strong> — each gets a unique traceability code.</p>
+            <p>Use <strong>Trace Lookup</strong> to look up a lot's full history by its code (useful for buyer/compliance queries).</p>
+            <p><strong>Quality</strong> reflects whether the lot passed inspection — check failed lots before dispatch.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Lot" → pick the harvest batch → enter packed quantity and packaging → click "Save" to generate a trace code.</p>
+        </x-help-panel>
         <a href="{{ route('trace.lookup') }}" class="btn btn-secondary">🔍 Trace Lookup</a>
         <a href="{{ route('packhouse-lots.create') }}" class="btn btn-primary">+ New Lot</a>
     </div>

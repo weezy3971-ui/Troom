@@ -9,6 +9,13 @@
         <p class="page-subtitle">Plan and track each crop cycle per block and season</p>
     </div>
     <div class="actions">
+        <x-help-panel title="Tips — Crop Cycles">
+            <p><strong>Create a cycle</strong> per block per season — e.g. "Block A — 2025 Long Rains".</p>
+            <p><strong>Planned → Active:</strong> activating a cycle requires a seasonal budget and copies in the crop's stage program as a schedule.</p>
+            <p><strong>Planting Planner</strong> shows a calendar view of all planned and active cycles across blocks.</p>
+            <p>Harvest, spray, irrigation, and fertigation logs are all linked to a crop cycle.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Crop Cycle" → pick block, crop, and season → click "Save" → open it and click "Activate" once budgeted.</p>
+        </x-help-panel>
         <a href="{{ route('crop-cycles.planner') }}" class="btn btn-secondary">🫘 Planting Planner</a>
         @if($canWrite)<a href="{{ route('crop-cycles.create') }}" class="btn btn-primary">+ New Crop Cycle</a>@endif
     </div>

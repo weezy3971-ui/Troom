@@ -15,6 +15,12 @@
         <p class="page-subtitle">Units of work — assign labour and inputs, track spend against budget</p>
     </div>
     <div class="actions">
+        <x-help-panel title="Tips — Projects">
+            <p>A project is a unit of work — break it into <strong>tasks</strong>, then assign workers and inputs to those tasks.</p>
+            <p><strong>Spent</strong> is shown in red if it exceeds the project's <strong>Budget</strong> — a quick way to spot cost overruns.</p>
+            <p>Use <strong>Workers</strong> to manage the labour roster available to assign.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Project" → set a budget → open it, add tasks, then assign workers to each task.</p>
+        </x-help-panel>
         <a href="{{ route('workers.index') }}" class="btn btn-ghost">Workers</a>
         <a href="{{ route('projects.create') }}" class="btn btn-primary">+ New Project</a>
     </div>

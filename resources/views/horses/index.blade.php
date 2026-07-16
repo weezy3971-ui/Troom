@@ -12,6 +12,11 @@
         <p class="page-subtitle">Stable roster — availability reflects current rides and rest periods</p>
     </div>
     <div class="actions">
+        <x-help-panel title="Tips — Horses">
+            <p><strong>Manage the stable:</strong> register horses and configure their required rest times between rides.</p>
+            <p><strong>Availability</strong> is automatically calculated based on ongoing rides and required rest periods.</p>
+            <p><strong>Quick steps:</strong> Click "+ Add Horse" → enter name, breed, and rest minutes → click "Save".</p>
+        </x-help-panel>
         <a href="{{ route('guides.index') }}" class="btn btn-ghost">Guides</a>
         <a href="{{ route('rides.index') }}" class="btn btn-ghost">Rides</a>
         <a href="{{ route('horses.create') }}" class="btn btn-primary">+ Add Horse</a>

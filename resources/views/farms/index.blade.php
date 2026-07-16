@@ -9,6 +9,13 @@
         <p class="page-subtitle">Manage your farm locations and sizes</p>
     </div>
     <div class="actions">
+        <x-help-panel title="Tips — Farms">
+            <p><strong>Add a farm</strong> for each physical location you manage. A farm is the top-level unit — blocks and assets sit under it.</p>
+            <p><strong>Blocks</strong> are subdivisions of a farm where crops are planted. Add blocks after creating a farm.</p>
+            <p><strong>Map View</strong> shows all farms on a map if coordinates are set.</p>
+            <p><strong>Size (Acres)</strong> is the total land area — it helps with yield-per-acre projections later.</p>
+            <p><strong>Quick steps:</strong> Click "+ Add Farm" → enter name, location, and size → click "Save", then add blocks under it.</p>
+        </x-help-panel>
         <a href="{{ route('farms.map') }}" class="btn btn-secondary">🗺️ Map View</a>
         @if($canWrite)<a href="{{ route('farms.create') }}" class="btn btn-primary">+ Add Farm</a>@endif
     </div>

@@ -9,7 +9,16 @@
         <h1 class="page-title">User Administration</h1>
         <p class="page-subtitle">Onboard people, assign roles, and control who can sign in</p>
     </div>
-    <a href="{{ route('activity-logs.index') }}" class="btn btn-secondary">View Audit Log</a>
+    <div class="actions">
+        <x-help-panel title="Tips — User Administration">
+            <p><strong>Onboard</strong> a user by approving their email and role first — only approved emails can register.</p>
+            <p>A <strong>Pending Registration</strong> means the email is approved but the person hasn't created their account yet.</p>
+            <p><strong>Deactivate</strong> an account to block sign-in without deleting their history — reactivate any time.</p>
+            <p>All role and access changes are recorded in the <strong>Audit Log</strong>.</p>
+            <p><strong>Quick steps:</strong> Enter the person's email → pick a role → click "Approve & Onboard" → they'll register themselves from the sign-in page.</p>
+        </x-help-panel>
+        <a href="{{ route('activity-logs.index') }}" class="btn btn-secondary">View Audit Log</a>
+    </div>
 </div>
 
 {{-- Onboard: approve an email --}}
