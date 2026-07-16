@@ -142,21 +142,39 @@
         @csrf @method('PUT')
         <div class="form-group">
             <label class="form-label" for="current_password">Current password *</label>
-            <input type="password" id="current_password" name="current_password" class="form-input" required>
+            <div class="password-field">
+                <input type="password" id="current_password" name="current_password" class="form-input" required autocomplete="current-password">
+                <button type="button" class="password-toggle" data-toggle-password="current_password" aria-label="Show password" aria-pressed="false">
+                    <span class="icon-eye"><x-icon name="eye" size="16" /></span>
+                    <span class="icon-eye-off" style="display:none;"><x-icon name="eye-off" size="16" /></span>
+                </button>
+            </div>
             @error('current_password')
                 <div class="form-error">{{ $message }}</div>
             @enderror
         </div>
         <div class="form-group">
             <label class="form-label" for="password">New password *</label>
-            <input type="password" id="password" name="password" class="form-input" minlength="8" required>
+            <div class="password-field">
+                <input type="password" id="password" name="password" class="form-input" minlength="8" required autocomplete="new-password">
+                <button type="button" class="password-toggle" data-toggle-password="password" aria-label="Show password" aria-pressed="false">
+                    <span class="icon-eye"><x-icon name="eye" size="16" /></span>
+                    <span class="icon-eye-off" style="display:none;"><x-icon name="eye-off" size="16" /></span>
+                </button>
+            </div>
             @error('password')
                 <div class="form-error">{{ $message }}</div>
             @enderror
         </div>
         <div class="form-group">
             <label class="form-label" for="password_confirmation">Confirm new password *</label>
-            <input type="password" id="password_confirmation" name="password_confirmation" class="form-input" minlength="8" required>
+            <div class="password-field">
+                <input type="password" id="password_confirmation" name="password_confirmation" class="form-input" minlength="8" required autocomplete="new-password">
+                <button type="button" class="password-toggle" data-toggle-password="password_confirmation" aria-label="Show password" aria-pressed="false">
+                    <span class="icon-eye"><x-icon name="eye" size="16" /></span>
+                    <span class="icon-eye-off" style="display:none;"><x-icon name="eye-off" size="16" /></span>
+                </button>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">Update Password</button>
     </form>

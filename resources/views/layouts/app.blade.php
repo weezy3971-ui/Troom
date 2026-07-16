@@ -1000,7 +1000,25 @@
             box-shadow: 0 0 0 3px var(--olive-bg);
         }
 
+        .form-input:-webkit-autofill,
+        .form-input:-webkit-autofill:hover,
+        .form-input:-webkit-autofill:focus {
+            -webkit-text-fill-color: var(--text-primary);
+            -webkit-box-shadow: 0 0 0px 1000px var(--bg-input) inset;
+            box-shadow: 0 0 0px 1000px var(--bg-input) inset;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
         .form-textarea { min-height: 100px; resize: vertical; }
+
+        .password-field { position: relative; }
+        .password-field .form-input { padding-right: 42px; }
+        .password-toggle {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--text-secondary); cursor: pointer;
+            padding: 4px; display: flex; align-items: center; justify-content: center;
+        }
+        .password-toggle:hover { color: var(--text-primary); }
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
 
@@ -1944,6 +1962,23 @@
                 if (e.key === 'Escape' && confirmModal.classList.contains('open')) closeConfirm();
             });
         }
+
+        // Show/hide toggle for any .password-toggle button (delegated so it
+        // also covers forms rendered after this listener attaches).
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-toggle-password]');
+            if (!btn) return;
+            var input = document.getElementById(btn.getAttribute('data-toggle-password'));
+            if (!input) return;
+            var willShow = input.type === 'password';
+            input.type = willShow ? 'text' : 'password';
+            btn.setAttribute('aria-pressed', String(willShow));
+            btn.setAttribute('aria-label', willShow ? 'Hide password' : 'Show password');
+            var eyeIcon = btn.querySelector('.icon-eye');
+            var eyeOffIcon = btn.querySelector('.icon-eye-off');
+            if (eyeIcon) eyeIcon.style.display = willShow ? 'none' : '';
+            if (eyeOffIcon) eyeOffIcon.style.display = willShow ? '' : 'none';
+        });
     });
     </script>
 </body>
