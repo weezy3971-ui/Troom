@@ -28,6 +28,10 @@
         <div class="detail-value">KES {{ number_format($expense->amount, 2) }}</div>
     </div>
     <div class="detail-item">
+        <div class="detail-label">Mode of Payment</div>
+        <div class="detail-value">{{ $expense->payment_mode ? ucfirst(str_replace('_', ' ', $expense->payment_mode)) : '—' }}</div>
+    </div>
+    <div class="detail-item">
         <div class="detail-label">Farm</div>
         <div class="detail-value">{{ $expense->farm->name ?? '—' }}</div>
     </div>
@@ -45,4 +49,13 @@
     <div class="card-header"><h3 class="card-title">Description</h3></div>
     <p style="font-size: 13px; color: var(--text-secondary);">{{ $expense->description }}</p>
 </div>
+
+@if($expense->receipt_path)
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header"><h3 class="card-title">Receipt</h3></div>
+    <a href="{{ $expense->receiptUrl() }}" target="_blank" rel="noopener">
+        <img src="{{ $expense->receiptUrl() }}" alt="Receipt" style="max-width: 320px; border-radius: 8px; border: 1px solid var(--border); display: block;">
+    </a>
+</div>
+@endif
 @endsection

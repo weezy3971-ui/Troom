@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Expense extends Model
 {
@@ -23,11 +24,22 @@ class Expense extends Model
         'other',
     ];
 
+    public const PAYMENT_MODES = [
+        'cash',
+        'mpesa',
+        'bank_transfer',
+        'cheque',
+        'card',
+        'other',
+    ];
+
     protected $fillable = [
         'category',
         'amount',
+        'payment_mode',
         'expense_date',
         'description',
+        'receipt_path',
         'farm_id',
         'block_id',
         'logged_by',
@@ -51,5 +63,10 @@ class Expense extends Model
     public function logger(): BelongsTo
     {
         return $this->belongsTo(User::class, 'logged_by');
+    }
+
+    public function receiptUrl(): ?string
+    {
+        return $this->receipt_path ? Storage::disk('public')->url($this->receipt_path) : null;
     }
 }

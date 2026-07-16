@@ -7,6 +7,7 @@ use App\Models\CostAllocation;
 use App\Models\Expense;
 use App\Models\Farm;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ExpenseController extends Controller
@@ -40,14 +41,20 @@ class ExpenseController extends Controller
         $farms = Farm::orderBy('name')->get();
         $blocks = Block::with('farm')->orderBy('name')->get();
         $categories = Expense::CATEGORIES;
+        $paymentModes = Expense::PAYMENT_MODES;
 
-        return view('expenses.create', compact('farms', 'blocks', 'categories'));
+        return view('expenses.create', compact('farms', 'blocks', 'categories', 'paymentModes'));
     }
 
     public function store(Request $request)
     {
         $validated = $this->validateExpense($request);
         $validated['logged_by'] = $request->user()?->id;
+
+        if ($request->hasFile('receipt')) {
+            $validated['receipt_path'] = $request->file('receipt')->store('receipts', 'public');
+        }
+        unset($validated['receipt']);
 
         $expense = Expense::create($validated);
         $this->syncCostAllocation($expense);
@@ -67,13 +74,22 @@ class ExpenseController extends Controller
         $farms = Farm::orderBy('name')->get();
         $blocks = Block::with('farm')->orderBy('name')->get();
         $categories = Expense::CATEGORIES;
+        $paymentModes = Expense::PAYMENT_MODES;
 
-        return view('expenses.edit', compact('expense', 'farms', 'blocks', 'categories'));
+        return view('expenses.edit', compact('expense', 'farms', 'blocks', 'categories', 'paymentModes'));
     }
 
     public function update(Request $request, Expense $expense)
     {
         $validated = $this->validateExpense($request);
+
+        if ($request->hasFile('receipt')) {
+            if ($expense->receipt_path) {
+                Storage::disk('public')->delete($expense->receipt_path);
+            }
+            $validated['receipt_path'] = $request->file('receipt')->store('receipts', 'public');
+        }
+        unset($validated['receipt']);
 
         $expense->update($validated);
         $this->syncCostAllocation($expense);
@@ -88,6 +104,10 @@ class ExpenseController extends Controller
             ->where('source_id', $expense->id)
             ->delete();
 
+        if ($expense->receipt_path) {
+            Storage::disk('public')->delete($expense->receipt_path);
+        }
+
         $expense->delete();
 
         return redirect()->route('expenses.index')
@@ -99,8 +119,10 @@ class ExpenseController extends Controller
         return $request->validate([
             'category' => ['required', Rule::in(Expense::CATEGORIES)],
             'amount' => 'required|numeric|min:0.01',
+            'payment_mode' => ['nullable', Rule::in(Expense::PAYMENT_MODES)],
             'expense_date' => 'required|date',
             'description' => 'required|string',
+            'receipt' => 'nullable|image|max:5120',
             'farm_id' => 'nullable|exists:farms,id',
             'block_id' => 'nullable|exists:blocks,id',
         ]);

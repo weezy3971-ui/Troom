@@ -15,6 +15,9 @@
     placeholder="Search by name or location…"
     :search="$search"
     :total="$outgrowers->count()"
+    :filters="[
+        ['name' => 'status', 'label' => 'All Status', 'options' => ['active' => 'Active', 'inactive' => 'Inactive']],
+    ]"
 />
 
 @if($outgrowers->isEmpty())
@@ -31,15 +34,17 @@
         <div class="table-wrap">
             <table>
                 <thead>
-                    <tr><th>Name</th><th>Phone</th><th>Location</th><th>Order Lines</th><th>Status</th><th>Actions</th></tr>
+                    <tr><th>Name</th><th>Phone</th><th>Location</th><th>Specialization</th><th>Order Lines</th><th>Rating</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                     @foreach($outgrowers as $outgrower)
                     <tr>
-                        <td style="font-weight: 600; color: var(--text-primary);">{{ $outgrower->name }}</td>
+                        <td style="font-weight: 600;"><a href="{{ route('outgrowers.show', $outgrower) }}" style="color: var(--olive); text-decoration: none;">{{ $outgrower->name }}</a></td>
                         <td>{{ $outgrower->phone ?? '—' }}</td>
                         <td>{{ $outgrower->location ?? '—' }}</td>
+                        <td>{{ $outgrower->specialization ?? '—' }}</td>
                         <td>{{ $outgrower->sales_order_lines_count }}</td>
+                        <td>@if($outgrower->reliability_rating)<span style="color: var(--gold); letter-spacing: 1px;">{{ str_repeat('★', $outgrower->reliability_rating) }}{{ str_repeat('☆', 5 - $outgrower->reliability_rating) }}</span>@else —@endif</td>
                         <td>
                             <span class="badge {{ $outgrower->is_active ? 'badge-active' : 'badge-neutral' }}">{{ $outgrower->is_active ? 'Active' : 'Inactive' }}</span>
                         </td>

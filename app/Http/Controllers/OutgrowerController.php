@@ -18,8 +18,21 @@ class OutgrowerController extends Controller
             });
         }
 
+        if ($request->input('status') === 'active') {
+            $query->where('is_active', true);
+        } elseif ($request->input('status') === 'inactive') {
+            $query->where('is_active', false);
+        }
+
         $outgrowers = $query->get();
-        return view('outgrowers.index', compact('outgrowers', 'search'));
+        $status = $request->input('status', '');
+        return view('outgrowers.index', compact('outgrowers', 'search', 'status'));
+    }
+
+    public function show(Outgrower $outgrower)
+    {
+        $outgrower->load(['salesOrderLines.salesOrder.customer']);
+        return view('outgrowers.show', compact('outgrower'));
     }
 
     public function create()
@@ -62,7 +75,9 @@ class OutgrowerController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:50',
             'location' => 'nullable|string|max:255',
-            'notes' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:1000',
+            'specialization' => 'nullable|string|max:255',
+            'reliability_rating' => 'nullable|integer|min:1|max:5',
             'is_active' => 'nullable|boolean',
         ]);
 

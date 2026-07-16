@@ -204,7 +204,7 @@ Route::middleware('auth')->group(function () {
     // Module 14: Sales & Customer Contracts
     Route::middleware(ModuleAccess::middleware('sales'))->group(function () {
         Route::resource('customers', CustomerController::class);
-        Route::resource('outgrowers', OutgrowerController::class)->except('show');
+        Route::resource('outgrowers', OutgrowerController::class);
         Route::resource('sales-orders', SalesOrderController::class);
         Route::post('sales-orders/{salesOrder}/lines', [SalesOrderController::class, 'addLine'])->name('sales-orders.lines.store');
         Route::delete('sales-orders/{salesOrder}/lines/{line}', [SalesOrderController::class, 'destroyLine'])->name('sales-orders.lines.destroy');

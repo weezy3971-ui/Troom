@@ -584,6 +584,13 @@
         }
         .icon-btn:hover { background: var(--bg-card); color: var(--text-primary); border-color: var(--border-strong); }
 
+        .menu-toggle-btn {
+            color: var(--olive);
+            border-color: rgba(47, 107, 59, 0.35);
+            background: var(--olive-bg);
+        }
+        .menu-toggle-btn:hover { background: rgba(47, 107, 59, 0.16); color: var(--olive); border-color: var(--olive); }
+
         /* ---- Notifications bell ---- */
         .notif-wrap { position: relative; }
         .notif-btn { position: relative; }
@@ -1599,7 +1606,7 @@
             </summary>
             <ul class="sidebar-nav nav-group-items">
                 @if($ma::allows($u,'sales'))<li><a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') || request()->routeIs('sales-orders.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Sales</span></a></li>@endif
-                @if($ma::allows($u,'sales'))<li><a href="{{ route('outgrowers.index') }}" class="{{ request()->routeIs('outgrowers.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Outgrowers</span></a></li>@endif
+                @if($ma::allows($u,'sales'))<li><a href="{{ route('outgrowers.index') }}" class="{{ request()->routeIs('outgrowers.*') ? 'active' : '' }}"><span class="icon"><x-icon name="outgrower" /></span><span class="nav-label">Outgrowers</span></a></li>@endif
                 @if($ma::allows($u,'logistics'))<li><a href="{{ route('dispatches.index') }}" class="{{ request()->routeIs('dispatches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="logistics" /></span><span class="nav-label">Logistics</span></a></li>@endif
                 @if($ma::allows($u,'finance'))<li><a href="{{ route('finance.index') }}" class="{{ request()->routeIs('finance.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Finance</span></a></li>@endif
             </ul>
