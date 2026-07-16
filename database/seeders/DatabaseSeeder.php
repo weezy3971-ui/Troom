@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ---- Owner ----
-        $owner = User::where('email', 'admin@trooms.co.ke')->first();
+        $owner = User::where('email', 'info@trooms.house')->first();
 
         if ($owner) {
             $this->command->info("Owner {$owner->email} already exists — leaving password untouched.");
@@ -28,8 +28,8 @@ class DatabaseSeeder extends Seeder
             }
 
             $owner = User::create([
-                'name' => 'Farm Admin',
-                'email' => 'admin@trooms.co.ke',
+                'name' => 'Admin',
+                'email' => 'info@trooms.house',
                 'role' => 'owner',
                 'password' => Hash::make($password),
             ]);

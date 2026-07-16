@@ -21,7 +21,7 @@ class User extends Authenticatable
      * All assignable roles, mapped to human-readable labels.
      */
     public const ROLES = [
-        'owner' => 'Owner (super-admin)',
+        'owner' => 'Admin',
         'md' => 'Managing Director',
         'horticulture_manager' => 'Horticulture Manager',
         'agronomist' => 'Agronomist',
@@ -34,6 +34,48 @@ class User extends Authenticatable
         'driver' => 'Driver',
         'stable_manager' => 'Stable Manager',
     ];
+
+    /**
+     * Seniority order, lowest number = most senior. Drives who may edit,
+     * deactivate, or view activity for whom: a role may never act on an
+     * account whose role outranks (has a lower number than) its own.
+     */
+    public const ROLE_RANK = [
+        'owner' => 0,
+        'md' => 1,
+        'horticulture_manager' => 2,
+        'agronomist' => 3,
+        'farm_supervisor' => 4,
+        'finance_officer' => 5,
+        'sales_officer' => 6,
+        'storekeeper' => 7,
+        'quality_officer' => 8,
+        'packhouse_supervisor' => 9,
+        'driver' => 10,
+        'stable_manager' => 11,
+    ];
+
+    /**
+     * This role's seniority rank (lower = more senior). Unknown roles rank
+     * last, so they can never outrank a recognized role.
+     */
+    public function rank(): int
+    {
+        return self::ROLE_RANK[$this->role] ?? PHP_INT_MAX;
+    }
+
+    /**
+     * Whether this user is senior to the given user (or role name) and so
+     * may act on their account. A role never outranks itself.
+     */
+    public function outranks(User|string $other): bool
+    {
+        $otherRank = $other instanceof User
+            ? $other->rank()
+            : (self::ROLE_RANK[$other] ?? PHP_INT_MAX);
+
+        return $this->rank() < $otherRank;
+    }
 
     /**
      * Human-readable label for this user's role.

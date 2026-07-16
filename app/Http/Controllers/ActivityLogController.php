@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 /**
@@ -21,6 +22,63 @@ class ActivityLogController extends Controller
     public function index(Request $request)
     {
         $showAll = $request->boolean('all');
+        $isHistory = $request->boolean('history');
+        $hasFilters = $request->filled('search') || $request->filled('user') || $request->filled('action') || $request->filled('date');
+
+        $query = $this->baseQuery($request);
+
+        // Nothing is ever deleted, but the default view is today-only so the
+        // table doesn't grow unbounded on screen. Older entries stay fully
+        // reachable via the date filter, search, or "View Full History".
+        if (! $isHistory && ! $hasFilters) {
+            $query->whereDate('created_at', today());
+        }
+
+        $logs = $query->paginate(50)->withQueryString();
+
+        $users = User::orderBy('name')->get()->reject(fn ($u) => $u->outranks($request->user()));
+        $actions = ActivityLog::query()
+            ->select('action')
+            ->distinct()
+            ->orderBy('action')
+            ->pluck('action');
+
+        return view('activity-logs.index', compact('logs', 'users', 'actions', 'showAll', 'isHistory', 'hasFilters'));
+    }
+
+    /**
+     * Download the currently filtered log as a PDF, same rules as index().
+     */
+    public function exportPdf(Request $request)
+    {
+        $isHistory = $request->boolean('history');
+        $hasFilters = $request->filled('search') || $request->filled('user') || $request->filled('action') || $request->filled('date');
+
+        $query = $this->baseQuery($request);
+
+        if (! $isHistory && ! $hasFilters) {
+            $query->whereDate('created_at', today());
+        }
+
+        $logs = $query->limit(2000)->get();
+
+        $pdf = Pdf::loadView('activity-logs.pdf', [
+            'logs' => $logs,
+            'generatedAt' => now(),
+            'scopeLabel' => $isHistory || $hasFilters ? 'Filtered results' : 'Today, ' . today()->format('M d, Y'),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download('activity-log-' . now()->format('Y-m-d-His') . '.pdf');
+    }
+
+    /**
+     * Shared filtering: auth noise, rank-based visibility, and the
+     * search/user/action/date filters used by both the screen and the PDF.
+     */
+    private function baseQuery(Request $request)
+    {
+        $showAll = $request->boolean('all');
+        $actor = $request->user();
 
         $query = ActivityLog::with('user')->latest();
 
@@ -31,6 +89,15 @@ class ActivityLogController extends Controller
                       $q->whereNull('subject_type')
                         ->orWhereNotIn('subject_type', self::SKIP_TYPES);
                   });
+        }
+
+        // Nobody sees activity performed by an account senior to their own.
+        $seniorRoles = collect(User::ROLE_RANK)
+            ->filter(fn ($rank) => $rank < $actor->rank())
+            ->keys();
+
+        if ($seniorRoles->isNotEmpty()) {
+            $query->whereDoesntHave('user', fn ($q) => $q->whereIn('role', $seniorRoles));
         }
 
         if ($userId = $request->input('user')) {
@@ -49,15 +116,6 @@ class ActivityLogController extends Controller
             $query->whereDate('created_at', $date);
         }
 
-        $logs = $query->paginate(50)->withQueryString();
-
-        $users = User::orderBy('name')->get();
-        $actions = ActivityLog::query()
-            ->select('action')
-            ->distinct()
-            ->orderBy('action')
-            ->pluck('action');
-
-        return view('activity-logs.index', compact('logs', 'users', 'actions', 'showAll'));
+        return $query;
     }
 }

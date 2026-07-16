@@ -259,8 +259,11 @@ Route::middleware('auth')->group(function () {
         Route::delete('users/approvals/{approvedEmail}', [UserController::class, 'revokeApproval'])->name('users.approvals.revoke');
         Route::put('users/password', [UserController::class, 'updatePassword'])->name('users.password');
         Route::put('users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
+        Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
         Route::put('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('activity-logs/export', [ActivityLogController::class, 'exportPdf'])->name('activity-logs.export');
     });
 });

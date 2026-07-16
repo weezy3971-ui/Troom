@@ -2,7 +2,7 @@
 @section('title', 'Settings')
 
 @php
-    $roleLabel = $user->role === 'owner' ? 'Horticulture Manager' : ucwords(str_replace('_', ' ', $user->role));
+    $roleLabel = $user->role === 'owner' ? 'Admin' : ucwords(str_replace('_', ' ', $user->role));
 @endphp
 
 @section('content')

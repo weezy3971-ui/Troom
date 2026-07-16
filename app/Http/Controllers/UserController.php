@@ -39,7 +39,7 @@ class UserController extends Controller
             'role' => ['required', Rule::in(array_keys(User::ROLES))],
         ]);
 
-        $this->guardOwnerRole($request, $validated['role']);
+        $this->guardSeniorRole($request, $validated['role']);
 
         $approval = ApprovedEmail::create([
             'email' => strtolower($validated['email']),
@@ -55,10 +55,14 @@ class UserController extends Controller
     /**
      * Revoke a pending (not-yet-registered) approval.
      */
-    public function revokeApproval(ApprovedEmail $approvedEmail)
+    public function revokeApproval(Request $request, ApprovedEmail $approvedEmail)
     {
         if ($approvedEmail->isRegistered()) {
             return back()->with('error', 'This email has already been used to register — deactivate the user instead.');
+        }
+
+        if ((User::ROLE_RANK[$approvedEmail->role] ?? PHP_INT_MAX) < $request->user()->rank()) {
+            abort(403, 'You cannot revoke an approval for a role senior to your own.');
         }
 
         $email = $approvedEmail->email;
@@ -78,11 +82,11 @@ class UserController extends Controller
             'role' => ['required', Rule::in(array_keys(User::ROLES))],
         ]);
 
-        $this->guardOwnerRole($request, $validated['role'], $user);
-
-        if ($user->id === $request->user()->id && $user->role === 'owner' && $validated['role'] !== 'owner') {
-            return back()->with('error', 'You cannot remove your own owner role.');
+        if ($user->id === $request->user()->id) {
+            return back()->with('error', 'You cannot change your own role.');
         }
+
+        $this->guardSeniorRole($request, $validated['role'], $user);
 
         $from = $user->role;
         $user->update(['role' => $validated['role']]);
@@ -101,8 +105,8 @@ class UserController extends Controller
             return back()->with('error', 'You cannot deactivate your own account.');
         }
 
-        if ($user->role === 'owner' && ! $request->user()->isOwner()) {
-            return back()->with('error', 'Only an owner can change an owner account.');
+        if ($user->outranks($request->user())) {
+            return back()->with('error', 'You cannot change the account of someone senior to you.');
         }
 
         $user->update(['is_active' => ! $user->is_active]);
@@ -111,6 +115,59 @@ class UserController extends Controller
         ActivityLogger::log($action, $user, ucfirst($action) . " user {$user->name}");
 
         return back()->with('success', "{$user->name}'s account has been {$action}.");
+    }
+
+    /**
+     * Permanently delete a user account (as opposed to deactivating it).
+     * Their past activity log entries are kept for the audit trail — the
+     * user_id on those rows is set to null, per the migration's
+     * nullOnDelete — so history isn't lost, only the login itself.
+     */
+    public function destroy(Request $request, User $user)
+    {
+        if ($user->id === $request->user()->id) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        if ($user->outranks($request->user())) {
+            return back()->with('error', 'You cannot delete the account of someone senior to you.');
+        }
+
+        $name = $user->name;
+        $email = $user->email;
+        $user->delete();
+
+        ActivityLogger::log('deleted_user', null, "Deleted user {$name} ({$email})");
+
+        return back()->with('success', "{$name}'s account has been permanently deleted.");
+    }
+
+    /**
+     * Reset another user's password — there's no self-service "forgot
+     * password" flow (no mail service wired up), so this is the recovery
+     * path for someone who's locked out. The new password must be shared
+     * with them directly; nobody may reset their own password this way
+     * (use updatePassword above, which requires the current one).
+     */
+    public function resetPassword(Request $request, User $user)
+    {
+        if ($user->id === $request->user()->id) {
+            return back()->with('error', 'You cannot reset your own password this way — use "Change Your Password" below.');
+        }
+
+        if ($user->outranks($request->user())) {
+            return back()->with('error', 'You cannot reset the password of someone senior to you.');
+        }
+
+        $validated = $request->validate([
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
+
+        $user->update(['password' => Hash::make($validated['password'])]);
+
+        ActivityLogger::log('reset_password', $user, "Reset {$user->name}'s password");
+
+        return back()->with('success', "{$user->name}'s password has been reset. Share the new password with them directly.");
     }
 
     /**
@@ -133,12 +190,20 @@ class UserController extends Controller
     }
 
     /**
-     * Prevent privilege escalation: only an owner may grant the owner role.
+     * Prevent privilege escalation: nobody may assign a role senior to their
+     * own, and nobody may edit the role of an account that already outranks
+     * them (otherwise a junior admin could demote a senior via this endpoint).
      */
-    protected function guardOwnerRole(Request $request, string $role, ?User $user = null): void
+    protected function guardSeniorRole(Request $request, string $role, ?User $user = null): void
     {
-        if ($role === 'owner' && ! $request->user()->isOwner()) {
-            abort(403, 'Only an owner can assign the owner role.');
+        $actor = $request->user();
+
+        if ((User::ROLE_RANK[$role] ?? PHP_INT_MAX) < $actor->rank()) {
+            abort(403, 'You cannot assign a role senior to your own.');
+        }
+
+        if ($user && $user->outranks($actor)) {
+            abort(403, 'You cannot change the account of someone senior to you.');
         }
     }
 }

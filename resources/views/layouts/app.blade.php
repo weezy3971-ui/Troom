@@ -1680,7 +1680,7 @@
             @auth
                 @php
                     $user = auth()->user();
-                    $roleLabel = $user->role === 'owner' ? 'Horticulture Manager' : ucwords(str_replace('_', ' ', $user->role));
+                    $roleLabel = $user->role === 'owner' ? 'Admin' : ucwords(str_replace('_', ' ', $user->role));
                     $topbarAlerts = app(\App\Services\AlertService::class)->collect();
                     $alertCount = count($topbarAlerts);
                 @endphp

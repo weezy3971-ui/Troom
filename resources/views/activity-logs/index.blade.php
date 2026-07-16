@@ -13,7 +13,9 @@
             <p>Use the <strong>filters</strong> above to narrow by team member, action type, or date.</p>
             <p>Sign-ins and other auth events are hidden by default — toggle <strong>"Show all"</strong> to include them.</p>
             <p><strong>Quick steps:</strong> Pick a team member, action, or date in the filter bar → click "Filter" → click "Reset" to clear.</p>
+            <p>The list shows <strong>today's activity</strong> by default to stay readable. Nothing is ever deleted — use <strong>View Full History</strong> or the filters above to reach older entries.</p>
         </x-help-panel>
+        <a href="{{ route('activity-logs.export', request()->query()) }}" class="btn btn-secondary btn-sm">Save as PDF</a>
         @if($showAll)
             <a href="{{ route('activity-logs.index', request()->except('all')) }}" class="btn btn-ghost btn-sm">Hide auth events</a>
         @else
@@ -22,10 +24,23 @@
     </div>
 </div>
 
+@if(! $isHistory && ! $hasFilters)
+    <div class="alert alert-info" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <span>Showing today's activity only. Older entries aren't deleted — view them anytime.</span>
+        <a href="{{ route('activity-logs.index', array_merge(request()->query(), ['history' => 1])) }}" class="btn btn-sm btn-secondary">View Full History</a>
+    </div>
+@elseif($isHistory)
+    <div class="alert alert-info" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <span>Showing full history.</span>
+        <a href="{{ route('activity-logs.index', collect(request()->query())->except(['history'])->all()) }}" class="btn btn-sm btn-secondary">Back to Today</a>
+    </div>
+@endif
+
 {{-- Filters --}}
 <div class="card" style="margin-bottom: 20px;">
     <form method="GET" action="{{ route('activity-logs.index') }}" class="form-grid" style="align-items:end;">
         @if($showAll)<input type="hidden" name="all" value="1">@endif
+        @if($isHistory)<input type="hidden" name="history" value="1">@endif
         <div class="form-group" style="margin-bottom:0;">
             <label class="form-label" for="search">Search</label>
             <input type="text" id="search" name="search" value="{{ request('search') }}" class="form-input" placeholder="e.g. Harvest Batch, crop cycle…">
@@ -54,7 +69,7 @@
         </div>
         <div class="form-group" style="margin-bottom:0; display:flex; gap:8px;">
             <button type="submit" class="btn btn-primary">Filter</button>
-            <a href="{{ route('activity-logs.index', $showAll ? ['all'=>1] : []) }}" class="btn btn-ghost">Reset</a>
+            <a href="{{ route('activity-logs.index', array_filter(['all' => $showAll ? 1 : null, 'history' => $isHistory ? 1 : null])) }}" class="btn btn-ghost">Reset</a>
         </div>
     </form>
 </div>
