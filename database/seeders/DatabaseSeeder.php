@@ -16,7 +16,13 @@ class DatabaseSeeder extends Seeder
         $owner = User::where('email', 'info@trooms.house')->first();
 
         if ($owner) {
-            $this->command->info("Owner {$owner->email} already exists — leaving password untouched.");
+            $password = env('SEED_ADMIN_PASSWORD');
+            if ($password) {
+                $owner->update(['password' => Hash::make($password)]);
+                $this->command->info("Owner {$owner->email} already exists — password synced to SEED_ADMIN_PASSWORD.");
+            } else {
+                $this->command->info("Owner {$owner->email} already exists — leaving password untouched.");
+            }
         } else {
             $password = env('SEED_ADMIN_PASSWORD');
 
@@ -63,7 +69,7 @@ class DatabaseSeeder extends Seeder
         // manually for on the original database. ----
         foreach ([
             ['email' => 'matthew@trooms.house', 'role' => 'owner'],
-            ['email' => 'maryannne.nduati@trooms.house', 'role' => 'owner'],
+            ['email' => 'maryanne.nduati@trooms.house', 'role' => 'owner'],
             ['email' => 'albert.maera@trooms.house', 'role' => 'horticulture_manager'],
             ['email' => 'george.mwangi@trooms.house', 'role' => 'sales_officer'],
         ] as $invite) {

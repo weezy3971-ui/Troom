@@ -9,6 +9,7 @@ class ApprovedEmail extends Model
 {
     protected $fillable = [
         'email',
+        'phone',
         'role',
         'invited_by',
         'registered_at',

@@ -52,6 +52,17 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+Route::get('/register/verify', [AuthController::class, 'showVerify'])->name('register.verify');
+Route::post('/register/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:10,1')->name('register.verify.submit');
+Route::post('/register/verify/resend', [AuthController::class, 'resendOtp'])->middleware('throttle:3,1')->name('register.verify.resend');
+
+// Self-service password reset (SMS OTP)
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetOtp'])->middleware('throttle:5,1')->name('password.email');
+Route::get('/forgot-password/verify', [AuthController::class, 'showResetVerify'])->name('password.reset.verify');
+Route::post('/forgot-password/verify', [AuthController::class, 'resetWithOtp'])->middleware('throttle:10,1')->name('password.update');
+Route::post('/forgot-password/verify/resend', [AuthController::class, 'resendResetOtp'])->middleware('throttle:3,1')->name('password.reset.resend');
+
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
@@ -257,9 +268,11 @@ Route::middleware('auth')->group(function () {
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::post('users/approve', [UserController::class, 'approveEmail'])->name('users.approve');
         Route::delete('users/approvals/{approvedEmail}', [UserController::class, 'revokeApproval'])->name('users.approvals.revoke');
+        Route::put('users/approvals/{approvedEmail}/phone', [UserController::class, 'updateApprovalPhone'])->name('users.approvals.phone');
         Route::put('users/password', [UserController::class, 'updatePassword'])->name('users.password');
         Route::put('users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
         Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+        Route::put('users/{user}/phone', [UserController::class, 'updateUserPhone'])->name('users.phone');
         Route::put('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 

@@ -91,6 +91,10 @@
         }
         .btn-login:hover { background: var(--accent-hover); }
         .error { background: rgba(240,101,90,0.1); color: #f0655a; border: 1px solid rgba(240,101,90,0.22); padding: 10px 14px; border-radius: 9px; font-size: 12px; margin-bottom: 20px; }
+        .success { background: var(--glow); color: var(--accent-hover); border: 1px solid rgba(52,211,153,0.22); padding: 10px 14px; border-radius: 9px; font-size: 12px; margin-bottom: 20px; }
+        .forgot-link { text-align: right; margin: -8px 0 18px; }
+        .forgot-link a { font-size: 12px; color: var(--text-2); text-decoration: none; }
+        .forgot-link a:hover { color: var(--accent-hover); text-decoration: underline; }
 
     </style>
 </head>
@@ -108,6 +112,10 @@
 
         <h2>Sign in</h2>
         <p class="subtitle">From nursery to dispatch — one farm system.</p>
+
+        @if(session('success'))
+            <div class="success">{{ session('success') }}</div>
+        @endif
 
         @if($errors->any())
             <div class="error">
@@ -132,6 +140,9 @@
                         <span class="icon-eye-off" style="display:none;"><x-icon name="eye-off" size="17" /></span>
                     </button>
                 </div>
+            </div>
+            <div class="forgot-link">
+                <a href="{{ route('password.request') }}">Forgot password?</a>
             </div>
             <div class="remember">
                 <input type="checkbox" id="remember" name="remember">

@@ -56,4 +56,18 @@ return [
         'timeout' => (int) env('ANTHROPIC_TIMEOUT', 60),
     ],
 
+    /*
+    | Bonga SMS — used to text users their password when an admin sets or
+    | resets it. SMS sending is skipped (silently, without failing the
+    | password change) whenever the API key is not configured.
+    */
+    'bonga_sms' => [
+        'key' => env('BONGA_SMS_API_KEY', env('SMS_API_KEY')),
+        'secret' => env('BONGA_SMS_API_SECRET', env('SMS_API_SECRET')),
+        'url' => env('BONGA_SMS_API_URL', env('SMS_API_URL')),
+        'client_id' => env('SMS_API_CLIENT_ID'),
+        'service_id' => env('SMS_SERVICE_ID', 1),
+        'timeout' => (int) env('SMS_TIMEOUT', 20),
+    ],
+
 ];

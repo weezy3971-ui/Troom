@@ -152,6 +152,13 @@
         }
         .sidebar::-webkit-scrollbar { display: none; }
 
+        /* Leaflet sets very high z-index on its tile pane (400) and zoom
+           controls (~1000). Without a stacking context of its own the map
+           escapes into the page root and paints over the fixed sidebar drawer
+           and overlay (z-index 240–250) when the mobile nav is open. Isolating
+           it traps that internal stacking so the map stays below the app chrome. */
+        .leaflet-container { isolation: isolate; }
+
         /* ---- Mobile-only controls (hidden on desktop by default) ----
            !important: both buttons also carry .icon-btn, whose own
            `display: inline-flex` is declared later in this stylesheet and

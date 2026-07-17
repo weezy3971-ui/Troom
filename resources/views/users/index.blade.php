@@ -28,7 +28,7 @@
 <div class="card" style="margin-bottom: 24px; max-width: 820px;">
     <div class="card-header"><h3 class="card-title">Onboard a User</h3></div>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
-        Approve an email address and assign its role. That person can then create their own account from the sign-in page — no one outside this list can register.
+        Approve an email address and assign its role. That person can then create their own account from the sign-in page — no one outside this list can register. The phone number you enter is used to verify their identity by SMS when they register, so make sure it's correct.
     </p>
     <form action="{{ route('users.approve') }}" method="POST"
           onsubmit="return confirmIfOwnerRole(this, this.email.value || 'this email')">
@@ -37,6 +37,11 @@
             <div class="form-group">
                 <label class="form-label" for="email">Email address *</label>
                 <input type="email" id="email" name="email" value="{{ old('email') }}" class="form-input" placeholder="person@trooms.co.ke" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="phone">Phone number *</label>
+                <input type="text" id="phone" name="phone" value="{{ old('phone') }}" class="form-input" placeholder="0712345678" inputmode="tel" required>
+                @error('phone')<div class="form-error">{{ $message }}</div>@enderror
             </div>
             <div class="form-group">
                 <label class="form-label" for="role">Role *</label>
@@ -58,17 +63,32 @@
     <div class="card-header"><h3 class="card-title">Pending Registrations ({{ $pendingApprovals->count() }})</h3></div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Email</th><th>Assigned Role</th><th>Approved By</th><th>When</th><th style="text-align:right;">Actions</th></tr></thead>
+            <thead><tr><th>Email</th><th>Phone</th><th>Assigned Role</th><th>Approved By</th><th>When</th><th style="text-align:right;">Actions</th></tr></thead>
             <tbody>
                 @foreach($pendingApprovals as $approval)
+                @php $approvalLocked = (\App\Models\User::ROLE_RANK[$approval->role] ?? PHP_INT_MAX) < $actor->rank(); @endphp
                 <tr>
                     <td class="mono">{{ $approval->email }}</td>
+                    <td>
+                        @if($approvalLocked)
+                            <span class="mono">{{ $approval->phone ?? '—' }}</span>
+                        @else
+                            <form action="{{ route('users.approvals.phone', $approval) }}" method="POST" style="display:flex; gap:6px; align-items:center;">
+                                @csrf @method('PUT')
+                                <input type="text" name="phone" value="{{ $approval->phone }}" class="form-input mono" style="padding:5px 8px; font-size:12px; width:150px;" placeholder="0712345678" inputmode="tel" required>
+                                <button type="submit" class="btn btn-ghost btn-sm">Save</button>
+                            </form>
+                            @if(! $approval->phone)
+                                <div style="font-size:11px; color:var(--danger, #f0655a); margin-top:4px;">No phone — set one so they can register.</div>
+                            @endif
+                        @endif
+                    </td>
                     <td><span class="badge badge-neutral">{{ \App\Models\User::ROLES[$approval->role] ?? $approval->role }}</span></td>
                     <td>{{ $approval->inviter->name ?? '—' }}</td>
                     <td>{{ $approval->created_at->format('M d, Y') }}</td>
                     <td>
                         <div style="display:flex; gap:8px; justify-content:flex-end;">
-                            @if((\App\Models\User::ROLE_RANK[$approval->role] ?? PHP_INT_MAX) < $actor->rank())
+                            @if($approvalLocked)
                                 <span style="font-size:12px; color:var(--text-muted);">{{ \App\Models\User::ROLES[$approval->role] ?? $approval->role }}</span>
                             @else
                                 <form action="{{ route('users.approvals.revoke', $approval) }}" method="POST" data-confirm="Revoke the pending approval for {{ $approval->email }}?">
@@ -91,7 +111,7 @@
     <div class="card-header"><h3 class="card-title">Users ({{ $users->count() }})</h3></div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
             <tbody>
                 @foreach($users as $user)
                 @php
@@ -102,6 +122,17 @@
                 <tr>
                     <td style="font-weight:600;">{{ $user->name }}</td>
                     <td class="mono">{{ $user->email }}</td>
+                    <td>
+                        @if($targetOutranksActor)
+                            <span class="mono">{{ $user->phone ?? '—' }}</span>
+                        @else
+                            <form action="{{ route('users.phone', $user) }}" method="POST" style="display:flex; gap:6px; align-items:center;">
+                                @csrf @method('PUT')
+                                <input type="text" name="phone" value="{{ $user->phone }}" class="form-input mono" style="padding:5px 8px; font-size:12px; width:140px;" placeholder="0712345678" inputmode="tel">
+                                <button type="submit" class="btn btn-ghost btn-sm">Save</button>
+                            </form>
+                        @endif
+                    </td>
                     <td>
                         @if($isSelf)
                             <span style="font-size:12px; color:var(--text-muted);">{{ $user->roleLabel() }} (you can't change your own role)</span>
@@ -144,7 +175,7 @@
                                     </button>
                                 </form>
                                 <button type="button" class="btn btn-secondary btn-sm"
-                                        onclick="openResetPasswordModal('{{ route('users.reset-password', $user) }}', '{{ addslashes($user->name) }}')">
+                                        onclick="openResetPasswordModal('{{ route('users.reset-password', $user) }}', '{{ addslashes($user->name) }}', '{{ addslashes($user->phone ?? '') }}')">
                                     Reset Password
                                 </button>
                                 <form action="{{ route('users.destroy', $user) }}" method="POST"
@@ -214,7 +245,7 @@
         <div class="confirm-icon">🔑</div>
         <div class="confirm-title" id="reset-password-modal-title">Reset Password</div>
         <div class="confirm-message">
-            Set a new password for <strong id="reset-password-modal-name"></strong>. You'll need to share it with them directly — there's no email notification.
+            Set a new password for <strong id="reset-password-modal-name"></strong>. If a phone number is on file, the new password is texted to them automatically.
         </div>
         <form id="reset-password-modal-form" method="POST" action="">
             @csrf @method('PUT')
@@ -225,6 +256,11 @@
             <div class="form-group">
                 <label class="form-label" for="reset-password-confirm-input">Confirm password</label>
                 <input type="password" id="reset-password-confirm-input" name="password_confirmation" class="form-input" minlength="8" required autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="reset-password-phone-input">Phone number (for SMS)</label>
+                <input type="text" id="reset-password-phone-input" name="phone" class="form-input" placeholder="07XX XXX XXX" inputmode="tel" autocomplete="tel">
+                <div style="font-size:11.5px; color:var(--text-muted); margin-top:5px;">Leave blank to keep the number on file. The new password is sent here by SMS.</div>
             </div>
             <div class="confirm-actions">
                 <button type="button" class="btn btn-ghost" onclick="closeResetPasswordModal()">Cancel</button>
@@ -253,12 +289,13 @@
     // rather than a per-row dropdown, so it can't get clipped by the
     // table's horizontal scroll container and stays centered on any
     // screen size (including phones).
-    function openResetPasswordModal(actionUrl, name) {
+    function openResetPasswordModal(actionUrl, name, phone) {
         var modal = document.getElementById('reset-password-modal');
         var form = document.getElementById('reset-password-modal-form');
         form.action = actionUrl;
         form.reset();
         document.getElementById('reset-password-modal-name').textContent = name;
+        document.getElementById('reset-password-phone-input').value = phone || '';
         modal.classList.add('open');
         document.getElementById('reset-password-input').focus();
     }

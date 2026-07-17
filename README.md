@@ -1,33 +1,32 @@
-# Trooms ERP
+# Deploy Notes
 
-Horticulture management system — from nursery to dispatch, one farm system.
+## Migrations
 
-Trooms ERP tracks a horticulture operation end-to-end: crop planning and budgets, nursery batches, daily field operations (irrigation, fertigation, spraying), labour and attendance, harvest and packhouse traceability, sales and dispatch, inventory and procurement, and a native finance ledger — plus an executive dashboard with AI-generated reports and KPI narratives. It also includes a separate Stables module (horses, guides, rides) for operations that run agritourism alongside farming.
-
-## Tech Stack
-
-- **Backend**: Laravel 13 (PHP 8.3+)
-- **Frontend**: Blade views, Tailwind CSS 4, Vite — no SPA framework
-- **Database**: SQLite by default (see `.env.example`); swap `DB_CONNECTION` for MySQL/Postgres in production
-- **Queue**: database driver — used for AI report generation and KPI narrative jobs
-- **AI**: Anthropic Claude, called directly via `App\Services\Ai\AiClient` (no SDK dependency). Optional — the app runs fine without an `ANTHROPIC_API_KEY`, AI features just stay disabled
-
-## Access Control
-
-- **Roles**: `owner`, `md`, `horticulture_manager`, `agronomist`, `farm_supervisor`, `finance_officer`, `sales_officer`, `storekeeper`, `quality_officer`, `packhouse_supervisor`, `driver`, `stable_manager` (`app/Models/User.php`)
-- **Module gating**: each module (master data, crop cycles, nursery, finance, AI, admin, etc.) is access-controlled per role via `App\Support\ModuleAccess` middleware, not just per-route policies
-- **Invite-only registration**: nobody can self-register unless an owner/admin first approves their email under Users. Once approved, they visit `/register` and set their own password
-- **Activity log**: every significant action is recorded to an audit trail, visible to owner/horticulture_manager under Activity Logs
-
-## Getting Started
-
-### Local development
+This release adds a `phone` column to the `users` and `approved_emails` tables. On deploy, run:
 
 ```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed
-npm install
-composer dev   # runs the PHP server, queue listener, and Vite dev server together
+php artisan migrate
 ```
+
+## SMS Setup
+
+SMS features (registration OTP, self-service password reset, admin password reset texts)
+won't work until these are done.
+
+**Blocking:**
+
+1. Set the SMS env vars on the server:
+
+   ```env
+   BONGA_SMS_API_KEY=<api key here>
+   BONGA_SMS_API_SECRET=<api secret here>
+   BONGA_SMS_API_URL=http://167.172.14.50:4002/v1/send-sms
+   SMS_API_CLIENT_ID=858
+   SMS_SERVICE_ID=1
+   ```
+
+   Re-run `php artisan config:cache` afterward if you cache config.
+
+2. Run migrations: `php artisan migrate` (adds `phone` to `users` and `approved_emails`).
+
+3. Confirm the production server's IP can reach `167.172.14.50:4002`.
