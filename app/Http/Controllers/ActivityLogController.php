@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\User;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 /**
@@ -47,7 +46,10 @@ class ActivityLogController extends Controller
     }
 
     /**
-     * Download the currently filtered log as a PDF, same rules as index().
+     * Render the currently filtered log as a print-friendly page, same rules
+     * as index(). The page auto-opens the browser's print dialog, where the
+     * user picks "Save as PDF" — no server-side PDF library required, matching
+     * how the crop-cycle planner does it.
      */
     public function exportPdf(Request $request)
     {
@@ -62,13 +64,11 @@ class ActivityLogController extends Controller
 
         $logs = $query->limit(2000)->get();
 
-        $pdf = Pdf::loadView('activity-logs.pdf', [
+        return view('activity-logs.pdf', [
             'logs' => $logs,
             'generatedAt' => now(),
             'scopeLabel' => $isHistory || $hasFilters ? 'Filtered results' : 'Today, ' . today()->format('M d, Y'),
-        ])->setPaper('a4', 'landscape');
-
-        return $pdf->download('activity-log-' . now()->format('Y-m-d-His') . '.pdf');
+        ]);
     }
 
     /**
