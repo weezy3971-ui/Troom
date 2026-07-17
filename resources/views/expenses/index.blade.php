@@ -74,6 +74,9 @@
                         <td><span class="badge badge-neutral">{{ $categoryLabels[$expense->category] ?? ucfirst($expense->category) }}</span></td>
                         <td style="font-weight: 600; color: var(--text-primary);">
                             <a href="{{ route('expenses.show', $expense) }}" style="color: var(--accent-hover); text-decoration: none;">{{ \Illuminate\Support\Str::limit($expense->description, 60) }}</a>
+                            @if($expense->isLocked())
+                                <span title="Locked — can no longer be edited or deleted" style="margin-left:4px;">🔒</span>
+                            @endif
                         </td>
                         <td>{{ $expense->farm->name ?? '—' }}</td>
                         <td class="mono">{{ number_format($expense->amount, 2) }}</td>

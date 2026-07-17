@@ -69,4 +69,14 @@ class Expense extends Model
     {
         return $this->receipt_path ? Storage::disk('public')->url($this->receipt_path) : null;
     }
+
+    /**
+     * Expenses carry receipts/amounts that shouldn't be quietly rewritten
+     * long after the fact. Once a full day has passed since it was logged,
+     * it can no longer be edited or deleted — only viewed.
+     */
+    public function isLocked(): bool
+    {
+        return $this->created_at->addDay()->isPast();
+    }
 }

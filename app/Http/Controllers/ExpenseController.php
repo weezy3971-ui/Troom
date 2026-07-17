@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\CostAllocation;
 use App\Models\Expense;
 use App\Models\Farm;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -71,6 +72,11 @@ class ExpenseController extends Controller
 
     public function edit(Expense $expense)
     {
+        if ($expense->isLocked()) {
+            return redirect()->route('expenses.show', $expense)
+                ->with('error', 'This expense was logged more than a day ago and can no longer be edited.');
+        }
+
         $farms = Farm::orderBy('name')->get();
         $blocks = Block::with('farm')->orderBy('name')->get();
         $categories = Expense::CATEGORIES;
@@ -81,6 +87,13 @@ class ExpenseController extends Controller
 
     public function update(Request $request, Expense $expense)
     {
+        if ($expense->isLocked()) {
+            return redirect()->route('expenses.show', $expense)
+                ->with('error', 'This expense was logged more than a day ago and can no longer be edited.');
+        }
+
+        $before = $expense->only(['category', 'amount', 'payment_mode', 'expense_date', 'description', 'farm_id', 'block_id']);
+
         $validated = $this->validateExpense($request);
 
         if ($request->hasFile('receipt')) {
@@ -91,15 +104,25 @@ class ExpenseController extends Controller
         }
         unset($validated['receipt']);
 
-        $expense->update($validated);
+        // Suppress the generic "Updated Expense" audit entry in favour of an
+        // explicit before/after description below — expense edits are
+        // sensitive enough to spell out exactly what changed and by whom.
+        Expense::withoutEvents(fn () => $expense->update($validated));
+
         $this->syncCostAllocation($expense);
+        $this->logFieldChanges($request, $expense, $before);
 
         return redirect()->route('expenses.show', $expense)
             ->with('success', 'Expense updated.');
     }
 
-    public function destroy(Expense $expense)
+    public function destroy(Request $request, Expense $expense)
     {
+        if ($expense->isLocked()) {
+            return redirect()->route('expenses.show', $expense)
+                ->with('error', 'This expense was logged more than a day ago and can no longer be deleted.');
+        }
+
         CostAllocation::where('source_type', 'expense')
             ->where('source_id', $expense->id)
             ->delete();
@@ -108,10 +131,59 @@ class ExpenseController extends Controller
             Storage::disk('public')->delete($expense->receipt_path);
         }
 
-        $expense->delete();
+        $summary = ucfirst(str_replace('_', ' ', $expense->category)) . ' — KES ' . number_format($expense->amount, 2)
+            . ' (' . \Illuminate\Support\Str::limit($expense->description, 60) . ')';
+
+        Expense::withoutEvents(fn () => $expense->delete());
+
+        ActivityLogger::log(
+            'deleted',
+            null,
+            "{$request->user()->name} deleted an expense: {$summary}"
+        );
 
         return redirect()->route('expenses.index')
             ->with('success', 'Expense deleted.');
+    }
+
+    /**
+     * Log exactly what changed on an expense edit, e.g. "James changed the
+     * amount from 2,000.00 to 1,000.00" — plain before/after values rather
+     * than a generic "updated" entry, since expenses are sensitive enough
+     * that admins need to see precisely what was altered.
+     */
+    private function logFieldChanges(Request $request, Expense $expense, array $before): void
+    {
+        $labels = [
+            'category' => 'category',
+            'amount' => 'amount',
+            'payment_mode' => 'payment mode',
+            'expense_date' => 'date',
+            'description' => 'description',
+            'farm_id' => 'farm',
+            'block_id' => 'block',
+        ];
+
+        $changes = [];
+        foreach ($before as $field => $old) {
+            $new = $expense->{$field};
+            if ((string) $old === (string) $new) {
+                continue;
+            }
+
+            $format = fn ($v) => $field === 'amount' ? number_format((float) $v, 2) : ($v ?? '—');
+            $changes[] = "{$labels[$field]} from {$format($old)} to {$format($new)}";
+        }
+
+        if (empty($changes)) {
+            return;
+        }
+
+        ActivityLogger::log(
+            'updated',
+            $expense,
+            "{$request->user()->name} changed the " . implode(', ', $changes) . ' on this expense'
+        );
     }
 
     private function validateExpense(Request $request): array

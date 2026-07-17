@@ -10,13 +10,23 @@
         <p class="page-subtitle">{{ $expense->expense_date->format('M d, Y') }} · KES {{ number_format($expense->amount, 2) }}</p>
     </div>
     <div class="actions">
-        <a href="{{ route('expenses.edit', $expense) }}" class="btn btn-secondary">Edit</a>
-        <form action="{{ route('expenses.destroy', $expense) }}" method="POST" data-confirm="Delete this expense?">
-            @csrf @method('DELETE')
-            <button type="submit" class="btn btn-danger">Delete</button>
-        </form>
+        @if($expense->isLocked())
+            <span class="badge badge-neutral" title="Expenses can only be edited or deleted within a day of being logged">🔒 Locked</span>
+        @else
+            <a href="{{ route('expenses.edit', $expense) }}" class="btn btn-secondary">Edit</a>
+            <form action="{{ route('expenses.destroy', $expense) }}" method="POST" data-confirm="Delete this expense? This is only possible because it was logged less than a day ago — it will be permanently removed.">
+                @csrf @method('DELETE')
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        @endif
     </div>
 </div>
+
+@if($expense->isLocked())
+    <div class="alert alert-info" style="margin-bottom:20px;">
+        This expense was logged more than a day ago and is now locked — it can no longer be edited or deleted, only viewed.
+    </div>
+@endif
 
 <div class="detail-grid">
     <div class="detail-item">
