@@ -58,6 +58,21 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // ---- Pre-approved team members — awaiting self-registration with
+        // their own chosen password, same as the owner had to approve them
+        // manually for on the original database. ----
+        foreach ([
+            ['email' => 'matthew@trooms.house', 'role' => 'owner'],
+            ['email' => 'maryannne.nduati@trooms.house', 'role' => 'owner'],
+            ['email' => 'albert.maera@trooms.house', 'role' => 'horticulture_manager'],
+            ['email' => 'george.mwangi@trooms.house', 'role' => 'sales_officer'],
+        ] as $invite) {
+            ApprovedEmail::firstOrCreate(
+                ['email' => $invite['email']],
+                ['role' => $invite['role'], 'invited_by' => $owner->id]
+            );
+        }
+
         $this->call(StableSeeder::class);
     }
 }
