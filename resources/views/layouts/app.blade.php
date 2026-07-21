@@ -1593,7 +1593,7 @@
         </details>
 
         @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour') || $ma::allows($u,'projects'); @endphp
-        @if(! $simplifiedNav && $fieldOps)
+        @if($fieldOps)
         {{-- Field Operations --}}
         <details class="nav-group" {{ request()->routeIs('nursery-batches.*','daily-activities.*','irrigation-logs.*','fertigation-logs.*','spray-logs.*','labour-attendances.*','weigh-scale-readings.*','projects.*','workers.*') ? 'open' : '' }}>
             <summary>

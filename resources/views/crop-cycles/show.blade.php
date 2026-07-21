@@ -20,7 +20,7 @@
         @endif
         @if($cropCycle->status === 'active')
             @if(\App\Support\PlannerPrograms::forCrop($cropCycle->crop?->name))
-                <a href="{{ route('crop-cycles.planner', ['cycle' => $cropCycle->id]) }}" class="btn btn-secondary">🗓 Planting Planner</a>
+                <a href="{{ route('crop-cycles.planner', ['cycle' => $cropCycle->id]) }}" class="btn btn-primary">🗓 Planting Planner</a>
             @endif
             <form action="{{ route('crop-cycles.complete', $cropCycle) }}" method="POST">
                 @csrf

@@ -38,6 +38,27 @@
     .crop-picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .crop-picker select { max-width: 320px; }
 
+    /* Load-a-cycle panel — the primary way in from an activated cycle, so it's
+       given the brand green to stand out above the plain crop picker. */
+    .pl-cycle-loader {
+        background: var(--olive-bg);
+        border: 1px solid var(--olive);
+        border-left: 4px solid var(--olive);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+    }
+    .pl-cycle-loader-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .pl-cycle-icon {
+        font-size: 20px; line-height: 1; flex: none;
+        width: 38px; height: 38px; border-radius: 10px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--olive); box-shadow: 0 2px 6px rgba(47,107,59,0.30);
+    }
+    .pl-cycle-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+    .pl-cycle-sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
+    .pl-cycle-loader select { max-width: 420px; border-color: var(--olive); }
+    @media print { .pl-cycle-loader { display: none !important; } }
+
     .pl-sources { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
     .pl-sources li { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; }
     .pl-sources a { color: var(--olive); text-decoration: none; }
@@ -72,26 +93,34 @@
 
 <div class="planner-stack">
 
+    @if($activeCycles->isNotEmpty())
+        {{-- Load a live, activated crop cycle: sets crop + planting date. --}}
+        <div class="pl-cycle-loader">
+            <div class="pl-cycle-loader-head">
+                <span class="pl-cycle-icon">🗓</span>
+                <div>
+                    <div class="pl-cycle-title">Load an active crop cycle</div>
+                    <div class="pl-cycle-sub">Pull in a live cycle's crop &amp; planting date — the whole plan re-dates itself.</div>
+                </div>
+            </div>
+            <select id="plCycle" class="form-select" onchange="plLoadCycle()" aria-label="Load active crop cycle">
+                <option value="">+ New plan</option>
+                @foreach($activeCycles as $cyc)
+                    <option value="{{ $cyc['id'] }}"
+                        data-slug="{{ $cyc['slug'] }}"
+                        data-date="{{ $cyc['date'] }}"
+                        data-block="{{ $cyc['block'] }}"
+                        data-variety="{{ $cyc['variety'] }}"
+                        data-area="{{ $cyc['area'] }}"
+                        {{ ($selectedCycleId ?? null) === $cyc['id'] ? 'selected' : '' }}>{{ $cyc['label'] }}</option>
+                @endforeach
+            </select>
+        </div>
+    @endif
+
     {{-- Crop picker --}}
     <div class="card">
         <div class="card-header"><h3 class="card-title">Which crop?</h3></div>
-
-        @if($activeCycles->isNotEmpty())
-            {{-- Load a live, activated crop cycle: sets crop + planting date. --}}
-            <div class="crop-picker" style="margin-bottom:14px;">
-                <label class="form-label" style="margin:0;" for="plCycle">Load an active crop cycle</label>
-                <select id="plCycle" class="form-select" onchange="plLoadCycle()" aria-label="Load active crop cycle">
-                    <option value="">— Blank worksheet —</option>
-                    @foreach($activeCycles as $cyc)
-                        <option value="{{ $cyc['id'] }}"
-                            data-slug="{{ $cyc['slug'] }}"
-                            data-date="{{ $cyc['date'] }}"
-                            {{ ($selectedCycleId ?? null) === $cyc['id'] ? 'selected' : '' }}>{{ $cyc['label'] }}</option>
-                    @endforeach
-                </select>
-            </div>
-        @endif
-
         <div class="crop-picker">
             <select id="plCrop" class="form-select" onchange="plRenderAll()" aria-label="Choose crop">
                 @foreach($programs as $slug => $program)
@@ -121,7 +150,7 @@
             </div>
             <div class="form-group" style="margin:0;">
                 <label class="form-label">Area (acres)</label>
-                <input type="text" class="form-input" placeholder="e.g. 1.0">
+                <input type="text" id="planner_area" class="form-input" placeholder="e.g. 1.0">
             </div>
             <div class="form-group" style="margin:0;">
                 <label class="form-label" id="plDateLabel">Planting date (Day 0)</label>
@@ -132,12 +161,6 @@
                 <input type="text" class="form-input" value="{{ auth()->user()->name }}">
             </div>
         </div>
-    </div>
-
-    {{-- Readiness checklist --}}
-    <div class="card">
-        <div class="card-header"><h3 class="card-title">Before you plant — readiness check</h3></div>
-        <ul class="planner-check" id="plChecklist"></ul>
     </div>
 
     {{-- The dated schedule --}}
@@ -212,16 +235,6 @@
         });
     }
 
-    function plRenderChecklist(p) {
-        var ul = document.getElementById("plChecklist");
-        ul.innerHTML = "";
-        p.checklist.forEach(function (item) {
-            var li = document.createElement("li");
-            li.innerHTML = '<input type="checkbox"> ' + item.text;
-            ul.appendChild(li);
-        });
-    }
-
     function plRenderSources(p) {
         var ul = document.getElementById("plSources");
         ul.innerHTML = "";
@@ -288,23 +301,37 @@
         }
 
         plRenderVarieties(p);
-        plRenderChecklist(p);
         plRenderNotes(p);
         plRenderSources(p);
         plRenderSchedule();
         document.getElementById("plFooter").textContent = p.footer;
     }
 
-    // Load a selected active crop cycle: set the crop + planting date, then
-    // re-date the whole sheet. Reflects whatever cycles are currently active.
+    var PL_DEFAULT_DATE = "{{ now()->addDay()->toDateString() }}";
+    function plSetVal(id, v) { var el = document.getElementById(id); if (el) { el.value = v || ""; } }
+
+    // Load a selected active crop cycle: auto-fill crop + all cycle details, then
+    // re-date the whole sheet. Choosing "New plan" resets the details to blank.
     function plLoadCycle() {
         var sel = document.getElementById("plCycle");
         if (!sel) { return; }
         var opt = sel.options[sel.selectedIndex];
-        var slug = opt ? opt.getAttribute("data-slug") : "";
-        var date = opt ? opt.getAttribute("data-date") : "";
-        if (slug) { document.getElementById("plCrop").value = slug; }
-        if (date) { document.getElementById("plantDate").value = date; }
+        var isCycle = !!(opt && opt.value);
+
+        if (isCycle) {
+            var slug = opt.getAttribute("data-slug");
+            if (slug) { document.getElementById("plCrop").value = slug; }
+            plSetVal("plantDate", opt.getAttribute("data-date") || PL_DEFAULT_DATE);
+            plSetVal("planner_block", opt.getAttribute("data-block"));
+            plSetVal("planner_variety", opt.getAttribute("data-variety"));
+            plSetVal("planner_area", opt.getAttribute("data-area"));
+        } else {
+            // New plan — reset the cycle-detail fields to a clean slate.
+            plSetVal("plantDate", PL_DEFAULT_DATE);
+            plSetVal("planner_block", "");
+            plSetVal("planner_variety", "");
+            plSetVal("planner_area", "");
+        }
         plRenderAll();
     }
 

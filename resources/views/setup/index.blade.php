@@ -155,7 +155,7 @@
                         <label class="form-label" for="crop_name">Crop Name *</label>
                         <x-combobox name="crop_name" :value="old('crop_name')" :options="\App\Support\ReferenceData::cropNames()" placeholder="Type or pick a crop" />
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" data-variety-field>
                         <label class="form-label" for="crop_variety">Variety</label>
                         <x-combobox name="crop_variety" :value="old('crop_variety')" :options="\App\Support\ReferenceData::varieties()" placeholder="Type or pick a variety" />
                     </div>
@@ -173,28 +173,6 @@
                     </div>
                 </div>
 
-                <details class="wiz-advanced">
-                    <summary>Default budget template (optional)</summary>
-                    <p class="wiz-hint">Pre-fills this and future crop cycles' seasonal budget so you don't re-enter it each season.</p>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label" for="crop_default_labour_budget">Labour (KES)</label>
-                            <input type="number" id="crop_default_labour_budget" name="crop_default_labour_budget" value="{{ old('crop_default_labour_budget') }}" class="form-input" step="0.01" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="crop_default_input_budget">Inputs (KES)</label>
-                            <input type="number" id="crop_default_input_budget" name="crop_default_input_budget" value="{{ old('crop_default_input_budget') }}" class="form-input" step="0.01" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="crop_default_irrigation_budget">Irrigation (KES)</label>
-                            <input type="number" id="crop_default_irrigation_budget" name="crop_default_irrigation_budget" value="{{ old('crop_default_irrigation_budget') }}" class="form-input" step="0.01" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="crop_default_overhead_budget">Overhead (KES)</label>
-                            <input type="number" id="crop_default_overhead_budget" name="crop_default_overhead_budget" value="{{ old('crop_default_overhead_budget') }}" class="form-input" step="0.01" min="0">
-                        </div>
-                    </div>
-                </details>
             </div>
         </section>
 
@@ -415,6 +393,38 @@ document.addEventListener('DOMContentLoaded', function () {
     if (cropSel) cropSel.addEventListener('change', recalcHarvest);
     if (cropDays) cropDays.addEventListener('input', recalcHarvest);
     if (planting) planting.addEventListener('change', recalcHarvest);
+
+    // ── Variety options narrow to the chosen crop ───────────────
+    var VARIETIES_BY_CROP = @json($varietiesByCrop);
+    var cropNameInput = document.getElementById('crop_name');
+    var varietyField = form.querySelector('[data-variety-field]');
+    var varietyMenu = varietyField ? varietyField.querySelector('[data-combobox-menu]') : null;
+    var varietyFullOptions = varietyMenu ? varietyMenu.innerHTML : '';
+
+    function rebuildVarieties() {
+        if (!varietyMenu) return;
+        var crop = cropNameInput && cropNameInput.value ? cropNameInput.value.trim().toLowerCase() : '';
+        var list = null;
+        Object.keys(VARIETIES_BY_CROP).forEach(function (k) {
+            if (k.toLowerCase() === crop) { list = VARIETIES_BY_CROP[k]; }
+        });
+        // Unknown / free-text crop → keep the full list rather than over-restrict.
+        if (!list) { varietyMenu.innerHTML = varietyFullOptions; return; }
+        varietyMenu.innerHTML = '';
+        list.forEach(function (v) {
+            var div = document.createElement('div');
+            div.className = 'combobox-option';
+            div.setAttribute('role', 'option');
+            div.setAttribute('data-value', v);
+            div.textContent = v;
+            varietyMenu.appendChild(div);
+        });
+    }
+    if (cropNameInput) {
+        cropNameInput.addEventListener('input', rebuildVarieties);
+        cropNameInput.addEventListener('change', rebuildVarieties);
+    }
+    rebuildVarieties();
 
     // ── Review summary on the final step ────────────────────────
     function textForMode(prefix, existingSel, newFieldId, label) {

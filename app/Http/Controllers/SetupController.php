@@ -28,7 +28,11 @@ class SetupController extends Controller
             'default_irrigation_budget', 'default_overhead_budget',
         ]);
 
-        return view('setup.index', compact('farms', 'blocks', 'crops'));
+        // Curated variety map keyed by crop name, for narrowing the variety
+        // picker to the chosen crop.
+        $varietiesByCrop = \App\Support\ReferenceData::varietiesByCrop();
+
+        return view('setup.index', compact('farms', 'blocks', 'crops', 'varietiesByCrop'));
     }
 
     public function store(Request $request)

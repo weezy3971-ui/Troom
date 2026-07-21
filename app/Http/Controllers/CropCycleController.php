@@ -47,7 +47,7 @@ class CropCycleController extends Controller
         // Active crop cycles whose crop maps to a planner program — lets the
         // planner load a real cycle's crop + planting date. It reads these live,
         // so a cycle appears here as soon as it's activated.
-        $activeCycles = CropCycle::with('crop', 'block')
+        $activeCycles = CropCycle::with('crop', 'block.farm')
             ->where('status', 'active')
             ->get()
             ->map(function ($cycle) use ($programs) {
@@ -65,6 +65,11 @@ class CropCycleController extends Controller
                         . ($cycle->block ? ' on ' . $cycle->block->name : ''),
                     'slug' => $slug,
                     'date' => optional($cycle->planting_date)->toDateString(),
+                    'block' => $cycle->block
+                        ? trim(($cycle->block->farm->name ?? '') . ' — ' . $cycle->block->name, ' —')
+                        : '',
+                    'variety' => $cycle->crop->variety ?? '',
+                    'area' => $cycle->block?->size_acres ? (string) $cycle->block->size_acres : '',
                 ];
             })
             ->filter()
