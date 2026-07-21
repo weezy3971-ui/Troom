@@ -41,6 +41,10 @@ return [
         'token' => env('WEIGH_SCALE_TOKEN'),
     ],
 
+    'whatsapp' => [
+        'test_mode' => (bool) env('WHATSAPP_TEST_MODE', true),
+    ],
+
     /*
     | Anthropic (Claude) — powers AI-generated reports and the AI companion.
     | Set ANTHROPIC_API_KEY in your .env. The model defaults to Haiku 4.5, the

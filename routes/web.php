@@ -3,10 +3,9 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AiReportController;
 use App\Http\Controllers\AnalyticsController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AssetCheckoutController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\AssetController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CropController;
 use App\Http\Controllers\CropCycleController;
@@ -20,27 +19,29 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FarmController;
 use App\Http\Controllers\FertigationLogController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HarvestBatchController;
+use App\Http\Controllers\HorseController;
+use App\Http\Controllers\HorseRideController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\IrrigationLogController;
 use App\Http\Controllers\LabourAttendanceController;
-use App\Http\Controllers\WeighScaleReadingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NurseryBatchController;
 use App\Http\Controllers\OutgrowerController;
-use App\Http\Controllers\GuideController;
-use App\Http\Controllers\HorseController;
-use App\Http\Controllers\HorseRideController;
 use App\Http\Controllers\PackhouseLotController;
 use App\Http\Controllers\ProcurementRequestController;
 use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\WorkerController;
-use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\QualityCheckController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SprayLogController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\WeighScaleReadingController;
+use App\Http\Controllers\WhatsappOpsController;
+use App\Http\Controllers\WorkerController;
 use App\Support\ModuleAccess;
 use Illuminate\Support\Facades\Route;
 
@@ -140,6 +141,15 @@ Route::middleware('auth')->group(function () {
 
     // Module 4: Daily Farm Operations
     Route::resource('daily-activities', DailyActivityController::class)->middleware(ModuleAccess::middleware('daily_ops'));
+
+    Route::middleware(ModuleAccess::middleware('whatsapp_ops'))->prefix('whatsapp-ops')->name('whatsapp-ops.')->group(function () {
+        Route::get('/', [WhatsappOpsController::class, 'index'])->name('index');
+        Route::post('/simulate', [WhatsappOpsController::class, 'simulate'])->name('simulate');
+        Route::put('/{whatsappMessage}/interpretation', [WhatsappOpsController::class, 'updateInterpretation'])->name('interpretation.update');
+        Route::post('/{whatsappMessage}/approve', [WhatsappOpsController::class, 'approve'])->name('approve');
+        Route::post('/{whatsappMessage}/reject', [WhatsappOpsController::class, 'reject'])->name('reject');
+        Route::post('/{whatsappMessage}/post', [WhatsappOpsController::class, 'post'])->name('post');
+    });
 
     // Module 5: Irrigation Management
     Route::resource('irrigation-logs', IrrigationLogController::class)->middleware(ModuleAccess::middleware('irrigation'));

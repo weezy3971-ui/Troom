@@ -1592,10 +1592,10 @@
             </ul>
         </details>
 
-        @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour') || $ma::allows($u,'projects'); @endphp
+        @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'whatsapp_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour') || $ma::allows($u,'projects'); @endphp
         @if($fieldOps)
         {{-- Field Operations --}}
-        <details class="nav-group" {{ request()->routeIs('nursery-batches.*','daily-activities.*','irrigation-logs.*','fertigation-logs.*','spray-logs.*','labour-attendances.*','weigh-scale-readings.*','projects.*','workers.*') ? 'open' : '' }}>
+        <details class="nav-group" {{ request()->routeIs('nursery-batches.*','daily-activities.*','whatsapp-ops.*','irrigation-logs.*','fertigation-logs.*','spray-logs.*','labour-attendances.*','weigh-scale-readings.*','projects.*','workers.*') ? 'open' : '' }}>
             <summary>
                 <span class="icon"><x-icon name="operations" /></span>
                 <span class="nav-group-title nav-label">Field Operations</span>
@@ -1604,6 +1604,7 @@
             <ul class="sidebar-nav nav-group-items">
                 @if($ma::allows($u,'nursery'))<li><a href="{{ route('nursery-batches.index') }}" class="{{ request()->routeIs('nursery-batches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="nursery" /></span><span class="nav-label">Nursery</span></a></li>@endif
                 @if($ma::allows($u,'daily_ops'))<li><a href="{{ route('daily-activities.index') }}" class="{{ request()->routeIs('daily-activities.*') ? 'active' : '' }}"><span class="icon"><x-icon name="operations" /></span><span class="nav-label">Daily Operations</span></a></li>@endif
+                @if($ma::allows($u,'whatsapp_ops'))<li><a href="{{ route('whatsapp-ops.index') }}" class="{{ request()->routeIs('whatsapp-ops.*') ? 'active' : '' }}"><span class="icon"><x-icon name="notifications" /></span><span class="nav-label">WhatsApp Inbox</span></a></li>@endif
                 @if($ma::allows($u,'irrigation'))<li><a href="{{ route('irrigation-logs.index') }}" class="{{ request()->routeIs('irrigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="irrigation" /></span><span class="nav-label">Irrigation</span></a></li>@endif
                 @if($ma::allows($u,'fertigation'))<li><a href="{{ route('fertigation-logs.index') }}" class="{{ request()->routeIs('fertigation-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="fertigation" /></span><span class="nav-label">Fertigation</span></a></li>@endif
                 @if($ma::allows($u,'pest'))<li><a href="{{ route('spray-logs.index') }}" class="{{ request()->routeIs('spray-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="pest" /></span><span class="nav-label">Pest &amp; Disease</span></a></li>@endif

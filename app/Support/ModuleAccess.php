@@ -18,30 +18,31 @@ class ModuleAccess
     public const MAP = [
         'master_data' => ['horticulture_manager', 'agronomist'],
         'crop_cycles' => ['horticulture_manager', 'agronomist', 'finance_officer', 'md'],
-        'nursery'     => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
-        'daily_ops'   => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
-        'irrigation'  => ['horticulture_manager', 'farm_supervisor'],
+        'nursery' => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
+        'daily_ops' => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
+        'irrigation' => ['horticulture_manager', 'farm_supervisor'],
         'fertigation' => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
-        'pest'        => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
-        'labour'      => ['horticulture_manager', 'farm_supervisor'],
-        'weighing'    => ['horticulture_manager', 'farm_supervisor', 'packhouse_supervisor'],
-        'projects'    => ['horticulture_manager', 'farm_supervisor'],
-        'checkouts'   => ['horticulture_manager', 'storekeeper', 'farm_supervisor'],
-        'stables'     => ['horticulture_manager', 'stable_manager'],
-        'inventory'   => ['horticulture_manager', 'storekeeper'],
-        'harvest'     => ['horticulture_manager', 'farm_supervisor', 'packhouse_supervisor'],
-        'packhouse'   => ['horticulture_manager', 'packhouse_supervisor'],
-        'quality'     => ['horticulture_manager', 'quality_officer'],
-        'sales'       => ['horticulture_manager', 'sales_officer'],
-        'logistics'   => ['horticulture_manager', 'sales_officer', 'driver'],
-        'finance'     => ['md', 'finance_officer'],
+        'pest' => ['horticulture_manager', 'agronomist', 'farm_supervisor'],
+        'labour' => ['horticulture_manager', 'farm_supervisor'],
+        'weighing' => ['horticulture_manager', 'farm_supervisor', 'packhouse_supervisor'],
+        'projects' => ['horticulture_manager', 'farm_supervisor'],
+        'checkouts' => ['horticulture_manager', 'storekeeper', 'farm_supervisor'],
+        'stables' => ['horticulture_manager', 'stable_manager'],
+        'inventory' => ['horticulture_manager', 'storekeeper'],
+        'harvest' => ['horticulture_manager', 'farm_supervisor', 'packhouse_supervisor'],
+        'packhouse' => ['horticulture_manager', 'packhouse_supervisor'],
+        'quality' => ['horticulture_manager', 'quality_officer'],
+        'sales' => ['horticulture_manager', 'sales_officer'],
+        'logistics' => ['horticulture_manager', 'sales_officer', 'driver'],
+        'finance' => ['md', 'finance_officer'],
         // Executive Dashboard is finance-facing: Finance Officer & MD only
         // (owner is always allowed as super-admin).
-        'analytics'   => ['finance_officer', 'md'],
+        'analytics' => ['finance_officer', 'md'],
         // AI reports & companion — executive-facing, same audience as analytics.
-        'ai'          => ['finance_officer', 'md', 'horticulture_manager'],
+        'ai' => ['finance_officer', 'md', 'horticulture_manager'],
+        'whatsapp_ops' => ['md', 'horticulture_manager', 'farm_supervisor'],
         // User administration & audit trail (owner always allowed via CheckRole).
-        'admin'       => ['horticulture_manager'],
+        'admin' => ['horticulture_manager'],
     ];
 
     /**
@@ -59,7 +60,7 @@ class ModuleAccess
      */
     public static function middleware(string $module): string
     {
-        return 'role:' . implode(',', self::for($module));
+        return 'role:'.implode(',', self::for($module));
     }
 
     /**
