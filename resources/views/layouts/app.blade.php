@@ -1544,14 +1544,25 @@
 
         @php $u = auth()->user(); $ma = \App\Support\ModuleAccess::class; @endphp
 
+        {{-- Simplified navigation: show only Dashboard + the core Farm → Block →
+             Crop → Crop Cycle flow (per feedback). Everything else is hidden but
+             its code/routes/data remain intact — flip this to false to restore
+             the full navigation. --}}
+        @php $simplifiedNav = true; @endphp
+
+        {{-- AI features (reports, KPI narrative) only work with an Anthropic API
+             key configured — hide their entry points until then so users don't
+             hit a broken flow. --}}
+        @php $aiConfigured = app(\App\Services\Ai\AiClient::class)->isConfigured(); @endphp
+
         {{-- Quick links (single, primary destinations) --}}
         <div class="sidebar-section">
             <ul class="sidebar-nav">
                 <li><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><span class="icon"><x-icon name="dashboard" /></span><span class="nav-label">Dashboard</span></a></li>
-                @if($ma::allows($u, 'analytics'))
+                @if(! $simplifiedNav && $ma::allows($u, 'analytics'))
                 <li><a href="{{ route('analytics.index') }}" class="{{ request()->routeIs('analytics.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">Executive Dashboard</span></a></li>
                 @endif
-                @if($ma::allows($u, 'ai'))
+                @if($ma::allows($u, 'ai') && $aiConfigured)
                 <li><a href="{{ route('ai-reports.index') }}" class="{{ request()->routeIs('ai-reports.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">AI Reports</span></a></li>
                 @endif
                 <li><a href="{{ route('expenses.index') }}" class="{{ request()->routeIs('expenses.*') ? 'active' : '' }}"><span class="icon"><x-icon name="expenses" /></span><span class="nav-label">Expenses</span></a></li>
@@ -1560,18 +1571,20 @@
 
         <div class="sidebar-divider"></div>
 
-        {{-- Master Data (readable by all roles) --}}
-        <details class="nav-group" {{ request()->routeIs('farms.*','blocks.*','crops.*','crop-programs.*','assets.*','crop-cycles.*','checkouts.*') ? 'open' : '' }}>
+        {{-- Farm Operations (readable by all roles) — open by default on login;
+             still collapsible. Other groups stay closed unless their route is active. --}}
+        <details class="nav-group" open>
             <summary>
                 <span class="icon"><x-icon name="blocks" /></span>
-                <span class="nav-group-title nav-label">Master Data</span>
+                <span class="nav-group-title nav-label">Farm Operations</span>
                 <span class="nav-chevron"><x-icon name="chevron" size="14" /></span>
             </summary>
             <ul class="sidebar-nav nav-group-items">
+                @if($ma::allows($u,'master_data'))<li><a href="{{ route('setup') }}" class="{{ request()->routeIs('setup') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Set Up Planting</span></a></li>@endif
                 <li><a href="{{ route('farms.index') }}" class="{{ request()->routeIs('farms.*') ? 'active' : '' }}"><span class="icon"><x-icon name="farm" /></span><span class="nav-label">Farms</span></a></li>
                 <li><a href="{{ route('blocks.index') }}" class="{{ request()->routeIs('blocks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="blocks" /></span><span class="nav-label">Blocks</span></a></li>
                 <li><a href="{{ route('crops.index') }}" class="{{ request()->routeIs('crops.*') ? 'active' : '' }}"><span class="icon"><x-icon name="crops" /></span><span class="nav-label">Crops</span></a></li>
-                @if($ma::allows($u,'crop_cycles'))<li><a href="{{ route('crop-programs.index') }}" class="{{ request()->routeIs('crop-programs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Crop Programs</span></a></li>@endif
+                @if(! $simplifiedNav && $ma::allows($u,'crop_cycles'))<li><a href="{{ route('crop-programs.index') }}" class="{{ request()->routeIs('crop-programs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Crop Programs</span></a></li>@endif
                 <li><a href="{{ route('crop-cycles.index') }}" class="{{ request()->routeIs('crop-cycles.*') && ! request()->routeIs('crop-cycles.planner') ? 'active' : '' }}"><span class="icon"><x-icon name="cycles" /></span><span class="nav-label">Crop Cycles</span></a></li>
                 <li><a href="{{ route('crop-cycles.planner') }}" class="{{ request()->routeIs('crop-cycles.planner') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Planting Planner</span></a></li>
                 <li><a href="{{ route('assets.index') }}" class="{{ request()->routeIs('assets.*') ? 'active' : '' }}"><span class="icon"><x-icon name="assets" /></span><span class="nav-label">Assets</span></a></li>
@@ -1580,7 +1593,7 @@
         </details>
 
         @php $fieldOps = $ma::allows($u,'nursery') || $ma::allows($u,'daily_ops') || $ma::allows($u,'irrigation') || $ma::allows($u,'fertigation') || $ma::allows($u,'pest') || $ma::allows($u,'labour') || $ma::allows($u,'projects'); @endphp
-        @if($fieldOps)
+        @if(! $simplifiedNav && $fieldOps)
         {{-- Field Operations --}}
         <details class="nav-group" {{ request()->routeIs('nursery-batches.*','daily-activities.*','irrigation-logs.*','fertigation-logs.*','spray-logs.*','labour-attendances.*','weigh-scale-readings.*','projects.*','workers.*') ? 'open' : '' }}>
             <summary>
@@ -1638,7 +1651,7 @@
         </details>
         @endif
 
-        @if($ma::allows($u,'stables'))
+        @if(! $simplifiedNav && $ma::allows($u,'stables'))
         {{-- Stables --}}
         <details class="nav-group" {{ request()->routeIs('rides.*','horses.*','guides.*') ? 'open' : '' }}>
             <summary>
@@ -1757,16 +1770,18 @@
                             </a>
                             <a href="{{ route('farms.index') }}" class="user-dropdown-item">
                                 <span class="udd-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-                                Master Data
+                                Farm Operations
                             </a>
                             <a href="{{ route('crop-cycles.index') }}" class="user-dropdown-item">
                                 <span class="udd-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-                                Crop Planning
+                                Crop Cycles
                             </a>
+                            @if(! ($simplifiedNav ?? true))
                             <a href="{{ route('daily-activities.index') }}" class="user-dropdown-item">
                                 <span class="udd-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
                                 Field Operations
                             </a>
+                            @endif
                         </div>
 
                         {{-- Account actions --}}

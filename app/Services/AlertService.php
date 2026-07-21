@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Asset;
 use App\Models\CropCycle;
-use App\Models\CropCycleStage;
 use App\Models\InventoryItem;
 use App\Models\ProcurementRequest;
 use App\Models\SalesOrder;
@@ -60,25 +59,6 @@ class AlertService
                     'message' => "Order at risk: {$order->customer->name} order #{$order->id} is under-allocated near its delivery date.",
                 ];
             }
-        }
-
-        // Module 2 — stage_due (crop stage program schedule)
-        $dueStages = CropCycleStage::dueSoon()
-            ->with('cropCycle.crop', 'cropCycle.block')
-            ->whereHas('cropCycle', fn ($c) => $c->where('status', 'active'))
-            ->get();
-        foreach ($dueStages as $stage) {
-            $overdue = $stage->isOverdue();
-            $alerts[] = [
-                'type' => 'stage_due',
-                'severity' => $overdue ? 'danger' : 'warning',
-                'module' => 'Crop Program',
-                'message' => ($overdue ? 'Overdue stage: ' : 'Stage due: ')
-                    . "\"{$stage->name}\" for "
-                    . optional($stage->cropCycle)->season_name
-                    . ' (' . optional(optional($stage->cropCycle)->block)->name . ')'
-                    . ' — due ' . $stage->due_date->format('M d') . '.',
-            ];
         }
 
         // Module 10b — input_not_procured (procurement past its needed-by date)

@@ -26,6 +26,10 @@ class AiReportController extends Controller
 
     public function store(Request $request)
     {
+        if (! app(AiClient::class)->isConfigured()) {
+            return back()->with('error', 'AI reports are disabled — no Anthropic API key is configured.');
+        }
+
         $validated = $request->validate([
             'type' => 'required|in:' . implode(',', array_keys(AiReport::TYPES)),
             'period_start' => 'nullable|date',
@@ -61,6 +65,10 @@ class AiReportController extends Controller
 
     public function regenerate(AiReport $aiReport)
     {
+        if (! app(AiClient::class)->isConfigured()) {
+            return back()->with('error', 'AI reports are disabled — no Anthropic API key is configured.');
+        }
+
         $aiReport->update(['status' => 'pending', 'error' => null]);
         GenerateAiReport::dispatchSync($aiReport->id);
         $aiReport->refresh();

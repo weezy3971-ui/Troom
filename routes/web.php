@@ -39,6 +39,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\QualityCheckController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SprayLogController;
 use App\Support\ModuleAccess;
 use Illuminate\Support\Facades\Route;
@@ -88,6 +89,12 @@ Route::middleware('auth')->group(function () {
     Route::get('farms-map', [FarmController::class, 'map'])->name('farms.map');
 
     $masterData = ModuleAccess::middleware('master_data');
+
+    // Guided single-page setup wizard (Farm → Block → Crop → Crop Cycle). Writes
+    // master-data records, so it's gated behind the same roles as those creates.
+    Route::get('setup', [SetupController::class, 'index'])->name('setup')->middleware($masterData);
+    Route::post('setup', [SetupController::class, 'store'])->middleware($masterData);
+
     foreach (['farms' => FarmController::class, 'blocks' => BlockController::class, 'crops' => CropController::class, 'assets' => AssetController::class] as $name => $ctrl) {
         Route::resource($name, $ctrl)->except(['index', 'show'])->middleware($masterData);
         Route::resource($name, $ctrl)->only(['index', 'show']);
@@ -105,10 +112,6 @@ Route::middleware('auth')->group(function () {
         Route::post('crop-cycles/{cropCycle}/complete', [CropCycleController::class, 'complete'])->name('crop-cycles.complete');
         Route::post('crop-cycles/{cropCycle}/cancel', [CropCycleController::class, 'cancel'])->name('crop-cycles.cancel');
         Route::post('crop-cycles/{cropCycle}/budget', [CropCycleController::class, 'setBudget'])->name('crop-cycles.budget');
-
-        // Stage schedule (Theme 2 — crop stage programs materialised onto a cycle)
-        Route::post('crop-cycles/{cropCycle}/schedule', [CropCycleController::class, 'generateSchedule'])->name('crop-cycles.schedule');
-        Route::patch('crop-cycles/{cropCycle}/stages/{stage}', [CropCycleController::class, 'updateStage'])->name('crop-cycles.stages.update');
 
         // Crop stage programs (reusable per-crop protocols)
         Route::resource('crop-programs', CropProgramController::class);

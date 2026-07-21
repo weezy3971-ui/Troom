@@ -75,6 +75,23 @@
     {{-- Crop picker --}}
     <div class="card">
         <div class="card-header"><h3 class="card-title">Which crop?</h3></div>
+
+        @if($activeCycles->isNotEmpty())
+            {{-- Load a live, activated crop cycle: sets crop + planting date. --}}
+            <div class="crop-picker" style="margin-bottom:14px;">
+                <label class="form-label" style="margin:0;" for="plCycle">Load an active crop cycle</label>
+                <select id="plCycle" class="form-select" onchange="plLoadCycle()" aria-label="Load active crop cycle">
+                    <option value="">— Blank worksheet —</option>
+                    @foreach($activeCycles as $cyc)
+                        <option value="{{ $cyc['id'] }}"
+                            data-slug="{{ $cyc['slug'] }}"
+                            data-date="{{ $cyc['date'] }}"
+                            {{ ($selectedCycleId ?? null) === $cyc['id'] ? 'selected' : '' }}>{{ $cyc['label'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
+
         <div class="crop-picker">
             <select id="plCrop" class="form-select" onchange="plRenderAll()" aria-label="Choose crop">
                 @foreach($programs as $slug => $program)
@@ -108,7 +125,7 @@
             </div>
             <div class="form-group" style="margin:0;">
                 <label class="form-label" id="plDateLabel">Planting date (Day 0)</label>
-                <input type="date" class="form-input" id="plantDate" value="{{ now()->addDay()->toDateString() }}" onchange="plRenderSchedule()">
+                <input type="date" class="form-input" id="plantDate" value="{{ $plantDate ?? now()->addDay()->toDateString() }}" onchange="plRenderSchedule()">
             </div>
             <div class="form-group" style="margin:0;">
                 <label class="form-label">Prepared by</label>
@@ -276,6 +293,19 @@
         plRenderSources(p);
         plRenderSchedule();
         document.getElementById("plFooter").textContent = p.footer;
+    }
+
+    // Load a selected active crop cycle: set the crop + planting date, then
+    // re-date the whole sheet. Reflects whatever cycles are currently active.
+    function plLoadCycle() {
+        var sel = document.getElementById("plCycle");
+        if (!sel) { return; }
+        var opt = sel.options[sel.selectedIndex];
+        var slug = opt ? opt.getAttribute("data-slug") : "";
+        var date = opt ? opt.getAttribute("data-date") : "";
+        if (slug) { document.getElementById("plCrop").value = slug; }
+        if (date) { document.getElementById("plantDate").value = date; }
+        plRenderAll();
     }
 
     plRenderAll();

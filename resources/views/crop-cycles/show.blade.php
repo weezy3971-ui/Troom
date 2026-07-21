@@ -19,6 +19,9 @@
             </form>
         @endif
         @if($cropCycle->status === 'active')
+            @if(\App\Support\PlannerPrograms::forCrop($cropCycle->crop?->name))
+                <a href="{{ route('crop-cycles.planner', ['cycle' => $cropCycle->id]) }}" class="btn btn-secondary">🗓 Planting Planner</a>
+            @endif
             <form action="{{ route('crop-cycles.complete', $cropCycle) }}" method="POST">
                 @csrf
                 <button type="submit" class="btn btn-success">✓ Complete</button>
@@ -40,10 +43,10 @@
     @endif
 </div>
 
-<x-help-panel title="Guide — crop cycle & schedule">
-    <p><strong>Activating</strong> a cycle needs a seasonal budget and locks the block to this cycle. On activation, the crop's active stage program is copied in as a dated <strong>Stage Schedule</strong> (each stage = planting date + its day offset).</p>
-    <p><strong>Stage Schedule:</strong> tick stages <em>Done</em> as the work happens. Pending stages that fall due raise a notification. If you add or change the crop program later, use <em>Regenerate</em> to rebuild the schedule.</p>
+<x-help-panel title="Guide — crop cycle">
+    <p><strong>Activating</strong> a cycle needs a seasonal budget and locks the block to this cycle.</p>
     <p><strong>Yield Projection</strong> needs planting detail (beds/area) plus the crop's expected yield and reference price to estimate harvest and revenue, then compares against what's actually harvested.</p>
+    <p>Use the <strong>Planting Planner</strong> for a dated task schedule (top-dressing, flowering, harvest windows) for a crop.</p>
 </x-help-panel>
 
 <div class="detail-grid">
@@ -261,81 +264,6 @@
             × {{ $germPct }}% germination × {{ $popPct }}% population{{ $projection['price_per_kg'] > 0 ? ', valued at KES ' . number_format($projection['price_per_kg'], 2) . '/kg' : '' }}.
             @if($germMeasured || $popMeasured)Rates use the latest field readings below.@else Germination and population are crop-default assumptions until you record field readings below.@endif
         </p>
-    @endif
-</div>
-
-{{-- Theme 2: crop stage program schedule --}}
-<div class="card" style="margin-bottom: 20px;">
-    <div class="card-header">
-        <h3 class="card-title">Stage Schedule</h3>
-        @if($canSchedule)
-            <form action="{{ route('crop-cycles.schedule', $cropCycle) }}" method="POST" style="margin-left:auto;" data-confirm="Rebuild the schedule from the crop's active program? Existing stages will be replaced.">
-                @csrf
-                <button type="submit" class="btn btn-secondary btn-sm">{{ $cropCycle->stages->isEmpty() ? 'Generate Schedule' : 'Regenerate' }}</button>
-            </form>
-        @endif
-    </div>
-
-    @if($cropCycle->stages->isEmpty())
-        <div class="alert alert-info" style="margin: 16px 20px;">
-            @if($canSchedule)
-                No stages scheduled yet. Click <strong>Generate Schedule</strong> to build the timeline from the crop's program.
-            @else
-                No schedule. Set a planting date on this cycle and define an active
-                <a href="{{ route('crop-programs.index') }}">crop program</a> for {{ $cropCycle->crop?->name ?? 'this crop' }} to enable scheduling.
-            @endif
-        </div>
-    @else
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr><th>#</th><th>Stage</th><th>Activity</th><th>Due</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                    @foreach($cropCycle->stages as $stage)
-                    <tr>
-                        <td>{{ $stage->sequence }}</td>
-                        <td style="font-weight: 600; color: var(--text-primary);">
-                            {{ $stage->name }}
-                            @if($stage->notes)<div class="page-subtitle" style="margin:0; font-weight:400;">{{ $stage->notes }}</div>@endif
-                        </td>
-                        <td>{{ $stage->activity_type ? ucfirst(str_replace('_',' ', $stage->activity_type)) : '—' }}</td>
-                        <td>{{ $stage->due_date->format('M d, Y') }}</td>
-                        <td>
-                            @if($stage->isDone())
-                                <span class="badge badge-completed">Done</span>
-                            @elseif($stage->status === 'skipped')
-                                <span class="badge badge-neutral">Skipped</span>
-                            @elseif($stage->isOverdue())
-                                <span class="badge badge-cancelled">Overdue</span>
-                            @elseif($stage->isDue())
-                                <span class="badge badge-planned">Due today</span>
-                            @else
-                                <span class="badge badge-active">Pending</span>
-                            @endif
-                        </td>
-                        <td>
-                            <div class="actions">
-                                @if($stage->isDone())
-                                    <form action="{{ route('crop-cycles.stages.update', [$cropCycle, $stage]) }}" method="POST">
-                                        @csrf @method('PATCH')
-                                        <input type="hidden" name="status" value="pending">
-                                        <button type="submit" class="btn btn-ghost btn-sm">Reopen</button>
-                                    </form>
-                                @else
-                                    <form action="{{ route('crop-cycles.stages.update', [$cropCycle, $stage]) }}" method="POST">
-                                        @csrf @method('PATCH')
-                                        <input type="hidden" name="status" value="done">
-                                        <button type="submit" class="btn btn-secondary btn-sm">Mark Done</button>
-                                    </form>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
     @endif
 </div>
 

@@ -221,4 +221,27 @@ class PlannerPrograms
     {
         return collect(self::all())->map(fn ($p) => $p['crop'])->all();
     }
+
+    /**
+     * Find the curated program for a crop by its display name (case-insensitive),
+     * matching either the slug key or the program's `crop` label. Lets a crop
+     * cycle build a sensible default stage schedule with zero program setup.
+     */
+    public static function forCrop(?string $name): ?array
+    {
+        if (! $name) {
+            return null;
+        }
+
+        $needle = strtolower(trim($name));
+        $slug = \Illuminate\Support\Str::slug($needle);
+
+        foreach (self::all() as $key => $program) {
+            if ($key === $slug || strtolower(trim($program['crop'] ?? '')) === $needle) {
+                return $program;
+            }
+        }
+
+        return null;
+    }
 }
