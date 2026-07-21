@@ -142,8 +142,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware(ModuleAccess::middleware('whatsapp_ops'))->prefix('whatsapp-ops')->name('whatsapp-ops.')->group(function () {
         Route::get('/', [WhatsappOpsController::class, 'index'])->name('index');
         Route::post('/simulate', [WhatsappOpsController::class, 'simulate'])->name('simulate');
+        Route::put('/{whatsappMessage}/interpretation', [WhatsappOpsController::class, 'updateInterpretation'])->name('interpretation.update');
         Route::post('/{whatsappMessage}/approve', [WhatsappOpsController::class, 'approve'])->name('approve');
         Route::post('/{whatsappMessage}/reject', [WhatsappOpsController::class, 'reject'])->name('reject');
+        Route::post('/{whatsappMessage}/post', [WhatsappOpsController::class, 'post'])->name('post');
     });
 
     // Module 5: Irrigation Management
