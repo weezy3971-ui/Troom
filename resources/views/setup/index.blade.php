@@ -6,8 +6,8 @@
 
 <div class="page-header">
     <div>
-        <h1 class="page-title">Set Up Planting</h1>
-        <p class="page-subtitle">Farm, block, crop and crop cycle.</p>
+        <h1 class="page-title">New Crop Cycle</h1>
+        <p class="page-subtitle">Pick or add the farm, block and crop, then set the budget — all in one place.</p>
     </div>
 </div>
 
@@ -22,22 +22,13 @@
     </div>
 @endif
 
-{{-- Progress stepper --}}
-<ol class="wiz-steps" id="wizSteps">
-    <li class="wiz-step is-current" data-step="1"><span class="wiz-dot">1</span><span class="wiz-name">Farm</span></li>
-    <li class="wiz-step" data-step="2"><span class="wiz-dot">2</span><span class="wiz-name">Block</span></li>
-    <li class="wiz-step" data-step="3"><span class="wiz-dot">3</span><span class="wiz-name">Crop</span></li>
-    <li class="wiz-step" data-step="4"><span class="wiz-dot">4</span><span class="wiz-name">Crop Cycle</span></li>
-    <li class="wiz-step" data-step="5"><span class="wiz-dot">5</span><span class="wiz-name">Budget</span></li>
-</ol>
-
 <div class="card" style="max-width: 760px;">
     <form action="{{ route('setup') }}" method="POST" id="wizForm">
         @csrf
 
         {{-- ───────────────── Step 1 — Farm ───────────────── --}}
-        <section class="wiz-panel is-active" data-panel="1">
-            <h3 class="wiz-title">Which farm?</h3>
+        <section class="wiz-panel" data-panel="1">
+            <h3 class="wiz-title"><span class="wiz-num">1</span> Which farm?</h3>
 
             <div class="seg" data-seg="farm_mode">
                 <label class="seg-btn"><input type="radio" name="farm_mode" value="existing" @if($farms->isEmpty()) disabled @else checked @endif> Use existing</label>
@@ -84,7 +75,7 @@
 
         {{-- ───────────────── Step 2 — Block ───────────────── --}}
         <section class="wiz-panel" data-panel="2">
-            <h3 class="wiz-title">Which block?</h3>
+            <h3 class="wiz-title"><span class="wiz-num">2</span> Which block?</h3>
 
             <div class="seg" data-seg="block_mode">
                 <label class="seg-btn"><input type="radio" name="block_mode" value="existing"> Use existing</label>
@@ -139,7 +130,7 @@
 
         {{-- ───────────────── Step 3 — Crop ───────────────── --}}
         <section class="wiz-panel" data-panel="3">
-            <h3 class="wiz-title">Which crop?</h3>
+            <h3 class="wiz-title"><span class="wiz-num">3</span> Which crop?</h3>
 
             <div class="seg" data-seg="crop_mode">
                 <label class="seg-btn"><input type="radio" name="crop_mode" value="existing" @if($crops->isEmpty()) disabled @else checked @endif> Use existing</label>
@@ -193,7 +184,7 @@
 
         {{-- ───────────────── Step 4 — Crop Cycle ───────────────── --}}
         <section class="wiz-panel" data-panel="4">
-            <h3 class="wiz-title">The crop cycle</h3>
+            <h3 class="wiz-title"><span class="wiz-num">4</span> The crop cycle</h3>
 
             <div class="form-grid">
                 <div class="form-group">
@@ -214,7 +205,7 @@
 
         {{-- ───────────────── Step 5 — Seasonal Budget ───────────────── --}}
         <section class="wiz-panel" data-panel="5">
-            <h3 class="wiz-title">Seasonal budget</h3>
+            <h3 class="wiz-title"><span class="wiz-num">5</span> Seasonal budget</h3>
             <p class="wiz-hint" style="margin-bottom:16px;">Set the budget for this cycle — it's required to activate. Pre-filled from the crop's template where available; adjust as needed.</p>
 
             <div class="wiz-summary" id="wizSummary"></div>
@@ -243,29 +234,18 @@
 
         {{-- Footer nav --}}
         <div class="wiz-footer">
-            <a href="{{ route('crop-cycles.index') }}" class="btn btn-ghost" id="wizCancel">Cancel</a>
-            <div class="wiz-footer-right">
-                <button type="button" class="btn btn-secondary" id="wizBack" style="display:none;">Back</button>
-                <button type="button" class="btn btn-primary" id="wizNext">Next</button>
-                <button type="submit" class="btn btn-success" id="wizSubmit" style="display:none;">▶ Activate Cycle</button>
-            </div>
+            <a href="{{ route('crop-cycles.index') }}" class="btn btn-ghost">Cancel</a>
+            <button type="submit" class="btn btn-success" id="wizSubmit">Create Crop Cycle</button>
         </div>
     </form>
 </div>
 
 <style>
-    .wiz-steps { display:flex; list-style:none; padding:0; margin:0 0 20px; gap:8px; max-width:760px; }
-    .wiz-step { flex:1; display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--text-muted); font-size:13px; font-weight:600; }
-    .wiz-step .wiz-dot { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--border); color:var(--text-secondary); font-size:12px; font-weight:700; flex:none; transition:background var(--transition), color var(--transition); }
-    .wiz-step.is-current { border-color:var(--olive); color:var(--text-primary); box-shadow:0 2px 6px rgba(47,107,59,0.22); }
-    .wiz-step.is-current .wiz-dot { background:var(--olive); color:#fff; }
-    .wiz-step.is-done { border-color:var(--olive); color:var(--olive); }
-    .wiz-step.is-done .wiz-dot { background:var(--olive); color:#fff; }
-    @media (max-width:640px){ .wiz-step .wiz-name{ display:none; } }
-
-    .wiz-panel { display:none; }
-    .wiz-panel.is-active { display:block; }
-    .wiz-title { font-size:16px; font-weight:600; margin:0 0 14px; }
+    /* Single scrolling form: every section visible, divided for scanning. */
+    .wiz-panel { display:block; padding-top:22px; margin-top:22px; border-top:1px solid var(--border); }
+    .wiz-panel[data-panel="1"] { padding-top:0; margin-top:0; border-top:0; }
+    .wiz-title { font-size:16px; font-weight:600; margin:0 0 14px; display:flex; align-items:center; gap:9px; }
+    .wiz-num { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--olive); color:#fff; font-size:12px; font-weight:700; flex:none; }
     .wiz-hint { font-size:12px; color:var(--text-muted); margin-top:4px; }
 
     .seg { display:inline-flex; gap:8px; margin-bottom:18px; }
@@ -307,8 +287,6 @@
     .wiz-total strong { color:var(--olive); font-size:16px; }
 
     .wiz-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:24px; padding-top:16px; border-top:1px solid var(--border); }
-    .wiz-footer-right { display:flex; gap:12px; }
-
     .wiz-invalid { border-color:#dc2626 !important; }
 </style>
 
@@ -316,13 +294,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('wizForm');
     var totalSteps = 5;
-    var current = 1;
-
-    var panels = form.querySelectorAll('.wiz-panel');
-    var steps = document.querySelectorAll('#wizSteps .wiz-step');
-    var backBtn = document.getElementById('wizBack');
-    var nextBtn = document.getElementById('wizNext');
-    var submitBtn = document.getElementById('wizSubmit');
 
     // ── Existing / New mode toggles ─────────────────────────────
     // Disable inputs in the hidden sub-panel so they're neither submitted nor
@@ -347,7 +318,8 @@ document.addEventListener('DOMContentLoaded', function () {
         r.addEventListener('change', function () {
             applyMode(r.name);
             if (r.name === 'farm_mode') { refreshBlockOptions(); }
-            if (r.name === 'crop_mode') { recalcHarvest(); }
+            if (r.name === 'crop_mode') { recalcHarvest(); prefillBudget(); }
+            buildSummary();
         });
     });
 
@@ -405,9 +377,13 @@ document.addEventListener('DOMContentLoaded', function () {
             harvest.value = d.toISOString().slice(0, 10);
         }
     }
-    if (cropSel) cropSel.addEventListener('change', recalcHarvest);
+    if (cropSel) cropSel.addEventListener('change', function () { recalcHarvest(); prefillBudget(); buildSummary(); });
     if (cropDays) cropDays.addEventListener('input', recalcHarvest);
     if (planting) planting.addEventListener('change', recalcHarvest);
+    ['existing_farm_id', 'existing_block_id', 'farm_name', 'block_name', 'crop_name'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', buildSummary);
+    });
 
     // ── Variety options narrow to the chosen crop ───────────────
     var VARIETIES_BY_CROP = @json($varietiesByCrop);
@@ -530,37 +506,24 @@ document.addEventListener('DOMContentLoaded', function () {
         return ok;
     }
 
-    // ── Navigation ──────────────────────────────────────────────
-    function render() {
-        panels.forEach(function (p) { p.classList.toggle('is-active', +p.dataset.panel === current); });
-        steps.forEach(function (s) {
-            var n = +s.dataset.step;
-            s.classList.toggle('is-current', n === current);
-            s.classList.toggle('is-done', n < current);
-        });
-        backBtn.style.display = current > 1 ? '' : 'none';
-        nextBtn.style.display = current < totalSteps ? '' : 'none';
-        submitBtn.style.display = current === totalSteps ? '' : 'none';
-        if (current === totalSteps) { buildSummary(); prefillBudget(); updateBudgetTotal(); }
-    }
-    nextBtn.addEventListener('click', function () {
-        if (!validateStep(current)) return;
-        if (current < totalSteps) { current++; render(); }
-    });
-    backBtn.addEventListener('click', function () {
-        if (current > 1) { current--; render(); }
-    });
-    // Guard the real submit too (in case Enter is pressed).
+    // ── Submit: validate every section, jump to the first that fails ────
     form.addEventListener('submit', function (e) {
         for (var s = 1; s <= totalSteps; s++) {
-            if (!validateStep(s)) { e.preventDefault(); current = s; render(); return; }
+            if (!validateStep(s)) {
+                e.preventDefault();
+                var panel = form.querySelector('.wiz-panel[data-panel="' + s + '"]');
+                if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
         }
     });
 
-    // Init
+    // Init — all sections are visible at once, so prime every derived field.
     ['farm_mode', 'block_mode', 'crop_mode'].forEach(applyMode);
     refreshBlockOptions();
-    render();
+    buildSummary();
+    prefillBudget();
+    updateBudgetTotal();
 });
 </script>
 @endsection

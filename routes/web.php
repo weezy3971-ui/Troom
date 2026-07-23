@@ -98,10 +98,13 @@ Route::middleware('auth')->group(function () {
 
     $masterData = ModuleAccess::middleware('master_data');
 
-    // Guided single-page setup wizard (Farm → Block → Crop → Crop Cycle). Writes
-    // master-data records, so it's gated behind the same roles as those creates.
-    Route::get('setup', [SetupController::class, 'index'])->name('setup')->middleware($masterData);
-    Route::post('setup', [SetupController::class, 'store'])->middleware($masterData);
+    // The single "New Crop Cycle" flow: one page that picks or creates the farm,
+    // block and crop and sets the budget. It writes master data as a byproduct,
+    // but it is the crop-cycle create screen — gated behind crop_cycles (a
+    // superset of master_data, so no former user loses access).
+    $cycleWrite = ModuleAccess::middleware('crop_cycles');
+    Route::get('setup', [SetupController::class, 'index'])->name('setup')->middleware($cycleWrite);
+    Route::post('setup', [SetupController::class, 'store'])->middleware($cycleWrite);
 
     foreach (['farms' => FarmController::class, 'blocks' => BlockController::class, 'crops' => CropController::class, 'assets' => AssetController::class] as $name => $ctrl) {
         Route::resource($name, $ctrl)->except(['index', 'show'])->middleware($masterData);
@@ -122,7 +125,12 @@ Route::middleware('auth')->group(function () {
 
     // Module 2: Crop Planning & Seasonal Budgets — read-all, write restricted.
     $cropCycles = ModuleAccess::middleware('crop_cycles');
-    Route::resource('crop-cycles', CropCycleController::class)->except(['index', 'show'])->middleware($cropCycles);
+    // Creating a cycle happens in the merged "New Crop Cycle" flow (setup), which
+    // can also spin up the farm/block/crop it needs. The bare create form is
+    // retired; its route redirects so existing links still land somewhere sensible.
+    Route::get('crop-cycles/create', fn () => redirect()->route('setup'))
+        ->name('crop-cycles.create')->middleware($cropCycles);
+    Route::resource('crop-cycles', CropCycleController::class)->except(['index', 'show', 'create'])->middleware($cropCycles);
     // Planting schedule planner — a self-contained tool; must be declared before the
     // {cropCycle} show route so "planner" isn't parsed as a crop-cycle id.
     Route::get('crop-cycles/planner', [CropCycleController::class, 'planner'])->name('crop-cycles.planner');
