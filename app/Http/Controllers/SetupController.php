@@ -33,14 +33,7 @@ class SetupController extends Controller
         // picker to the chosen crop.
         $varietiesByCrop = \App\Support\ReferenceData::varietiesByCrop();
 
-        // The plan the new cycle will run. Optional here so setup isn't blocked
-        // on an agronomist writing one first, but without it nothing is
-        // scheduled and no reminders fire.
-        $templates = \App\Models\CropCycleTemplate::where('is_active', true)
-            ->orderBy('crop_name')
-            ->get(['id', 'crop_id', 'crop_name', 'variety', 'total_cycle_days']);
-
-        return view('setup.index', compact('farms', 'blocks', 'crops', 'varietiesByCrop', 'templates'));
+        return view('setup.index', compact('farms', 'blocks', 'crops', 'varietiesByCrop'));
     }
 
     public function store(Request $request)
@@ -83,7 +76,6 @@ class SetupController extends Controller
             'crop_default_overhead_budget' => 'nullable|numeric|min:0',
 
             // Step 4 — Crop Cycle
-            'crop_cycle_template_id' => 'nullable|exists:crop_cycle_templates,id',
             'season_name' => 'required|string|max:255',
             'planting_date' => 'nullable|date',
             'expected_harvest_date' => 'nullable|date|after_or_equal:planting_date',
@@ -142,25 +134,18 @@ class SetupController extends Controller
                     'default_overhead_budget' => $validated['crop_default_overhead_budget'] ?? null,
                 ]);
 
-            $template = ! empty($validated['crop_cycle_template_id'])
-                ? \App\Models\CropCycleTemplate::find($validated['crop_cycle_template_id'])
-                : null;
-
-            // Expected harvest falls back to planting date + cycle length. The
-            // template's length is the plan of record, so it wins over the
-            // crop's nominal maturity when a template was chosen.
-            $cycleDays = $template?->total_cycle_days ?: $crop->days_to_maturity;
+            // Expected harvest falls back to planting date + crop maturity, matching
+            // the standalone crop-cycle form's client-side auto-calc.
             $harvest = $validated['expected_harvest_date'] ?? null;
-            if (! $harvest && ! empty($validated['planting_date']) && $cycleDays) {
+            if (! $harvest && ! empty($validated['planting_date']) && $crop->days_to_maturity) {
                 $harvest = \Illuminate\Support\Carbon::parse($validated['planting_date'])
-                    ->addDays((int) $cycleDays)
+                    ->addDays((int) $crop->days_to_maturity)
                     ->toDateString();
             }
 
             $cycle = CropCycle::create([
                 'block_id' => $block->id,
                 'crop_id' => $crop->id,
-                'crop_cycle_template_id' => $template?->id,
                 'season_name' => $validated['season_name'],
                 'planting_date' => $validated['planting_date'] ?? null,
                 'expected_harvest_date' => $harvest,

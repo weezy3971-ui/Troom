@@ -29,21 +29,6 @@
                 <p id="maturity-hint" style="font-size:12px; color:var(--text-muted); margin-top:4px; display:none;"></p>
             </div>
             <div class="form-group">
-                <label class="form-label" for="crop_cycle_template_id">Cycle Template *</label>
-                <select id="crop_cycle_template_id" name="crop_cycle_template_id" class="form-select" required>
-                    <option value="">Select a template</option>
-                    @foreach($templates as $template)
-                        <option value="{{ $template->id }}" data-crop="{{ $template->crop_id }}" data-days="{{ $template->total_cycle_days }}" {{ old('crop_cycle_template_id') == $template->id ? 'selected' : '' }}>{{ $template->label() }}</option>
-                    @endforeach
-                </select>
-                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">
-                    The plan this cycle follows. Its schedule points become dated tasks once the cycle is active.
-                    @if($templates->isEmpty())
-                        <a href="{{ route('crop-cycle-templates.create') }}">Create one first.</a>
-                    @endif
-                </p>
-            </div>
-            <div class="form-group">
                 <label class="form-label" for="season_name">Season Name *</label>
                 <input type="text" id="season_name" name="season_name" value="{{ old('season_name') }}" class="form-input" required placeholder="e.g. Q3 2026, Long Rains 2026">
             </div>
@@ -67,7 +52,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var cropSel = document.getElementById('crop_id');
-    var tplSel = document.getElementById('crop_cycle_template_id');
     var planting = document.getElementById('planting_date');
     var harvest = document.getElementById('expected_harvest_date');
     var hint = document.getElementById('maturity-hint');
@@ -75,40 +59,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     harvest.addEventListener('input', function () { harvestTouched = true; });
 
-    // The template's cycle length is the plan of record, so it wins over the
-    // crop's nominal maturity when both are known.
-    function cycleDays() {
-        var tpl = tplSel.options[tplSel.selectedIndex];
-        var t = tpl ? parseInt(tpl.getAttribute('data-days'), 10) : NaN;
-        if (!isNaN(t)) return t;
-
+    function maturityDays() {
         var opt = cropSel.options[cropSel.selectedIndex];
         var d = opt ? parseInt(opt.getAttribute('data-maturity'), 10) : NaN;
         return isNaN(d) ? null : d;
     }
 
-    // Narrow the template list to the chosen crop, keeping crop-agnostic
-    // templates (no crop_id) always available.
-    function filterTemplates() {
-        var crop = cropSel.value;
-        var cleared = false;
-
-        Array.prototype.forEach.call(tplSel.options, function (opt) {
-            if (!opt.value) return;
-            var owner = opt.getAttribute('data-crop');
-            var show = !crop || !owner || owner === crop;
-            opt.hidden = !show;
-            if (!show && opt.selected) { cleared = true; }
-        });
-
-        if (cleared) { tplSel.value = ''; }
-    }
-
     function recalc() {
-        var days = cycleDays();
+        var days = maturityDays();
         if (days) {
             hint.style.display = 'block';
-            hint.textContent = 'Cycle runs about ' + days + ' days.';
+            hint.textContent = 'Matures in about ' + days + ' days.';
         } else {
             hint.style.display = 'none';
         }
@@ -120,10 +81,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    cropSel.addEventListener('change', function () { filterTemplates(); recalc(); });
-    tplSel.addEventListener('change', recalc);
+    cropSel.addEventListener('change', recalc);
     planting.addEventListener('change', recalc);
-    filterTemplates();
     recalc();
 });
 </script>

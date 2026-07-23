@@ -1588,11 +1588,11 @@
             <ul class="sidebar-nav nav-group-items">
                 <li><a href="{{ route('farms.index') }}" class="{{ request()->routeIs('farms.*') ? 'active' : '' }}"><span class="icon"><x-icon name="farm" /></span><span class="nav-label">Farms</span></a></li>
                 <li><a href="{{ route('blocks.index') }}" class="{{ request()->routeIs('blocks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="blocks" /></span><span class="nav-label">Blocks</span></a></li>
-                {{-- Crops, their cycles and their templates are one area, reached
+                {{-- Crops, their cycles and their programs are one area, reached
                      through a tab strip rather than three sidebar entries. --}}
-                <li><a href="{{ route('crops.index') }}" class="{{ request()->routeIs('crops.*', 'crop-cycle-templates.*', 'crop-cycles.*') ? 'active' : '' }}"><span class="icon"><x-icon name="crops" /></span><span class="nav-label">Crops &amp; Cycles</span></a></li>
-                @if($ma::allows($u,'crop_cycles'))<li><a href="{{ route('setup') }}" class="{{ request()->routeIs('setup') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">New Crop Cycle</span></a></li>@endif
-                <li><a href="{{ route('tasks.index') }}" class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">My Tasks</span></a></li>
+                <li><a href="{{ route('crops.index') }}" class="{{ request()->routeIs('crops.*', 'crop-programs.*') || (request()->routeIs('crop-cycles.*') && ! request()->routeIs('crop-cycles.planner')) ? 'active' : '' }}"><span class="icon"><x-icon name="crops" /></span><span class="nav-label">Crops &amp; Cycles</span></a></li>
+                @if($ma::allows($u,'master_data'))<li><a href="{{ route('setup') }}" class="{{ request()->routeIs('setup') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Set Up Planting</span></a></li>@endif
+                <li><a href="{{ route('crop-cycles.planner') }}" class="{{ request()->routeIs('crop-cycles.planner') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Planting Planner</span></a></li>
                 <li><a href="{{ route('assets.index') }}" class="{{ request()->routeIs('assets.*') ? 'active' : '' }}"><span class="icon"><x-icon name="assets" /></span><span class="nav-label">Assets</span></a></li>
                 @if($ma::allows($u,'checkouts'))<li><a href="{{ route('checkouts.index') }}" class="{{ request()->routeIs('checkouts.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Checkouts</span></a></li>@endif
             </ul>

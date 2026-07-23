@@ -9,8 +9,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\CropController;
 use App\Http\Controllers\CropCycleController;
-use App\Http\Controllers\CropCycleTemplateController;
 use App\Http\Controllers\CropMonitoringController;
+use App\Http\Controllers\CropProgramController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DailyActivityController;
 use App\Http\Controllers\DashboardController;
@@ -34,7 +34,6 @@ use App\Http\Controllers\NurseryBatchController;
 use App\Http\Controllers\OutgrowerController;
 use App\Http\Controllers\PackhouseLotController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\PlantingCycleActivityController;
 use App\Http\Controllers\ProcurementRequestController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\QualityCheckController;
@@ -43,7 +42,6 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SprayLogController;
-use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\WeighScaleReadingController;
@@ -100,13 +98,10 @@ Route::middleware('auth')->group(function () {
 
     $masterData = ModuleAccess::middleware('master_data');
 
-    // The single "New Crop Cycle" flow: one page that picks or creates the farm,
-    // block and crop, chooses a template, and sets the budget. It writes master
-    // data as a byproduct, but it is the crop-cycle create screen — gated behind
-    // crop_cycles (a superset of master_data, so no former user loses access).
-    $cycleWrite = ModuleAccess::middleware('crop_cycles');
-    Route::get('setup', [SetupController::class, 'index'])->name('setup')->middleware($cycleWrite);
-    Route::post('setup', [SetupController::class, 'store'])->middleware($cycleWrite);
+    // Guided single-page setup wizard (Farm → Block → Crop → Crop Cycle). Writes
+    // master-data records, so it's gated behind the same roles as those creates.
+    Route::get('setup', [SetupController::class, 'index'])->name('setup')->middleware($masterData);
+    Route::post('setup', [SetupController::class, 'store'])->middleware($masterData);
 
     foreach (['farms' => FarmController::class, 'blocks' => BlockController::class, 'crops' => CropController::class, 'assets' => AssetController::class] as $name => $ctrl) {
         Route::resource($name, $ctrl)->except(['index', 'show'])->middleware($masterData);
@@ -127,12 +122,10 @@ Route::middleware('auth')->group(function () {
 
     // Module 2: Crop Planning & Seasonal Budgets — read-all, write restricted.
     $cropCycles = ModuleAccess::middleware('crop_cycles');
-    // Creating a cycle now happens in the merged "New Crop Cycle" flow (setup),
-    // which can also spin up the farm/block/crop it needs. The old bare form is
-    // retired; its route redirects so existing links still land somewhere sensible.
-    Route::get('crop-cycles/create', fn () => redirect()->route('setup'))
-        ->name('crop-cycles.create')->middleware($cropCycles);
-    Route::resource('crop-cycles', CropCycleController::class)->except(['index', 'show', 'create'])->middleware($cropCycles);
+    Route::resource('crop-cycles', CropCycleController::class)->except(['index', 'show'])->middleware($cropCycles);
+    // Planting schedule planner — a self-contained tool; must be declared before the
+    // {cropCycle} show route so "planner" isn't parsed as a crop-cycle id.
+    Route::get('crop-cycles/planner', [CropCycleController::class, 'planner'])->name('crop-cycles.planner');
     Route::resource('crop-cycles', CropCycleController::class)->only(['index', 'show']);
     Route::middleware($cropCycles)->group(function () {
         Route::post('crop-cycles/{cropCycle}/activate', [CropCycleController::class, 'activate'])->name('crop-cycles.activate');
@@ -140,13 +133,10 @@ Route::middleware('auth')->group(function () {
         Route::post('crop-cycles/{cropCycle}/cancel', [CropCycleController::class, 'cancel'])->name('crop-cycles.cancel');
         Route::post('crop-cycles/{cropCycle}/budget', [CropCycleController::class, 'setBudget'])->name('crop-cycles.budget');
 
-        // Crop cycle templates — the reusable planting-to-harvest plan, its
-        // growth stages, and the spray/input schedule the reminder engine reads.
-        Route::resource('crop-cycle-templates', CropCycleTemplateController::class);
-        Route::post('crop-cycle-templates/{cropCycleTemplate}/stages', [CropCycleTemplateController::class, 'storeStage'])->name('crop-cycle-templates.stages.store');
-        Route::delete('crop-cycle-templates/{cropCycleTemplate}/stages/{stage}', [CropCycleTemplateController::class, 'destroyStage'])->name('crop-cycle-templates.stages.destroy');
-        Route::post('crop-cycle-templates/{cropCycleTemplate}/schedule-points', [CropCycleTemplateController::class, 'storeSchedulePoint'])->name('crop-cycle-templates.points.store');
-        Route::delete('crop-cycle-templates/{cropCycleTemplate}/schedule-points/{point}', [CropCycleTemplateController::class, 'destroySchedulePoint'])->name('crop-cycle-templates.points.destroy');
+        // Crop stage programs (reusable per-crop protocols)
+        Route::resource('crop-programs', CropProgramController::class);
+        Route::post('crop-programs/{cropProgram}/stages', [CropProgramController::class, 'storeStage'])->name('crop-programs.stages.store');
+        Route::delete('crop-programs/{cropProgram}/stages/{stage}', [CropProgramController::class, 'destroyStage'])->name('crop-programs.stages.destroy');
 
         // In-season crop monitoring — germination checks, stand counts, pre-harvest sampling
         Route::post('crop-cycles/{cropCycle}/germination', [CropMonitoringController::class, 'storeGermination'])->name('crop-cycles.germination.store');
@@ -170,18 +160,6 @@ Route::middleware('auth')->group(function () {
 
     // Module 4: Daily Farm Operations
     Route::resource('daily-activities', DailyActivityController::class)->middleware(ModuleAccess::middleware('daily_ops'));
-
-    // Task list fed by the reminder engine. Readable by anyone (staff see their
-    // own); closing and reassigning are authorised per-task in the controller.
-    Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
-    Route::post('tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
-    Route::post('tasks/{task}/reassign', [TaskController::class, 'reassign'])->middleware(ModuleAccess::middleware('daily_ops'))->name('tasks.reassign');
-
-    // Logging work against a cycle — closes the scheduled task and books the cost.
-    Route::middleware(ModuleAccess::middleware('daily_ops'))->group(function () {
-        Route::post('crop-cycles/{cropCycle}/activities', [PlantingCycleActivityController::class, 'store'])->name('crop-cycles.activities.store');
-        Route::delete('crop-cycles/{cropCycle}/activities/{activity}', [PlantingCycleActivityController::class, 'destroy'])->name('crop-cycles.activities.destroy');
-    });
 
     Route::middleware(ModuleAccess::middleware('whatsapp_ops'))->prefix('whatsapp-ops')->name('whatsapp-ops.')->group(function () {
         Route::get('/', [WhatsappOpsController::class, 'index'])->name('index');

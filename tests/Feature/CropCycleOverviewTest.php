@@ -118,7 +118,7 @@ class CropCycleOverviewTest extends TestCase
     {
         $actor = $this->manager();
 
-        foreach (['crops.index', 'crop-cycles.index', 'crop-cycle-templates.index'] as $route) {
+        foreach (['crops.index', 'crop-cycles.index', 'crop-programs.index'] as $route) {
             $this->actingAs($actor)->get(route($route))
                 ->assertOk()
                 ->assertSee('Crop Cycles')

@@ -7,11 +7,11 @@
 
     $tabs = [
         ['label' => 'Crops', 'route' => 'crops.index', 'active' => request()->routeIs('crops.*')],
-        ['label' => 'Crop Cycles', 'route' => 'crop-cycles.index', 'active' => request()->routeIs('crop-cycles.*')],
+        ['label' => 'Crop Cycles', 'route' => 'crop-cycles.index', 'active' => request()->routeIs('crop-cycles.*') && ! request()->routeIs('crop-cycles.planner')],
     ];
 
     if ($ma::allows($u, 'crop_cycles')) {
-        $tabs[] = ['label' => 'Templates', 'route' => 'crop-cycle-templates.index', 'active' => request()->routeIs('crop-cycle-templates.*')];
+        $tabs[] = ['label' => 'Programs', 'route' => 'crop-programs.index', 'active' => request()->routeIs('crop-programs.*')];
     }
 @endphp
 
