@@ -69,6 +69,7 @@
                         <td>
                             <div class="actions">
                                 <a href="{{ route('blocks.show', $block) }}" class="btn btn-ghost btn-sm">View</a>
+                                <a href="{{ route('land-preparations.open', $block) }}" class="btn btn-ghost btn-sm">Prep</a>
                                 @if($canWrite)
                                 <a href="{{ route('blocks.edit', $block) }}" class="btn btn-ghost btn-sm">Edit</a>
                                 <form action="{{ route('blocks.destroy', $block) }}" method="POST" data-confirm="Delete this block?">

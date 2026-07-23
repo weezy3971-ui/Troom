@@ -19,6 +19,11 @@ class InformationSourceController extends Controller
 {
     public function index()
     {
+        // The list keeps itself current — guidance cited in code shows up here on
+        // the next visit, with no import step to remember. No actor is recorded:
+        // these come from the code, not from whoever opened the page.
+        \App\Support\ReferenceSources::sync();
+
         $sources = InformationSource::inUse()
             ->orderBy('name')
             ->get()

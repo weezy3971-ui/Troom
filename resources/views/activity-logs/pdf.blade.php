@@ -39,7 +39,7 @@
         <a href="{{ url()->previous() }}" class="btn">← Back to Activity Log</a>
     </div>
 
-    <h1>Trooms ERP — Activity Log</h1>
+    <h1>Trooms House — Activity Log</h1>
     <div class="meta">{{ $scopeLabel }} · Generated {{ $generatedAt->format('M d, Y H:i') }} · {{ $logs->count() }} entries</div>
 
     <table>

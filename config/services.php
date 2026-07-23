@@ -74,4 +74,26 @@ return [
         'timeout' => (int) env('SMS_TIMEOUT', 20),
     ],
 
+    /*
+    | M-Pesa (Safaricom Daraja) — B2C vendor payouts and C2B customer
+    | payments. 'driver' picks the gateway: 'fake' (default) simulates
+    | Safaricom so the flow works with no credentials at all; 'daraja' uses
+    | the real API once DarajaGateway is implemented and these are filled in.
+    | See app/Services/Mpesa/DarajaGateway.php for the integration steps.
+    */
+    'mpesa' => [
+        'driver' => env('MPESA_DRIVER', 'fake'),
+        'env' => env('MPESA_ENV', 'sandbox'), // sandbox | production
+        'base_url' => env('MPESA_ENV', 'sandbox') === 'production'
+            ? 'https://api.safaricom.co.ke'
+            : 'https://sandbox.safaricom.co.ke',
+        'shortcode' => env('MPESA_SHORTCODE'),
+        'consumer_key' => env('MPESA_CONSUMER_KEY'),
+        'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
+        'passkey' => env('MPESA_PASSKEY'),
+        'initiator_name' => env('MPESA_INITIATOR_NAME'),
+        'initiator_password' => env('MPESA_INITIATOR_PASSWORD'),
+        'cert_path' => env('MPESA_CERT_PATH'),
+    ],
+
 ];

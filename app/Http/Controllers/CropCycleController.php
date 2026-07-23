@@ -75,8 +75,12 @@ class CropCycleController extends Controller
 
         $cropCycle = CropCycle::create($validated);
 
+        // Preparation is tied to the cycle from the moment it exists, so its
+        // cost belongs to this planting and its checklist gates activation.
+        \App\Models\LandPreparation::attachTo($cropCycle, $request->user()?->id);
+
         return redirect()->route('crop-cycles.show', $cropCycle)
-            ->with('success', 'Crop cycle created successfully.');
+            ->with('success', 'Crop cycle created. Land preparation for this block is attached to it.');
     }
 
     public function show(CropCycle $cropCycle)
@@ -85,7 +89,8 @@ class CropCycleController extends Controller
             'block.farm', 'crop', 'seasonalBudget', 'costAllocations', 'plantings', 'harvestBatches',
             'germinationChecks.recordedBy', 'plantPopulationCounts.recordedBy', 'yieldForecasts.recordedBy',
             'template.stages', 'template.schedulePoints.stage',
-            'activities.schedulePoint', 'activities.performedBy'
+            'activities.schedulePoint', 'activities.performedBy',
+            'landPreparation.expenses'
         );
         $projection = (new \App\Services\YieldProjectionService($cropCycle))->summary();
 
@@ -94,10 +99,55 @@ class CropCycleController extends Controller
         $schedule = $cropCycle->resolvedSchedule();
         $compliance = $cropCycle->sprayComplianceRate();
         $activityTypes = CropCycleSchedulePoint::ACTIVITY_TYPES;
+        $timeline = $this->timelineFor($cropCycle);
 
         return view('crop-cycles.show', compact(
-            'cropCycle', 'projection', 'schedule', 'compliance', 'activityTypes'
+            'cropCycle', 'projection', 'schedule', 'compliance', 'activityTypes', 'timeline'
         ));
+    }
+
+    /**
+     * The cycle's template drawn on its calendar: growth stages as bars, plus
+     * any schedule point that falls outside a stage as a single-day marker.
+     * Empty when there is no template or no planting date to anchor it to.
+     *
+     * @return array<int, array{label: string, start: \Illuminate\Support\Carbon, end: ?\Illuminate\Support\Carbon, class: string, day: int, day_end: ?int}>
+     */
+    private function timelineFor(CropCycle $cropCycle): array
+    {
+        if (! $cropCycle->template || ! $cropCycle->planting_date) {
+            return [];
+        }
+
+        $base = $cropCycle->planting_date->copy();
+        $rows = [];
+
+        foreach ($cropCycle->template->stages as $stage) {
+            $rows[] = [
+                'label' => $stage->stage_name,
+                'start' => $base->copy()->addDays($stage->start_day_offset),
+                'end' => $base->copy()->addDays($stage->end_day_offset),
+                'class' => '',
+                'day' => $stage->start_day_offset,
+                'day_end' => $stage->end_day_offset,
+            ];
+        }
+
+        // Points with no stage would otherwise be invisible on the chart.
+        foreach ($cropCycle->template->schedulePoints->whereNull('crop_cycle_stage_id') as $point) {
+            $rows[] = [
+                'label' => $point->product_name ?: $point->activityLabel(),
+                'start' => $base->copy()->addDays($point->day_offset),
+                'end' => null,
+                'class' => $point->activity_type === 'harvest_check' ? 'is-harvest' : '',
+                'day' => $point->day_offset,
+                'day_end' => null,
+            ];
+        }
+
+        usort($rows, fn ($a, $b) => $a['day'] <=> $b['day']);
+
+        return $rows;
     }
 
     public function edit(CropCycle $cropCycle)
@@ -151,6 +201,16 @@ class CropCycleController extends Controller
     {
         if (!$cropCycle->canActivate()) {
             return back()->with('error', 'Cannot activate: a seasonal budget must be set first.');
+        }
+
+        // A block is not planted into until it has been prepared. The admin is
+        // sent to the checklist rather than left with a dead button — that page
+        // is also where preparation can be recorded as not required.
+        if (! $cropCycle->landPrepSatisfied()) {
+            $prep = $cropCycle->landPreparation;
+
+            return redirect()->route('land-preparations.show', $prep)
+                ->with('error', "Cannot activate: {$cropCycle->block->name} still has {$prep->outstandingCount()} preparation step(s) outstanding. Finish them, or record that preparation isn't required for this block.");
         }
 
         if ($cropCycle->blockHasActiveCycle()) {

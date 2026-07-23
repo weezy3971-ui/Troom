@@ -35,10 +35,19 @@
 <body>
     <div class="receipt">
         <div class="brand">
-            <div class="logo">T</div>
+            <div class="logo">
+                {{-- Inlined rather than via <x-icon>: this view is printed and
+                     saved as PDF, so it stays self-contained. --}}
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                     fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1.9 10.3 12 1.3l10.1 9"/>
+                    <path d="M4.5 10.7v8.8a2.4 2.4 0 0 0 2.4 2.4h10.2a2.4 2.4 0 0 0 2.4-2.4v-8.8"/>
+                    <path d="M10.1 21.9V13a1.45 1.45 0 0 1 2.9 0v8.9"/>
+                </svg>
+            </div>
             <div>
-                <h1>Trooms Stables</h1>
-                <div class="sub">Horse Riding Receipt</div>
+                <h1>Trooms House</h1>
+                <div class="sub">Farms &amp; Equestrian — Riding Receipt</div>
             </div>
         </div>
 
@@ -68,7 +77,7 @@
 
         <div class="foot">
             Please present this receipt to the stable manager.<br>
-            Thank you for riding with Trooms Stables.
+            Thank you for riding with Trooms House.
         </div>
     </div>
 

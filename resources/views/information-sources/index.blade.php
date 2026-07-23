@@ -128,7 +128,7 @@
                         <div class="src-foot">
                             <a href="{{ $source->url }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Open</a>
                             <form action="{{ route('information-sources.destroy', $source) }}" method="POST"
-                                  data-confirm="Delete {{ $source->name }} ({{ $source->domain }})?{{ $impact[$source->id] ? ' ' . $impact[$source->id] . '.' : '' }} @if($source->isCitedInCode())You can put it back from the Deleted section.@endif"
+                                  data-confirm="Delete {{ $source->name }} ({{ $source->domain }})? @if($source->isCitedInCode())It is cited by {{ count($source->citedPages()) }} page(s) in use. You can put it back from the Deleted section.@endif"
                                   data-confirm-ok="Delete Source">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>

@@ -3,6 +3,8 @@
 
 @section('content')
 @php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'crop_cycles'); @endphp
+<x-crop-tabs />
+
 <div class="page-header">
     <div>
         <h1 class="page-title">Crop Cycles</h1>
@@ -14,7 +16,7 @@
             <p><strong>Planned → Active:</strong> activating a cycle requires a seasonal budget. Once active, the reminder engine starts raising its scheduled tasks.</p>
             <p>A cycle runs a <strong>template</strong> — the crop's planting-to-harvest plan. Its schedule points become dated tasks and reminders automatically.</p>
             <p>Harvest, spray, irrigation, and fertigation logs are all linked to a crop cycle.</p>
-            <p><strong>Quick steps:</strong> Click "+ New Crop Cycle" → pick block, crop, template, and season → click "Save" → open it and click "Activate" once budgeted.</p>
+            <p><strong>Quick steps:</strong> Click "+ New Crop Cycle" → pick or add the farm, block and crop → choose a template → set the budget → Create. It activates on the spot once the block is prepared.</p>
         </x-help-panel>
         <a href="{{ route('crop-cycle-templates.index') }}" class="btn btn-secondary">🗓 Cycle Templates</a>
         @if($canWrite)<a href="{{ route('crop-cycles.create') }}" class="btn btn-primary">+ New Crop Cycle</a>@endif

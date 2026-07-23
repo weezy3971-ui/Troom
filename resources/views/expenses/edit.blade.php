@@ -26,6 +26,17 @@
                 @error('amount') <p class="form-error">{{ $message }}</p> @enderror
             </div>
             <div class="form-group">
+                <label class="form-label" for="vendor_id">Paid To (Vendor)</label>
+                <select id="vendor_id" name="vendor_id" class="form-select">
+                    <option value="">— None —</option>
+                    @foreach($vendors as $vendor)
+                        <option value="{{ $vendor->id }}" {{ old('vendor_id', $expense->vendor_id) == $vendor->id ? 'selected' : '' }}>{{ $vendor->name }}</option>
+                    @endforeach
+                </select>
+                <p class="form-hint">Who received the money. Needed before this can be settled by M-Pesa.</p>
+                @error('vendor_id') <p class="form-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="form-group">
                 <label class="form-label" for="payment_mode">Mode of Payment</label>
                 <select id="payment_mode" name="payment_mode" class="form-select">
                     <option value="">Select mode</option>
@@ -56,6 +67,20 @@
                         <option value="{{ $block->id }}" {{ old('block_id', $expense->block_id) == $block->id ? 'selected' : '' }}>{{ $block->name }} — {{ $block->farm->name }}</option>
                     @endforeach
                 </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="land_preparation_id">Land Preparation</label>
+                <select id="land_preparation_id" name="land_preparation_id" class="form-select">
+                    <option value="">&mdash; None &mdash;</option>
+                    @foreach($landPreparations as $prep)
+                        <option value="{{ $prep->id }}" {{ old('land_preparation_id', $expense->land_preparation_id) == $prep->id ? 'selected' : '' }}>{{ $prep->block->name }} &mdash; {{ $prep->block->farm->name }} ({{ $prep->statusLabel() }})</option>
+                    @endforeach
+                </select>
+                <p class="form-hint" style="font-size:11.5px; color:var(--text-muted); margin-top:5px;">
+                    Pick the preparation round this paid for &mdash; ploughing, manure, casual labour. It keeps the cost
+                    with the planting that follows instead of leaving it unattached.
+                </p>
             </div>
         </div>
         <div class="form-group">

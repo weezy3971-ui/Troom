@@ -50,6 +50,54 @@
     </div>
 </div>
 
+{{-- Land preparation: the step between adding this block and planting into it --}}
+@php $prep = $block->latestLandPreparation(); @endphp
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Land Preparation</h3>
+        @if($prep)
+            <span class="badge badge-{{ $prep->statusColor() }}">{{ $prep->statusLabel() }}</span>
+        @endif
+    </div>
+    @if($prep)
+        <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:center;">
+            <div style="font-size:13px; color:var(--text-secondary);">
+                <strong>{{ $prep->doneCount() }} of {{ $prep->tasks->count() }}</strong> steps done
+                @if($prep->completed_on)
+                    — ready to plant {{ $prep->completed_on->format('M d, Y') }}
+                @elseif($prep->started_on)
+                    — started {{ $prep->started_on->format('M d, Y') }}
+                @endif
+            </div>
+            <div style="font-size:13px; color:var(--text-secondary);">
+                Cost: <strong>KES {{ number_format($prep->totalCost(), 2) }}</strong>
+                @unless($prep->cropCycle)
+                    <span style="color:var(--text-muted);">(not yet attributed to a planting)</span>
+                @endunless
+            </div>
+            <div style="margin-left:auto; display:flex; gap:8px;">
+                <a href="{{ route('land-preparations.show', $prep) }}" class="btn btn-secondary btn-sm">Open</a>
+                @if(\App\Support\ModuleAccess::allows(auth()->user(), 'daily_ops'))
+                    <form action="{{ route('land-preparations.store', $block) }}" method="POST"
+                          data-confirm="Start a new preparation round on {{ $block->name }}? The current round stays on record."
+                          data-confirm-ok="Start New Round">
+                        @csrf
+                        <button type="submit" class="btn btn-ghost btn-sm">New round</button>
+                    </form>
+                @endif
+            </div>
+        </div>
+    @else
+        <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center;">
+            <p style="font-size:13px; color:var(--text-secondary); margin:0;">
+                This block hasn't been prepared yet. Preparation comes before planting — starting it here keeps
+                the work, and what it costs, attached to the block.
+            </p>
+            <a href="{{ route('land-preparations.open', $block) }}" class="btn btn-primary btn-sm" style="margin-left:auto;">Prepare Block</a>
+        </div>
+    @endif
+</div>
+
 {{-- Tabbed hub --}}
 <style>
     .hub-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 0; }

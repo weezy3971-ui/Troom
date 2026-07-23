@@ -33,7 +33,7 @@ class ScheduleReminderService
         $today = $on ? \Illuminate\Support\Carbon::instance($on) : now();
 
         $cycles = CropCycle::query()
-            ->where('is_active', true)
+            ->where('status', 'active')
             ->whereNotNull('crop_cycle_template_id')
             ->whereNotNull('planting_date')
             ->with(['template.schedulePoints', 'activities', 'block.farm'])

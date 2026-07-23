@@ -224,7 +224,7 @@ class UserController extends Controller
         // Best-effort SMS; a delivery failure never blocks the reset itself.
         $texted = false;
         if ($user->phone) {
-            $message = "Trooms ERP: your password has been reset by an administrator. "
+            $message = "Trooms House: your password has been reset by an administrator. "
                 . "Your new password is: {$validated['password']} "
                 . "Please sign in and keep it private.";
             $texted = $sms->send($user->phone, $message);

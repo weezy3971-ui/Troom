@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify your phone — THE ERP</title>
+    <title>Verify your phone — Trooms House</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -73,11 +73,11 @@
     <div class="login-card">
         <div class="brand">
             <div class="login-logo">
-                <x-icon name="crops" size="26" />
+                <x-icon name="thf" size="26" />
             </div>
             <div class="brand-text">
-                <h1>Trooms ERP</h1>
-                <span>Horticulture Management</span>
+                <h1>Trooms House</h1>
+                <span>Farms &amp; Equestrian</span>
             </div>
         </div>
 

@@ -19,6 +19,11 @@
                 <input type="text" id="contact" name="contact" value="{{ old('contact', $customer->contact) }}" class="form-input">
             </div>
             <div class="form-group">
+                <label class="form-label" for="phone">M-Pesa Phone</label>
+                <input type="text" id="phone" name="phone" value="{{ old('phone', $customer->phone) }}" class="form-input" placeholder="0712 345 678">
+                <p class="form-hint">Where payment prompts are sent. Saved as 2547…</p>
+            </div>
+            <div class="form-group">
                 <label class="form-label" for="price_list">Price List</label>
                 <input type="text" id="price_list" name="price_list" value="{{ old('price_list', $customer->price_list) }}" class="form-input">
             </div>

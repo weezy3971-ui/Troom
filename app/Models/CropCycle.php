@@ -62,6 +62,16 @@ class CropCycle extends Model
         return $this->hasMany(Task::class);
     }
 
+    /**
+     * The land preparation this planting followed on from. Linking it is what
+     * pulls prep spend into the cycle's cost rather than leaving it stranded on
+     * the block with no stage to belong to.
+     */
+    public function landPreparation(): HasOne
+    {
+        return $this->hasOne(LandPreparation::class);
+    }
+
     public function seasonalBudget(): HasOne
     {
         return $this->hasOne(SeasonalBudget::class);
@@ -118,6 +128,42 @@ class CropCycle extends Model
     }
 
     /**
+     * Days from today until the expected harvest — negative once that date has
+     * passed. Null when the cycle has no expected harvest date, which is the
+     * honest answer rather than pretending it is due today.
+     */
+    public function daysToHarvest(): ?int
+    {
+        if (! $this->expected_harvest_date) {
+            return null;
+        }
+
+        return (int) now()->startOfDay()->diffInDays($this->expected_harvest_date, false);
+    }
+
+    /**
+     * How far through planting → expected harvest this cycle is, 0–100.
+     * Null unless both dates are set, since progress is meaningless without a
+     * span to measure against.
+     */
+    public function progressPercent(): ?int
+    {
+        if (! $this->planting_date || ! $this->expected_harvest_date) {
+            return null;
+        }
+
+        $span = $this->planting_date->diffInDays($this->expected_harvest_date);
+
+        if ($span <= 0) {
+            return 100;
+        }
+
+        $elapsed = $this->planting_date->diffInDays(now()->startOfDay(), false);
+
+        return (int) max(0, min(100, round($elapsed / $span * 100)));
+    }
+
+    /**
      * Total cost booked against this cycle across all allocation sources.
      */
     public function actualCost(): float
@@ -158,6 +204,20 @@ class CropCycle extends Model
     {
         return $this->seasonalBudget !== null
             && $this->seasonalBudget->total_budget > 0;
+    }
+
+    /**
+     * Land preparation must be finished before a block is planted into.
+     *
+     * A cycle with no preparation round attached passes: rounds are attached
+     * when a cycle is created, so the only cycles without one pre-date the
+     * rule, and blocking those retrospectively would strand real plantings.
+     */
+    public function landPrepSatisfied(): bool
+    {
+        $prep = $this->landPreparation;
+
+        return $prep === null || $prep->isSatisfied();
     }
 
     /**

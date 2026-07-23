@@ -48,6 +48,14 @@ class DatabaseSeeder extends Seeder
         // ---- Chart of Accounts ----
         foreach ([
             ['code' => '1000', 'name' => 'Cash & Bank',           'type' => 'asset'],
+            // M-Pesa is held separately from cash: the float is reconciled
+            // against Safaricom's statement, not counted in the till.
+            ['code' => '1100', 'name' => 'M-Pesa Float',          'type' => 'asset'],
+            // Sales are earned on fulfilment and collected on payment. Without
+            // a receivable in between, the two would both hit cash and every
+            // sale would be counted twice.
+            ['code' => '1200', 'name' => 'Accounts Receivable',   'type' => 'asset'],
+            ['code' => '2000', 'name' => 'Accounts Payable',      'type' => 'liability'],
             ['code' => '4000', 'name' => 'Produce Sales',         'type' => 'income'],
             ['code' => '5000', 'name' => 'Farm Operating Costs',  'type' => 'expense'],
         ] as $account) {
@@ -64,20 +72,9 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // ---- Pre-approved team members — awaiting self-registration with
-        // their own chosen password, same as the owner had to approve them
-        // manually for on the original database. ----
-        foreach ([
-            ['email' => 'matthew@trooms.house', 'role' => 'owner'],
-            ['email' => 'maryanne.nduati@trooms.house', 'role' => 'owner'],
-            ['email' => 'albert.maera@trooms.house', 'role' => 'horticulture_manager'],
-            ['email' => 'george.mwangi@trooms.house', 'role' => 'sales_officer'],
-        ] as $invite) {
-            ApprovedEmail::firstOrCreate(
-                ['email' => $invite['email']],
-                ['role' => $invite['role'], 'invited_by' => $owner->id]
-            );
-        }
+        // Team members are pre-approved through Settings → Users rather than
+        // seeded: their names and addresses are personal data and do not
+        // belong in source control.
 
         $this->call(StableSeeder::class);
     }

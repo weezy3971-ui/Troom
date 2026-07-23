@@ -32,6 +32,18 @@ class Block extends Model
         return $this->hasMany(CropCycle::class);
     }
 
+    /** Rounds of land preparation done on this block, newest first. */
+    public function landPreparations(): HasMany
+    {
+        return $this->hasMany(LandPreparation::class)->latest('id');
+    }
+
+    /** The preparation round a new crop cycle on this block would follow on from. */
+    public function latestLandPreparation(): ?LandPreparation
+    {
+        return $this->landPreparations()->with('tasks')->first();
+    }
+
     public function dailyActivities(): HasMany
     {
         return $this->hasMany(DailyActivity::class);

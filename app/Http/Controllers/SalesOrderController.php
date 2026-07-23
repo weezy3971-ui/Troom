@@ -47,7 +47,7 @@ class SalesOrderController extends Controller
 
     public function show(SalesOrder $salesOrder)
     {
-        $salesOrder->load('customer', 'crop', 'lines.packhouseLot.latestQualityCheck', 'dispatch');
+        $salesOrder->load('customer', 'crop', 'lines.packhouseLot.latestQualityCheck', 'dispatch', 'payments');
 
         // Only quality-passed, unallocated lots may be added to order lines.
         $availableLots = PackhouseLot::with('harvestBatch.cropCycle.crop', 'latestQualityCheck')
@@ -154,6 +154,28 @@ class SalesOrderController extends Controller
 
         return redirect()->route('sales-orders.show', $salesOrder)
             ->with('success', 'Delivery outcome recorded.');
+    }
+
+    /**
+     * Freeze the order's line value as the amount owed and give it a number.
+     * That number is what a customer quotes when paying — and, once M-Pesa is
+     * live, what a C2B payment's account reference is matched against.
+     */
+    public function issueInvoice(SalesOrder $salesOrder)
+    {
+        $salesOrder->load('lines');
+
+        if ($salesOrder->orderValue() <= 0) {
+            throw ValidationException::withMessages([
+                'invoice' => 'Allocate at least one priced line before invoicing this order.',
+            ]);
+        }
+
+        ActivityLogger::as('invoiced', fn () => $salesOrder->issueInvoice());
+
+        return redirect()->route('sales-orders.show', $salesOrder)
+            ->with('success', "Invoice {$salesOrder->invoice_number} issued for KES "
+                .number_format((float) $salesOrder->total_amount, 2).'.');
     }
 
     private function validateOrder(Request $request): array

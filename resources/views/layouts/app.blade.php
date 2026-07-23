@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Dashboard') — Trooms ERP</title>
-    <meta name="description" content="Trooms Horticulture ERP — Farm management from field to customer">
+    <title>@yield('title', 'Dashboard') — Trooms House</title>
+    <meta name="description" content="Trooms House Farms &amp; Equestrian — estate ERP, from field to customer">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
     <meta name="theme-color" content="#2F6B3B">
@@ -1059,6 +1059,12 @@
         .badge-ready { background: var(--success-bg); color: var(--success-text); }
         .badge-transplanted { background: rgba(92, 106, 97, 0.12); color: var(--text-secondary); }
         .badge-neutral { background: rgba(92, 106, 97, 0.12); color: var(--text-secondary); }
+        /* Payment state — unpaid reads as a warning, not a failure: an
+           invoice raised this morning is not yet a problem. */
+        .badge-paid { background: var(--success-bg); color: var(--success-text); }
+        .badge-partial { background: var(--warning-bg); color: var(--warning-text); }
+        .badge-unpaid { background: rgba(92, 106, 97, 0.12); color: var(--text-secondary); }
+        .badge-voided { background: var(--danger-bg); color: var(--danger-text); }
 
         /* ============================================
            ALERTS
@@ -1533,8 +1539,8 @@
     {{-- ---- Sidebar Rail ---- --}}
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <div class="logo"><x-icon name="crops" size="20" /></div>
-            <span class="brand-name">Trooms</span>
+            <div class="logo"><x-icon name="thf" size="20" /></div>
+            <span class="brand-name">Trooms House</span>
             <button type="button" class="icon-btn sidebar-close-btn" aria-label="Close menu" onclick="document.body.classList.remove('sidebar-open')">
                 <x-icon name="close" size="16" />
             </button>
@@ -1580,12 +1586,12 @@
                 <span class="nav-chevron"><x-icon name="chevron" size="14" /></span>
             </summary>
             <ul class="sidebar-nav nav-group-items">
-                @if($ma::allows($u,'master_data'))<li><a href="{{ route('setup') }}" class="{{ request()->routeIs('setup') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Set Up Planting</span></a></li>@endif
                 <li><a href="{{ route('farms.index') }}" class="{{ request()->routeIs('farms.*') ? 'active' : '' }}"><span class="icon"><x-icon name="farm" /></span><span class="nav-label">Farms</span></a></li>
                 <li><a href="{{ route('blocks.index') }}" class="{{ request()->routeIs('blocks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="blocks" /></span><span class="nav-label">Blocks</span></a></li>
-                <li><a href="{{ route('crops.index') }}" class="{{ request()->routeIs('crops.*') ? 'active' : '' }}"><span class="icon"><x-icon name="crops" /></span><span class="nav-label">Crops</span></a></li>
-                @if(! $simplifiedNav && $ma::allows($u,'crop_cycles'))<li><a href="{{ route('crop-cycle-templates.index') }}" class="{{ request()->routeIs('crop-cycle-templates.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">Cycle Templates</span></a></li>@endif
-                <li><a href="{{ route('crop-cycles.index') }}" class="{{ request()->routeIs('crop-cycles.*') ? 'active' : '' }}"><span class="icon"><x-icon name="cycles" /></span><span class="nav-label">Crop Cycles</span></a></li>
+                {{-- Crops, their cycles and their templates are one area, reached
+                     through a tab strip rather than three sidebar entries. --}}
+                <li><a href="{{ route('crops.index') }}" class="{{ request()->routeIs('crops.*', 'crop-cycle-templates.*', 'crop-cycles.*') ? 'active' : '' }}"><span class="icon"><x-icon name="crops" /></span><span class="nav-label">Crops &amp; Cycles</span></a></li>
+                @if($ma::allows($u,'crop_cycles'))<li><a href="{{ route('setup') }}" class="{{ request()->routeIs('setup') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">New Crop Cycle</span></a></li>@endif
                 <li><a href="{{ route('tasks.index') }}" class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}"><span class="icon"><x-icon name="planning" /></span><span class="nav-label">My Tasks</span></a></li>
                 <li><a href="{{ route('assets.index') }}" class="{{ request()->routeIs('assets.*') ? 'active' : '' }}"><span class="icon"><x-icon name="assets" /></span><span class="nav-label">Assets</span></a></li>
                 @if($ma::allows($u,'checkouts'))<li><a href="{{ route('checkouts.index') }}" class="{{ request()->routeIs('checkouts.*') ? 'active' : '' }}"><span class="icon"><x-icon name="inventory" /></span><span class="nav-label">Checkouts</span></a></li>@endif
@@ -1637,7 +1643,7 @@
         @php $commercial = $ma::allows($u,'sales') || $ma::allows($u,'logistics') || $ma::allows($u,'finance'); @endphp
         @if($commercial)
         {{-- Commercial --}}
-        <details class="nav-group" {{ request()->routeIs('customers.*','sales-orders.*','outgrowers.*','dispatches.*','finance.*') ? 'open' : '' }}>
+        <details class="nav-group" {{ request()->routeIs('customers.*','sales-orders.*','outgrowers.*','dispatches.*','finance.*','payments.*','vendors.*') ? 'open' : '' }}>
             <summary>
                 <span class="icon"><x-icon name="sales" /></span>
                 <span class="nav-group-title nav-label">Commercial</span>
@@ -1646,7 +1652,10 @@
             <ul class="sidebar-nav nav-group-items">
                 @if($ma::allows($u,'sales'))<li><a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') || request()->routeIs('sales-orders.*') ? 'active' : '' }}"><span class="icon"><x-icon name="sales" /></span><span class="nav-label">Sales</span></a></li>@endif
                 @if($ma::allows($u,'sales'))<li><a href="{{ route('outgrowers.index') }}" class="{{ request()->routeIs('outgrowers.*') ? 'active' : '' }}"><span class="icon"><x-icon name="outgrower" /></span><span class="nav-label">Outgrowers</span></a></li>@endif
+                @if($ma::allows($u,'sales'))<li><a href="{{ route('payments.index') }}" class="{{ request()->routeIs('payments.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Payments</span></a></li>@endif
                 @if($ma::allows($u,'logistics'))<li><a href="{{ route('dispatches.index') }}" class="{{ request()->routeIs('dispatches.*') ? 'active' : '' }}"><span class="icon"><x-icon name="logistics" /></span><span class="nav-label">Logistics</span></a></li>@endif
+                @if($ma::allows($u,'finance'))<li><a href="{{ route('vendors.index') }}" class="{{ request()->routeIs('vendors.*') ? 'active' : '' }}"><span class="icon"><x-icon name="outgrower" /></span><span class="nav-label">Vendors</span></a></li>@endif
+                @if($ma::allows($u,'finance'))<li><a href="{{ route('mpesa.index') }}" class="{{ request()->routeIs('mpesa.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" solid /></span><span class="nav-label">M-Pesa</span></a></li>@endif
                 @if($ma::allows($u,'finance'))<li><a href="{{ route('finance.index') }}" class="{{ request()->routeIs('finance.*') ? 'active' : '' }}"><span class="icon"><x-icon name="finance" /></span><span class="nav-label">Finance</span></a></li>@endif
             </ul>
         </details>
@@ -1670,7 +1679,7 @@
 
         @if($ma::allows($u,'admin'))
         {{-- Administration --}}
-        <details class="nav-group" {{ request()->routeIs('users.*','activity-logs.*') ? 'open' : '' }}>
+        <details class="nav-group" {{ request()->routeIs('users.*','activity-logs.*','information-sources.*') ? 'open' : '' }}>
             <summary>
                 <span class="icon"><x-icon name="settings" /></span>
                 <span class="nav-group-title nav-label">Administration</span>
@@ -1678,6 +1687,7 @@
             </summary>
             <ul class="sidebar-nav nav-group-items">
                 <li><a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}"><span class="icon"><x-icon name="settings" /></span><span class="nav-label">Users &amp; Roles</span></a></li>
+                <li><a href="{{ route('information-sources.index') }}" class="{{ request()->routeIs('information-sources.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">Sources</span></a></li>
                 <li><a href="{{ route('activity-logs.index') }}" class="{{ request()->routeIs('activity-logs.*') ? 'active' : '' }}"><span class="icon"><x-icon name="modules" /></span><span class="nav-label">Audit Log</span></a></li>
             </ul>
         </details>

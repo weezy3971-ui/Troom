@@ -57,10 +57,11 @@ class FinanceController extends Controller
         $expense = $this->account('5000', 'Farm Operating Costs', 'expense');
         $cash = $this->account('1000', 'Cash & Bank', 'asset');
         $revenue = $this->account('4000', 'Produce Sales', 'income');
+        $receivable = $this->account('1200', 'Accounts Receivable', 'asset');
 
         $posted = 0;
 
-        DB::transaction(function () use ($expense, $cash, $revenue, &$posted) {
+        DB::transaction(function () use ($expense, $cash, $revenue, $receivable, &$posted) {
             // Cost allocations -> Dr Expense, Cr Cash
             $allocations = CostAllocation::whereNotExists(function ($q) {
                 $q->select(DB::raw(1))
@@ -91,7 +92,13 @@ class FinanceController extends Controller
                 $posted++;
             }
 
-            // Fulfilled sales orders -> Dr Cash, Cr Revenue
+            // Fulfilled sales orders -> Dr Accounts Receivable, Cr Revenue.
+            //
+            // This used to debit Cash, which quietly assumed every delivered
+            // order had also been collected. Now that payments are recorded
+            // and post their own Dr Cash / Cr Receivable pair, debiting cash
+            // here too would count every sale twice. Fulfilment recognises the
+            // revenue; the payment collects it.
             $orders = SalesOrder::with('lines')
                 ->where('status', 'fulfilled')
                 ->whereNotExists(function ($q) {
@@ -108,7 +115,7 @@ class FinanceController extends Controller
                 }
                 LedgerEntry::create([
                     'entry_date' => $order->delivery_date ?? $order->order_date,
-                    'account_id' => $cash->id,
+                    'account_id' => $receivable->id,
                     'debit' => $value,
                     'credit' => 0,
                     'reference_type' => 'sale',

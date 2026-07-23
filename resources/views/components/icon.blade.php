@@ -50,6 +50,11 @@
         'expenses' => '<path d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v2"/><path d="M3 7v10a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2Z"/><path d="M16 13a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"/>',
         'eye' => '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/>',
         'eye-off' => '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.06"/><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
+        // Trooms House Farms & Equestrian mark — the estate's house-and-door
+        // logo, redrawn on the 24x24 grid so it inherits the same stroke weight
+        // and round caps as every other icon here instead of sitting in the UI
+        // as a foreign raster.
+        'thf' => '<path d="M1.9 10.3 12 1.3l10.1 9"/><path d="M4.5 10.7v8.8a2.4 2.4 0 0 0 2.4 2.4h10.2a2.4 2.4 0 0 0 2.4-2.4v-8.8"/><path d="M10.1 21.9V13a1.45 1.45 0 0 1 2.9 0v8.9"/>',
     ];
 
     $useSolid = $solid && isset($solidIcons[$name]);

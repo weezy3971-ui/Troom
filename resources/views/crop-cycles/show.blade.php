@@ -13,10 +13,18 @@
     @if($canWrite)
     <div class="actions">
         @if($cropCycle->status === 'planned')
-            <form action="{{ route('crop-cycles.activate', $cropCycle) }}" method="POST">
-                @csrf
-                <button type="submit" class="btn btn-success">▶ Activate</button>
-            </form>
+            @if($cropCycle->landPrepSatisfied())
+                <form action="{{ route('crop-cycles.activate', $cropCycle) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-success">▶ Activate</button>
+                </form>
+            @else
+                {{-- A block isn't planted into before it's prepared: point at the
+                     checklist rather than offering a button that will be refused. --}}
+                <a href="{{ route('land-preparations.show', $cropCycle->landPreparation) }}" class="btn btn-secondary">
+                    Prepare Block First ({{ $cropCycle->landPreparation->outstandingCount() }} left)
+                </a>
+            @endif
         @endif
         @if($cropCycle->status === 'active')
             @if($cropCycle->template)
@@ -49,6 +57,18 @@
     <p>Use the <strong>Planting Planner</strong> for a dated task schedule (top-dressing, flowering, harvest windows) for a crop.</p>
 </x-help-panel>
 
+@if($cropCycle->status === 'planned' && ! $cropCycle->landPrepSatisfied())
+<div class="alert alert-warning">
+    <div>
+        <strong>NOT READY TO PLANT</strong> — {{ $cropCycle->block->name }} has
+        {{ $cropCycle->landPreparation->outstandingCount() }} preparation step(s) outstanding, so this cycle can't be
+        activated yet.
+        <a href="{{ route('land-preparations.show', $cropCycle->landPreparation) }}">Open the checklist</a>
+        to finish them, or record there that preparation isn't required for this block.
+    </div>
+</div>
+@endif
+
 <div class="detail-grid">
     <div class="detail-item">
         <div class="detail-label">Status</div>
@@ -74,7 +94,65 @@
         <div class="detail-label">Farm</div>
         <div class="detail-value">{{ $cropCycle->block->farm->name }}</div>
     </div>
+    {{-- Prep spend belongs to this planting once the round is linked to it. --}}
+    <div class="detail-item">
+        <div class="detail-label">Land Preparation</div>
+        <div class="detail-value">
+            @if($cropCycle->landPreparation)
+                <a href="{{ route('land-preparations.show', $cropCycle->landPreparation) }}" style="color: var(--accent-hover); text-decoration: none;">
+                    KES {{ number_format($cropCycle->landPreparation->totalCost(), 2) }}
+                </a>
+                <span style="font-size: 11.5px; color: var(--text-muted);">
+                    — ready {{ $cropCycle->landPreparation->completed_on?->format('M d, Y') ?? 'date not set' }}
+                </span>
+            @else
+                <span style="color: var(--text-muted);">Not linked</span>
+            @endif
+        </div>
+    </div>
 </div>
+
+{{-- Planner Timeline --}}
+@if(count($timeline))
+@php
+    $totalDays = max(1, max(array_map(fn ($t) => $t['day_end'] ?? $t['day'], $timeline)));
+    $today = now()->startOfDay();
+    $base = $cropCycle->planting_date->copy()->startOfDay();
+    $elapsed = max(0, min($totalDays, $base->diffInDays($today, false)));
+    $progressPct = round(($elapsed / $totalDays) * 100, 1);
+@endphp
+<div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Crop Timeline</h3>
+        <span style="font-size: 12px; color: var(--text-muted);">Day {{ $elapsed }} of {{ $totalDays }}</span>
+    </div>
+    {{-- Progress bar --}}
+    <div style="position: relative; background: var(--border); border-radius: 6px; height: 8px; margin-bottom: 18px; overflow: hidden;">
+        <div style="height: 100%; width: {{ min($progressPct, 100) }}%; background: var(--olive, #6b8e23); border-radius: 6px; transition: width 0.4s ease;"></div>
+    </div>
+    {{-- Phase rows --}}
+    <div style="display: grid; gap: 0;">
+        @foreach($timeline as $t)
+        @php
+            $leftPct = round(($t['day'] / $totalDays) * 100, 1);
+            $widthPct = $t['day_end'] !== null ? round((($t['day_end'] - $t['day']) / $totalDays) * 100, 1) : 2;
+            $isPlant = $t['class'] === 'is-plant';
+            $isHarvest = $t['class'] === 'is-harvest';
+            $barColor = $isPlant ? 'var(--olive, #6b8e23)' : ($isHarvest ? 'var(--terracotta, #c0392b)' : 'var(--accent, #6366f1)');
+            $isPast = $today >= ($t['end'] ?? $t['start']);
+            $isCurrent = !$isPast && $today >= $t['start'];
+        @endphp
+        <div style="display: grid; grid-template-columns: 130px 1fr 110px; align-items: center; padding: 5px 0; gap: 10px; {{ $isCurrent ? 'font-weight: 600;' : '' }}{{ $isPast ? 'opacity: 0.5;' : '' }}">
+            <span style="font-size: 12.5px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $t['label'] }}">{{ $t['label'] }}</span>
+            <div style="position: relative; height: 6px; background: rgba(128,128,128,0.1); border-radius: 3px;">
+                <div style="position: absolute; left: {{ $leftPct }}%; width: {{ max($widthPct, 1.5) }}%; height: 100%; background: {{ $barColor }}; border-radius: 3px; {{ $isCurrent ? 'box-shadow: 0 0 4px ' . $barColor . ';' : '' }}"></div>
+            </div>
+            <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); white-space: nowrap;">{{ $t['start']->format('d M') }}{{ $t['end'] ? ' – ' . $t['end']->format('d M') : '' }}</span>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
 
 {{-- Seasonal Budget --}}
 <div class="card" style="margin-bottom: 20px;">

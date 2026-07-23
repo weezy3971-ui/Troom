@@ -3,6 +3,8 @@
 
 @section('content')
 @php $canWrite = \App\Support\ModuleAccess::allows(auth()->user(), 'master_data'); @endphp
+<x-crop-tabs />
+
 <div class="page-header">
     <div>
         <h1 class="page-title">Crop Catalogue</h1>

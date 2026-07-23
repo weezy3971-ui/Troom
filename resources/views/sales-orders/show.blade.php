@@ -43,6 +43,26 @@
         <div class="detail-label">Order Value</div>
         <div class="detail-value">KES {{ number_format($salesOrder->orderValue(), 2) }}</div>
     </div>
+    @if($salesOrder->isInvoiced())
+    <div class="detail-item">
+        <div class="detail-label">Invoice</div>
+        <div class="detail-value mono">{{ $salesOrder->invoice_number }}</div>
+    </div>
+    <div class="detail-item">
+        <div class="detail-label">Invoiced / Paid</div>
+        <div class="detail-value">
+            KES {{ number_format((float) $salesOrder->total_amount, 2) }}
+            <span style="color: var(--text-muted);">/</span>
+            KES {{ number_format((float) $salesOrder->amount_paid, 2) }}
+        </div>
+    </div>
+    <div class="detail-item">
+        <div class="detail-label">Payment</div>
+        <div class="detail-value">
+            <span class="badge badge-{{ $salesOrder->payment_status }}">{{ ucfirst($salesOrder->payment_status) }}</span>
+        </div>
+    </div>
+    @endif
 </div>
 
 <div class="cols-2" style="display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start;">
@@ -203,5 +223,103 @@
             <button type="submit" class="btn btn-primary">Save Delivery Outcome</button>
         </div>
     </form>
+</div>
+
+{{-- Payments & receipting --}}
+<div class="card" style="margin-top: 20px; padding: 0;">
+    <div class="card-header"><h3 class="card-title">Payments &amp; Receipts</h3></div>
+
+    @if(! $salesOrder->isInvoiced())
+        {{-- Invoicing is what fixes the amount owed. Until then there is
+             nothing for a payment to settle, so the form is not offered. --}}
+        <div style="padding: 4px 22px 22px;">
+            <p style="color: var(--text-secondary); font-size: 13.5px; margin-bottom: 14px;">
+                This order has not been invoiced. Issuing an invoice freezes the current order value of
+                <strong>KES {{ number_format($salesOrder->orderValue(), 2) }}</strong> as the amount owed and
+                gives the customer a number to quote when paying.
+            </p>
+            @error('invoice') <p class="form-error" style="margin-bottom: 12px;">{{ $message }}</p> @enderror
+            <form action="{{ route('sales-orders.invoice', $salesOrder) }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-primary" @disabled($salesOrder->orderValue() <= 0)>
+                    Issue Invoice
+                </button>
+                @if($salesOrder->orderValue() <= 0)
+                    <p class="form-hint" style="margin-top: 8px;">Allocate at least one priced line first.</p>
+                @endif
+            </form>
+        </div>
+    @else
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Receipt</th><th>Date</th><th>Method</th><th>Reference</th><th class="mono">Amount</th><th></th></tr></thead>
+                <tbody>
+                    @forelse($salesOrder->payments as $payment)
+                    <tr @if($payment->isVoided()) style="opacity: 0.6;" @endif>
+                        <td class="mono" style="font-weight: 600;">
+                            {{ $payment->receipt_number }}
+                            @if($payment->isVoided())<span class="badge badge-voided" style="margin-left:6px;">Voided</span>@endif
+                        </td>
+                        <td>{{ $payment->paid_at->format('M d, Y') }}</td>
+                        <td>{{ $payment->methodLabel() }}</td>
+                        <td class="mono">{{ $payment->reference ?? '—' }}</td>
+                        <td class="mono">{{ number_format((float) $payment->amount, 2) }}</td>
+                        <td><a href="{{ route('payments.receipt', $payment) }}" class="btn btn-ghost btn-sm">Receipt</a></td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding: 24px;">No payments recorded yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if($salesOrder->balanceDue() > 0)
+            <form action="{{ route('payments.store', $salesOrder) }}" method="POST" style="padding: 18px 22px 22px; border-top: 1px solid var(--border);">
+                @csrf
+                <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 14px;">
+                    Outstanding: <strong>KES {{ number_format($salesOrder->balanceDue(), 2) }}</strong>
+                </p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="amount">Amount Received (KES) *</label>
+                        <input type="number" step="0.01" id="amount" name="amount"
+                               value="{{ old('amount', number_format($salesOrder->balanceDue(), 2, '.', '')) }}"
+                               class="form-input" min="0.01" required>
+                        @error('amount') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="method">Method *</label>
+                        <select id="method" name="method" class="form-input" required>
+                            @foreach(\App\Models\Payment::METHOD_LABELS as $method => $label)
+                                <option value="{{ $method }}" @selected(old('method') === $method)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="paid_at">Date Received *</label>
+                        <input type="date" id="paid_at" name="paid_at" value="{{ old('paid_at', now()->toDateString()) }}" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reference">Reference / M-Pesa Code</label>
+                        <input type="text" id="reference" name="reference" value="{{ old('reference') }}" class="form-input" placeholder="e.g. SGH4KLM9XZ">
+                        <p class="form-hint">Required for M-Pesa — it is how the payment is reconciled later.</p>
+                        @error('reference') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="payer_phone">Payer Phone</label>
+                        <input type="text" id="payer_phone" name="payer_phone"
+                               value="{{ old('payer_phone', $salesOrder->customer->phone) }}" class="form-input" placeholder="0712 345 678">
+                    </div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <button type="submit" class="btn btn-primary">Record Payment &amp; Issue Receipt</button>
+                </div>
+            </form>
+        @else
+            <div style="padding: 4px 22px 22px;">
+                <span class="badge badge-paid">Paid in full</span>
+            </div>
+        @endif
+    @endif
 </div>
 @endsection

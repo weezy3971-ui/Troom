@@ -39,10 +39,12 @@ class BlockController extends Controller
             'soil_type' => 'nullable|string|max:255',
         ]);
 
-        Block::create($validated);
+        $block = Block::create($validated);
 
-        return redirect()->route('blocks.index')
-            ->with('success', 'Block created successfully.');
+        // The next thing that happens to a new block is that it gets prepared,
+        // so the flow leads there rather than back to the list.
+        return redirect()->route('land-preparations.open', $block)
+            ->with('success', "{$block->name} created. Next: prepare the block.");
     }
 
     public function show(Block $block)

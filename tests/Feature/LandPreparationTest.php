@@ -27,6 +27,16 @@ class LandPreparationTest extends TestCase
         return Farm::create(['name' => 'Trooms Naivasha', 'location' => 'Naivasha', 'size_acres' => 40]);
     }
 
+    /** A cycle runs a template, so one has to exist before a cycle can be created. */
+    private function template(Crop $crop): \App\Models\CropCycleTemplate
+    {
+        return \App\Models\CropCycleTemplate::create([
+            'crop_id' => $crop->id,
+            'crop_name' => $crop->name,
+            'total_cycle_days' => 90,
+        ]);
+    }
+
     private function block(): Block
     {
         return Block::create([
@@ -304,6 +314,7 @@ class LandPreparationTest extends TestCase
         $this->actingAs($this->manager())->post(route('crop-cycles.store'), [
             'block_id' => $block->id,
             'crop_id' => $crop->id,
+            'crop_cycle_template_id' => $this->template($crop)->id,
             'season_name' => 'Long Rains 2026',
             'planting_date' => '2026-07-25',
         ])->assertSessionHasNoErrors();
@@ -323,6 +334,7 @@ class LandPreparationTest extends TestCase
         $this->actingAs($this->manager())->post(route('crop-cycles.store'), [
             'block_id' => $block->id,
             'crop_id' => $crop->id,
+            'crop_cycle_template_id' => $this->template($crop)->id,
             'season_name' => 'Long Rains 2026',
         ]);
 

@@ -48,8 +48,8 @@ class PlantingCycleActivityController extends Controller
             }
 
             // Default the product to whatever the plan called for.
-            $validated['product_name'] = $validated['product_name'] ?: $point->product_name;
-            $validated['dosage'] = $validated['dosage'] ?: $point->dosage;
+            $validated['product_name'] = $validated['product_name'] ?? null ?: $point->product_name;
+            $validated['dosage'] = $validated['dosage'] ?? null ?: $point->dosage;
         }
 
         DB::transaction(function () use ($cropCycle, $validated, $point, $request) {

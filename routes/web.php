@@ -23,13 +23,17 @@ use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HarvestBatchController;
 use App\Http\Controllers\HorseController;
 use App\Http\Controllers\HorseRideController;
+use App\Http\Controllers\InformationSourceController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\IrrigationLogController;
 use App\Http\Controllers\LabourAttendanceController;
+use App\Http\Controllers\LandPreparationController;
+use App\Http\Controllers\MpesaController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NurseryBatchController;
 use App\Http\Controllers\OutgrowerController;
 use App\Http\Controllers\PackhouseLotController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlantingCycleActivityController;
 use App\Http\Controllers\ProcurementRequestController;
 use App\Http\Controllers\ProjectController;
@@ -41,6 +45,7 @@ use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SprayLogController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VendorController;
 use App\Http\Controllers\WeighScaleReadingController;
 use App\Http\Controllers\WhatsappOpsController;
 use App\Http\Controllers\WorkerController;
@@ -84,6 +89,8 @@ Route::middleware('auth')->group(function () {
     // Expenses — open to every role; anyone in the field can log ad-hoc spend
     // (tools, fuel, fines, casual labour paid in cash, etc).
     Route::resource('expenses', ExpenseController::class);
+    Route::post('expenses/{expense}/voucher', [ExpenseController::class, 'issueVoucher'])->name('expenses.issue-voucher');
+    Route::get('expenses/{expense}/voucher', [ExpenseController::class, 'voucher'])->name('expenses.voucher');
 
     // Module 1: Master Data — readable by all roles (spec), writable by managers.
     // Write routes (create/store/edit/update/destroy) are registered before the
@@ -93,19 +100,39 @@ Route::middleware('auth')->group(function () {
 
     $masterData = ModuleAccess::middleware('master_data');
 
-    // Guided single-page setup wizard (Farm → Block → Crop → Crop Cycle). Writes
-    // master-data records, so it's gated behind the same roles as those creates.
-    Route::get('setup', [SetupController::class, 'index'])->name('setup')->middleware($masterData);
-    Route::post('setup', [SetupController::class, 'store'])->middleware($masterData);
+    // The single "New Crop Cycle" flow: one page that picks or creates the farm,
+    // block and crop, chooses a template, and sets the budget. It writes master
+    // data as a byproduct, but it is the crop-cycle create screen — gated behind
+    // crop_cycles (a superset of master_data, so no former user loses access).
+    $cycleWrite = ModuleAccess::middleware('crop_cycles');
+    Route::get('setup', [SetupController::class, 'index'])->name('setup')->middleware($cycleWrite);
+    Route::post('setup', [SetupController::class, 'store'])->middleware($cycleWrite);
 
     foreach (['farms' => FarmController::class, 'blocks' => BlockController::class, 'crops' => CropController::class, 'assets' => AssetController::class] as $name => $ctrl) {
         Route::resource($name, $ctrl)->except(['index', 'show'])->middleware($masterData);
         Route::resource($name, $ctrl)->only(['index', 'show']);
     }
 
+    // Land preparation — the step between adding a block and planting into it.
+    // Read-all like crop cycles; the field work itself is a daily-ops write.
+    Route::get('blocks/{block}/land-preparation', [LandPreparationController::class, 'open'])->name('land-preparations.open');
+    Route::get('land-preparations/{landPreparation}', [LandPreparationController::class, 'show'])->name('land-preparations.show');
+    Route::middleware(ModuleAccess::middleware('daily_ops'))->group(function () {
+        Route::post('blocks/{block}/land-preparation', [LandPreparationController::class, 'store'])->name('land-preparations.store');
+        Route::put('land-preparations/{landPreparation}', [LandPreparationController::class, 'update'])->name('land-preparations.update');
+        Route::put('land-preparations/{landPreparation}/waive', [LandPreparationController::class, 'waive'])->name('land-preparations.waive');
+        Route::put('land-preparation-tasks/{task}', [LandPreparationController::class, 'updateTask'])->name('land-preparations.tasks.update');
+        Route::delete('land-preparations/{landPreparation}', [LandPreparationController::class, 'destroy'])->name('land-preparations.destroy');
+    });
+
     // Module 2: Crop Planning & Seasonal Budgets — read-all, write restricted.
     $cropCycles = ModuleAccess::middleware('crop_cycles');
-    Route::resource('crop-cycles', CropCycleController::class)->except(['index', 'show'])->middleware($cropCycles);
+    // Creating a cycle now happens in the merged "New Crop Cycle" flow (setup),
+    // which can also spin up the farm/block/crop it needs. The old bare form is
+    // retired; its route redirects so existing links still land somewhere sensible.
+    Route::get('crop-cycles/create', fn () => redirect()->route('setup'))
+        ->name('crop-cycles.create')->middleware($cropCycles);
+    Route::resource('crop-cycles', CropCycleController::class)->except(['index', 'show', 'create'])->middleware($cropCycles);
     Route::resource('crop-cycles', CropCycleController::class)->only(['index', 'show']);
     Route::middleware($cropCycles)->group(function () {
         Route::post('crop-cycles/{cropCycle}/activate', [CropCycleController::class, 'activate'])->name('crop-cycles.activate');
@@ -247,7 +274,37 @@ Route::middleware('auth')->group(function () {
         Route::post('sales-orders/{salesOrder}/lines', [SalesOrderController::class, 'addLine'])->name('sales-orders.lines.store');
         Route::delete('sales-orders/{salesOrder}/lines/{line}', [SalesOrderController::class, 'destroyLine'])->name('sales-orders.lines.destroy');
         Route::post('sales-orders/{salesOrder}/delivery', [SalesOrderController::class, 'recordDelivery'])->name('sales-orders.delivery');
+        Route::post('sales-orders/{salesOrder}/invoice', [SalesOrderController::class, 'issueInvoice'])->name('sales-orders.invoice');
+
+        // Module 14b: Payments received & receipting. Recording a payment sits
+        // with sales (whoever takes the money issues the receipt); voiding one
+        // is a finance correction and is gated separately below.
+        Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::post('sales-orders/{salesOrder}/payments', [PaymentController::class, 'store'])->name('payments.store');
+        Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+
+        // C2B demo: stands in for a customer paying at the paybill with no
+        // app involved. Sits with sales, same as recording a manual payment.
+        Route::get('mpesa/simulate-c2b', [MpesaController::class, 'simulateC2BForm'])->name('mpesa.simulate-c2b.form');
+        Route::post('mpesa/simulate-c2b', [MpesaController::class, 'simulateC2B'])->name('mpesa.simulate-c2b');
     });
+
+    Route::post('payments/{payment}/void', [PaymentController::class, 'void'])
+        ->middleware(ModuleAccess::middleware('finance'))
+        ->name('payments.void');
+
+    // M-Pesa — B2C disbursement and the reconciliation log. Disbursing real
+    // money is a finance action, same standard as voiding a receipt.
+    Route::middleware(ModuleAccess::middleware('finance'))->group(function () {
+        Route::get('mpesa', [MpesaController::class, 'index'])->name('mpesa.index');
+        Route::post('expenses/{expense}/disburse', [MpesaController::class, 'disburse'])->name('expenses.disburse');
+    });
+
+    // Vendors — who the farm pays. Kept under finance rather than procurement
+    // because their phone number is a payment destination, not a contact.
+    Route::resource('vendors', VendorController::class)
+        ->except('show')
+        ->middleware(ModuleAccess::middleware('finance'));
 
     // Module 15: Logistics & Dispatch
     Route::resource('dispatches', DispatchController::class)->middleware(ModuleAccess::middleware('logistics'));
@@ -305,5 +362,12 @@ Route::middleware('auth')->group(function () {
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::get('activity-logs/export', [ActivityLogController::class, 'exportPdf'])->name('activity-logs.export');
+
+        // Sources: every external site we take crop information from. The list
+        // syncs itself from the code; admins open a source or remove it.
+        Route::get('information-sources', [InformationSourceController::class, 'index'])->name('information-sources.index');
+        Route::post('information-sources', [InformationSourceController::class, 'store'])->name('information-sources.store');
+        Route::put('information-sources/{informationSource}/restore', [InformationSourceController::class, 'restore'])->name('information-sources.restore');
+        Route::delete('information-sources/{informationSource}', [InformationSourceController::class, 'destroy'])->name('information-sources.destroy');
     });
 });

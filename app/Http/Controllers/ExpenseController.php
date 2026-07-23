@@ -6,6 +6,8 @@ use App\Models\Block;
 use App\Models\CostAllocation;
 use App\Models\Expense;
 use App\Models\Farm;
+use App\Models\LandPreparation;
+use App\Models\Vendor;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -43,8 +45,23 @@ class ExpenseController extends Controller
         $blocks = Block::with('farm')->orderBy('name')->get();
         $categories = Expense::CATEGORIES;
         $paymentModes = Expense::PAYMENT_MODES;
+        $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
+        $landPreparations = $this->openLandPreparations();
 
-        return view('expenses.create', compact('farms', 'blocks', 'categories', 'paymentModes'));
+        return view('expenses.create', compact('farms', 'blocks', 'categories', 'paymentModes', 'vendors', 'landPreparations'));
+    }
+
+    /**
+     * Preparation rounds a cost can still be booked against — anything not yet
+     * closed out, newest first, so prep spend has somewhere to land.
+     */
+    private function openLandPreparations()
+    {
+        return LandPreparation::with('block.farm')
+            ->whereIn('status', ['planned', 'in_progress'])
+            ->orWhereNull('crop_cycle_id')
+            ->latest('id')
+            ->get();
     }
 
     public function store(Request $request)
@@ -66,8 +83,33 @@ class ExpenseController extends Controller
 
     public function show(Expense $expense)
     {
-        $expense->load('farm', 'block', 'logger');
+        $expense->load('farm', 'block', 'logger', 'vendor', 'mpesaTransactions');
         return view('expenses.show', compact('expense'));
+    }
+
+    /** Issue Trooms's proof that the vendor was paid — the outbound receipt. */
+    public function issueVoucher(Expense $expense)
+    {
+        if (! $expense->vendor_id) {
+            return redirect()->route('expenses.show', $expense)
+                ->with('error', 'Add a vendor to this expense before issuing a payment voucher — a voucher has to say who was paid.');
+        }
+
+        $expense->issueVoucher();
+
+        return redirect()->route('expenses.voucher', $expense);
+    }
+
+    /** The printable voucher itself. */
+    public function voucher(Expense $expense)
+    {
+        if (! $expense->isVouchered()) {
+            abort(404);
+        }
+
+        $expense->load('vendor', 'farm', 'block', 'logger');
+
+        return view('expenses.voucher', compact('expense'));
     }
 
     public function edit(Expense $expense)
@@ -81,8 +123,10 @@ class ExpenseController extends Controller
         $blocks = Block::with('farm')->orderBy('name')->get();
         $categories = Expense::CATEGORIES;
         $paymentModes = Expense::PAYMENT_MODES;
+        $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
+        $landPreparations = $this->openLandPreparations();
 
-        return view('expenses.edit', compact('expense', 'farms', 'blocks', 'categories', 'paymentModes'));
+        return view('expenses.edit', compact('expense', 'farms', 'blocks', 'categories', 'paymentModes', 'vendors', 'landPreparations'));
     }
 
     public function update(Request $request, Expense $expense)
@@ -190,6 +234,7 @@ class ExpenseController extends Controller
     {
         return $request->validate([
             'category' => ['required', Rule::in(Expense::CATEGORIES)],
+            'vendor_id' => 'nullable|exists:vendors,id',
             'amount' => 'required|numeric|min:0.01',
             'payment_mode' => ['nullable', Rule::in(Expense::PAYMENT_MODES)],
             'expense_date' => 'required|date',
@@ -197,6 +242,7 @@ class ExpenseController extends Controller
             'receipt' => 'nullable|image|max:5120',
             'farm_id' => 'nullable|exists:farms,id',
             'block_id' => 'nullable|exists:blocks,id',
+            'land_preparation_id' => 'nullable|exists:land_preparations,id',
         ]);
     }
 

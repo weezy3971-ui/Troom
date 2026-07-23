@@ -54,7 +54,8 @@ class CropController extends Controller
 
     public function show(Crop $crop)
     {
-        $crop->load('cropCycles.block.farm');
+        // The cycle table reads dates, budget and booked cost per row.
+        $crop->load('cropCycles.block.farm', 'cropCycles.seasonalBudget', 'cropCycles.costAllocations');
         return view('crops.show', compact('crop'));
     }
 

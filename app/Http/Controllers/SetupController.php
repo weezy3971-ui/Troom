@@ -6,6 +6,7 @@ use App\Models\Block;
 use App\Models\Crop;
 use App\Models\CropCycle;
 use App\Models\Farm;
+use App\Models\LandPreparation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -32,7 +33,14 @@ class SetupController extends Controller
         // picker to the chosen crop.
         $varietiesByCrop = \App\Support\ReferenceData::varietiesByCrop();
 
-        return view('setup.index', compact('farms', 'blocks', 'crops', 'varietiesByCrop'));
+        // The plan the new cycle will run. Optional here so setup isn't blocked
+        // on an agronomist writing one first, but without it nothing is
+        // scheduled and no reminders fire.
+        $templates = \App\Models\CropCycleTemplate::where('is_active', true)
+            ->orderBy('crop_name')
+            ->get(['id', 'crop_id', 'crop_name', 'variety', 'total_cycle_days']);
+
+        return view('setup.index', compact('farms', 'blocks', 'crops', 'varietiesByCrop', 'templates'));
     }
 
     public function store(Request $request)
@@ -59,6 +67,7 @@ class SetupController extends Controller
             'block_name' => 'required_if:block_mode,new|nullable|string|max:255',
             'block_size_acres' => 'required_if:block_mode,new|nullable|numeric|min:0.01',
             'block_soil_type' => 'nullable|string|max:255',
+            'block_already_prepared' => 'nullable|boolean',
 
             // Step 3 — Crop
             'crop_mode' => 'required|in:existing,new',
@@ -74,6 +83,7 @@ class SetupController extends Controller
             'crop_default_overhead_budget' => 'nullable|numeric|min:0',
 
             // Step 4 — Crop Cycle
+            'crop_cycle_template_id' => 'nullable|exists:crop_cycle_templates,id',
             'season_name' => 'required|string|max:255',
             'planting_date' => 'nullable|date',
             'expected_harvest_date' => 'nullable|date|after_or_equal:planting_date',
@@ -132,18 +142,25 @@ class SetupController extends Controller
                     'default_overhead_budget' => $validated['crop_default_overhead_budget'] ?? null,
                 ]);
 
-            // Expected harvest falls back to planting date + crop maturity, matching
-            // the standalone crop-cycle form's client-side auto-calc.
+            $template = ! empty($validated['crop_cycle_template_id'])
+                ? \App\Models\CropCycleTemplate::find($validated['crop_cycle_template_id'])
+                : null;
+
+            // Expected harvest falls back to planting date + cycle length. The
+            // template's length is the plan of record, so it wins over the
+            // crop's nominal maturity when a template was chosen.
+            $cycleDays = $template?->total_cycle_days ?: $crop->days_to_maturity;
             $harvest = $validated['expected_harvest_date'] ?? null;
-            if (! $harvest && ! empty($validated['planting_date']) && $crop->days_to_maturity) {
+            if (! $harvest && ! empty($validated['planting_date']) && $cycleDays) {
                 $harvest = \Illuminate\Support\Carbon::parse($validated['planting_date'])
-                    ->addDays((int) $crop->days_to_maturity)
+                    ->addDays((int) $cycleDays)
                     ->toDateString();
             }
 
             $cycle = CropCycle::create([
                 'block_id' => $block->id,
                 'crop_id' => $crop->id,
+                'crop_cycle_template_id' => $template?->id,
                 'season_name' => $validated['season_name'],
                 'planting_date' => $validated['planting_date'] ?? null,
                 'expected_harvest_date' => $harvest,
@@ -160,14 +177,27 @@ class SetupController extends Controller
                     + $validated['irrigation_budget'] + $validated['overhead_budget'],
             ]);
 
+            // Land preparation is attached to the cycle from the start, so its
+            // cost belongs to this planting. Whether it's outstanding decides
+            // whether the cycle can go active below.
+            $prep = LandPreparation::attachTo($cycle, auth()->id());
+
+            if (! empty($validated['block_already_prepared'])) {
+                $prep->update([
+                    'status' => 'not_required',
+                    'completed_on' => now()->toDateString(),
+                    'notes' => 'Declared already prepared during guided setup.',
+                ]);
+            }
+
             // Activate now — unless the block already has an active cycle (one
-            // active per block), in which case it stays planned.
+            // active per block), or the block still has to be prepared.
             $blockBusy = CropCycle::where('block_id', $block->id)
                 ->where('status', 'active')
                 ->where('id', '!=', $cycle->id)
                 ->exists();
 
-            if (! $blockBusy) {
+            if (! $blockBusy && $prep->isSatisfied()) {
                 $cycle->update(['status' => 'active']);
             }
 
@@ -177,6 +207,12 @@ class SetupController extends Controller
         if ($cropCycle->status === 'active') {
             return redirect()->route('crop-cycles.show', $cropCycle)
                 ->with('success', 'Setup complete — your crop cycle is now active.');
+        }
+
+        // Say which rule held it back, so "still planned" isn't a mystery.
+        if (! $cropCycle->landPrepSatisfied()) {
+            return redirect()->route('land-preparations.show', $cropCycle->landPreparation)
+                ->with('success', 'Setup complete. The cycle is planned — work through this preparation checklist for the block, then activate it.');
         }
 
         return redirect()->route('crop-cycles.show', $cropCycle)

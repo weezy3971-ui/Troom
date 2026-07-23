@@ -442,7 +442,7 @@ class AuthController extends Controller
     /** The SMS body carrying a one-time code. */
     private function otpMessage(string $otp): string
     {
-        return "Your Trooms ERP verification code is {$otp}. "
+        return "Your Trooms House verification code is {$otp}. "
             . 'It expires in ' . self::OTP_TTL_MINUTES . ' minutes. '
             . 'Do not share this code with anyone.';
     }

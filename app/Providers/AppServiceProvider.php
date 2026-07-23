@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Observers\ActivityObserver;
 use App\Observers\PlantingCycleActivityObserver;
+use App\Services\Mpesa\DarajaGateway;
+use App\Services\Mpesa\FakeMpesaGateway;
+use App\Services\Mpesa\MpesaGatewayContract;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -42,6 +45,10 @@ class AppServiceProvider extends ServiceProvider
         // Labour & workforce
         \App\Models\Worker::class,
         \App\Models\LabourAttendance::class,
+
+        // Land preparation (the step before a crop cycle exists)
+        \App\Models\LandPreparation::class,
+        \App\Models\LandPreparationTask::class,
 
         // Projects & task assignment
         \App\Models\Project::class,
@@ -83,6 +90,7 @@ class AppServiceProvider extends ServiceProvider
         // Administration
         \App\Models\User::class,
         \App\Models\ApprovedEmail::class,
+        \App\Models\InformationSource::class,
     ];
 
     /**
@@ -90,7 +98,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Demo/dev default to the fake gateway so B2C/C2B work with no
+        // Safaricom credentials at all. Set MPESA_DRIVER=daraja once
+        // DarajaGateway is filled in (see its docblock) to go live.
+        $this->app->bind(MpesaGatewayContract::class, function () {
+            if (config('services.mpesa.driver') === 'daraja') {
+                return new DarajaGateway(
+                    config('services.mpesa.consumer_key'),
+                    config('services.mpesa.consumer_secret'),
+                    config('services.mpesa.base_url'),
+                );
+            }
+
+            return new FakeMpesaGateway;
+        });
     }
 
     /**
