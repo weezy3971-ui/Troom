@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Observers\ActivityObserver;
+use App\Observers\PlantingCycleActivityObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Asset::class,
         \App\Models\CropCycle::class,
         \App\Models\SeasonalBudget::class,
-        \App\Models\CropProgram::class,
+        \App\Models\CropCycleTemplate::class,
 
         // Field operations — the day-to-day record of what workers did
         \App\Models\NurseryBatch::class,
@@ -31,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\IrrigationLog::class,
         \App\Models\FertigationLog::class,
         \App\Models\SprayLog::class,
+        \App\Models\PlantingCycleActivity::class,
 
         // Crop monitoring
         \App\Models\GerminationCheck::class,
@@ -99,5 +101,8 @@ class AppServiceProvider extends ServiceProvider
         foreach ($this->auditedModels as $model) {
             $model::observe(ActivityObserver::class);
         }
+
+        // Mirrors an activity's cost into the cycle's cost allocations.
+        \App\Models\PlantingCycleActivity::observe(PlantingCycleActivityObserver::class);
     }
 }

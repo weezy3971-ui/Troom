@@ -60,15 +60,18 @@ class Crop extends Model
         return $this->hasMany(CropCycle::class);
     }
 
-    public function programs(): HasMany
+    public function cycleTemplates(): HasMany
     {
-        return $this->hasMany(CropProgram::class);
+        return $this->hasMany(CropCycleTemplate::class);
     }
 
-    /** The program used when materialising a cycle schedule (first active one). */
-    public function activeProgram(): ?CropProgram
+    /** The template offered by default when starting a cycle on this crop. */
+    public function defaultTemplate(): ?CropCycleTemplate
     {
-        return $this->programs()->where('is_active', true)->with('stages')->first();
+        return $this->cycleTemplates()
+            ->where('is_active', true)
+            ->with('stages', 'schedulePoints')
+            ->first();
     }
 
     public function nurseryBatches(): HasMany

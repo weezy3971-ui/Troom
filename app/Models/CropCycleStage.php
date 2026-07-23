@@ -2,66 +2,42 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A growth stage within a template, expressed as day offsets from planting.
+ * e.g. "Fruiting, day 55-75".
+ */
 class CropCycleStage extends Model
 {
     protected $fillable = [
-        'crop_cycle_id',
-        'crop_program_stage_id',
-        'sequence',
-        'name',
-        'activity_type',
-        'due_date',
-        'status',
-        'completed_at',
-        'notes',
+        'crop_cycle_template_id',
+        'stage_name',
+        'start_day_offset',
+        'end_day_offset',
+        'sort_order',
     ];
 
     protected $casts = [
-        'sequence' => 'integer',
-        'due_date' => 'date',
-        'completed_at' => 'datetime',
+        'start_day_offset' => 'integer',
+        'end_day_offset' => 'integer',
+        'sort_order' => 'integer',
     ];
 
-    public function cropCycle(): BelongsTo
+    public function template(): BelongsTo
     {
-        return $this->belongsTo(CropCycle::class);
+        return $this->belongsTo(CropCycleTemplate::class, 'crop_cycle_template_id');
     }
 
-    public function programStage(): BelongsTo
+    public function schedulePoints(): HasMany
     {
-        return $this->belongsTo(CropProgramStage::class, 'crop_program_stage_id');
+        return $this->hasMany(CropCycleSchedulePoint::class)->orderBy('day_offset');
     }
 
-    public function isDone(): bool
+    public function dayRange(): string
     {
-        return $this->status === 'done';
-    }
-
-    public function isPending(): bool
-    {
-        return $this->status === 'pending';
-    }
-
-    /** Pending and due on or before today. */
-    public function isDue(): bool
-    {
-        return $this->isPending() && $this->due_date->isToday();
-    }
-
-    /** Pending and past its due date. */
-    public function isOverdue(): bool
-    {
-        return $this->isPending() && $this->due_date->isPast() && ! $this->due_date->isToday();
-    }
-
-    /** Pending stages due within the next $days days (inclusive of overdue). */
-    public function scopeDueSoon(Builder $query, int $days = 2): Builder
-    {
-        return $query->where('status', 'pending')
-            ->whereDate('due_date', '<=', now()->addDays($days)->toDateString());
+        return 'day ' . $this->start_day_offset . '–' . $this->end_day_offset;
     }
 }

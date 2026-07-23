@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Block;
 use App\Models\Crop;
 use App\Models\CropCycle;
+use App\Models\CropCycleSchedulePoint;
+use App\Models\CropCycleTemplate;
 use App\Models\SeasonalBudget;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
@@ -32,83 +34,13 @@ class CropCycleController extends Controller
         return view('crop-cycles.index', compact('cropCycles', 'search'));
     }
 
-    /**
-     * Planting-schedule planner. A self-contained worksheet: pick a crop and a
-     * planting date, and every phase (top-dressing, flowering, first harvest, …)
-     * is recalculated client-side. Fill it in, tick tasks, then Save as PDF.
-     *
-     * Programs are curated per crop; switching crop re-renders the whole sheet
-     * without a reload, so typed header details survive the switch.
-     */
-    public function planner(Request $request)
-    {
-        $programs = \App\Support\PlannerPrograms::all();
-
-        // Active crop cycles whose crop maps to a planner program — lets the
-        // planner load a real cycle's crop + planting date. It reads these live,
-        // so a cycle appears here as soon as it's activated.
-        $activeCycles = CropCycle::with('crop', 'block.farm')
-            ->where('status', 'active')
-            ->get()
-            ->map(function ($cycle) use ($programs) {
-                $slug = collect($programs)->search(
-                    fn ($p) => strtolower(trim($p['crop'] ?? '')) === strtolower(trim((string) $cycle->crop?->name))
-                );
-
-                if ($slug === false) {
-                    return null;
-                }
-
-                return [
-                    'id' => $cycle->id,
-                    'label' => $cycle->season_name . ' — ' . $cycle->crop->name
-                        . ($cycle->block ? ' on ' . $cycle->block->name : ''),
-                    'slug' => $slug,
-                    'date' => optional($cycle->planting_date)->toDateString(),
-                    'block' => $cycle->block
-                        ? trim(($cycle->block->farm->name ?? '') . ' — ' . $cycle->block->name, ' —')
-                        : '',
-                    'variety' => $cycle->crop->variety ?? '',
-                    'area' => $cycle->block?->size_acres ? (string) $cycle->block->size_acres : '',
-                ];
-            })
-            ->filter()
-            ->values();
-
-        // A ?cycle=ID link (e.g. from an activated cycle) pre-fills crop + date.
-        $selected = $request->input('crop');
-        $plantDate = null;
-        $selectedCycleId = null;
-        if ($cycleId = $request->input('cycle')) {
-            $match = $activeCycles->firstWhere('id', (int) $cycleId);
-            if ($match) {
-                $selected = $match['slug'];
-                $plantDate = $match['date'];
-                $selectedCycleId = $match['id'];
-            }
-        }
-
-        if (! $selected || ! isset($programs[$selected])) {
-            $selected = array_key_first($programs);
-        }
-
-        // Varieties are keyed by crop display name (curated ∪ what's in the DB).
-        $varietiesByCrop = \App\Support\ReferenceData::varietiesByCrop();
-
-        $blocks = Block::with('farm')->orderBy('name')->get()
-            ->map(fn ($b) => $b->farm->name . ' — ' . $b->name)->all();
-
-        return view('crop-cycles.planner', compact(
-            'programs', 'selected', 'varietiesByCrop', 'blocks',
-            'activeCycles', 'plantDate', 'selectedCycleId'
-        ));
-    }
-
     public function create()
     {
         $blocks = Block::with('farm')->orderBy('name')->get();
         $crops = Crop::orderBy('name')->get();
-        return view('crop-cycles.create', compact('blocks', 'crops'));
+        $templates = CropCycleTemplate::where('is_active', true)->orderBy('crop_name')->get();
+
+        return view('crop-cycles.create', compact('blocks', 'crops', 'templates'));
     }
 
     public function store(Request $request)
@@ -116,10 +48,20 @@ class CropCycleController extends Controller
         $validated = $request->validate([
             'block_id' => 'required|exists:blocks,id',
             'crop_id' => 'required|exists:crops,id',
+            'crop_cycle_template_id' => 'required|exists:crop_cycle_templates,id',
             'season_name' => 'required|string|max:255',
             'planting_date' => 'nullable|date',
             'expected_harvest_date' => 'nullable|date|after_or_equal:planting_date',
         ]);
+
+        // The template knows how long the cycle runs, so the harvest date
+        // follows from the planting date unless one was given explicitly.
+        if (empty($validated['expected_harvest_date']) && ! empty($validated['planting_date'])) {
+            $template = CropCycleTemplate::find($validated['crop_cycle_template_id']);
+            $validated['expected_harvest_date'] = \Illuminate\Support\Carbon::parse($validated['planting_date'])
+                ->addDays($template->total_cycle_days)
+                ->toDateString();
+        }
 
         // Business rule: a block can only have one active crop cycle at a time
         $activeExists = CropCycle::where('block_id', $validated['block_id'])
@@ -141,27 +83,41 @@ class CropCycleController extends Controller
     {
         $cropCycle->load(
             'block.farm', 'crop', 'seasonalBudget', 'costAllocations', 'plantings', 'harvestBatches',
-            'germinationChecks.recordedBy', 'plantPopulationCounts.recordedBy', 'yieldForecasts.recordedBy'
+            'germinationChecks.recordedBy', 'plantPopulationCounts.recordedBy', 'yieldForecasts.recordedBy',
+            'template.stages', 'template.schedulePoints.stage',
+            'activities.schedulePoint', 'activities.performedBy'
         );
         $projection = (new \App\Services\YieldProjectionService($cropCycle))->summary();
-        return view('crop-cycles.show', compact('cropCycle', 'projection'));
+
+        // The template schedule resolved onto this cycle's calendar: what is
+        // due, what is overdue, and what has been logged.
+        $schedule = $cropCycle->resolvedSchedule();
+        $compliance = $cropCycle->sprayComplianceRate();
+        $activityTypes = CropCycleSchedulePoint::ACTIVITY_TYPES;
+
+        return view('crop-cycles.show', compact(
+            'cropCycle', 'projection', 'schedule', 'compliance', 'activityTypes'
+        ));
     }
 
     public function edit(CropCycle $cropCycle)
     {
         $blocks = Block::with('farm')->orderBy('name')->get();
         $crops = Crop::orderBy('name')->get();
-        return view('crop-cycles.edit', compact('cropCycle', 'blocks', 'crops'));
+        $templates = CropCycleTemplate::where('is_active', true)->orderBy('crop_name')->get();
+
+        return view('crop-cycles.edit', compact('cropCycle', 'blocks', 'crops', 'templates'));
     }
 
     public function update(Request $request, CropCycle $cropCycle)
     {
         $validated = $request->validate([
-            'block_id'              => 'required|exists:blocks,id',
-            'crop_id'               => 'required|exists:crops,id',
-            'season_name'           => 'required|string|max:255',
-            'planting_date'         => 'nullable|date',
-            'expected_harvest_date' => 'nullable|date|after_or_equal:planting_date',
+            'block_id'               => 'required|exists:blocks,id',
+            'crop_id'                => 'required|exists:crops,id',
+            'crop_cycle_template_id' => 'required|exists:crop_cycle_templates,id',
+            'season_name'            => 'required|string|max:255',
+            'planting_date'          => 'nullable|date',
+            'expected_harvest_date'  => 'nullable|date|after_or_equal:planting_date',
         ]);
 
         // Business rule: a block can only have one active crop cycle at a time.
