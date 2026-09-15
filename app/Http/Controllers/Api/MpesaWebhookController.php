@@ -37,7 +37,14 @@ class MpesaWebhookController extends Controller
     /** Fires once a C2B payment has actually completed. */
     public function c2bConfirmation(Request $request)
     {
-        Log::info('M-Pesa C2B confirmation received', $request->all());
+        // Only what is needed to trace the payment. The full payload carries
+        // the payer's phone number and name, which must not reach the logs.
+        Log::info('M-Pesa C2B confirmation received', [
+            'trans_id' => $request->input('TransID'),
+            'bill_ref' => $request->input('BillRefNumber'),
+            'amount' => $request->input('TransAmount'),
+            'msisdn' => self::maskMsisdn($request->input('MSISDN')),
+        ]);
 
         C2BAllocation::receive([
             'phone' => $request->input('MSISDN'),
@@ -52,7 +59,10 @@ class MpesaWebhookController extends Controller
     /** Fires once a B2C disbursement (initiated via MpesaController::disburse()) resolves. */
     public function b2cResult(Request $request)
     {
-        Log::info('M-Pesa B2C result received', $request->all());
+        Log::info('M-Pesa B2C result received', [
+            'conversation_id' => $request->input('Result.ConversationID'),
+            'result_code' => $request->input('Result.ResultCode'),
+        ]);
 
         $result = $request->input('Result', []);
         $conversationId = $result['ConversationID'] ?? null;
@@ -89,7 +99,9 @@ class MpesaWebhookController extends Controller
     /** Fires if a B2C request times out in Safaricom's queue rather than resolving. */
     public function b2cTimeout(Request $request)
     {
-        Log::warning('M-Pesa B2C timeout received', $request->all());
+        Log::warning('M-Pesa B2C timeout received', [
+            'conversation_id' => $request->input('Result.ConversationID'),
+        ]);
 
         $conversationId = $request->input('Result.ConversationID');
 
@@ -98,5 +110,20 @@ class MpesaWebhookController extends Controller
             ->update(['status' => 'failed', 'result_description' => 'Timed out in the Safaricom queue.']);
 
         return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Accepted']);
+    }
+
+    /**
+     * Keep enough of a phone number to trace a payment, not enough to identify
+     * the payer. Safaricom sends the full MSISDN; logs keep only its tail.
+     */
+    private static function maskMsisdn(mixed $msisdn): ?string
+    {
+        $digits = preg_replace('/\D/', '', (string) $msisdn);
+
+        if ($digits === null || $digits === '') {
+            return null;
+        }
+
+        return str_repeat('*', max(0, strlen($digits) - 4)).substr($digits, -4);
     }
 }

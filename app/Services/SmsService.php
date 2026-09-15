@@ -50,7 +50,9 @@ class SmsService
         $msisdn = self::normalizePhone($phone);
 
         if ($msisdn === null) {
-            Log::warning('SMS not sent: missing or invalid phone number.', ['phone' => $phone]);
+            Log::warning('SMS not sent: missing or invalid phone number.', [
+                'phone' => self::maskMsisdn($phone),
+            ]);
 
             return false;
         }
@@ -81,26 +83,47 @@ class SmsService
             $ok = ! $response->failed() && (string) $status === '222';
 
             if (! $ok) {
+                // Status code only. The gateway echoes the request back in its
+                // body, and the message we just sent can be a user's new
+                // password, so the body must never reach the logs.
                 Log::error('SMS send failed.', [
-                    'recipient' => $msisdn,
+                    'recipient' => self::maskMsisdn($msisdn),
                     'http_status' => $response->status(),
-                    'body' => $response->body(),
+                    'gateway_status' => $status,
                 ]);
 
                 return false;
             }
 
-            Log::info('SMS sent.', ['recipient' => $msisdn, 'response' => $response->body()]);
+            Log::info('SMS sent.', [
+                'recipient' => self::maskMsisdn($msisdn),
+                'gateway_status' => $status,
+            ]);
 
             return true;
         } catch (\Throwable $e) {
             Log::error('SMS send threw an exception.', [
-                'recipient' => $msisdn,
+                'recipient' => self::maskMsisdn($msisdn),
                 'error' => $e->getMessage(),
             ]);
 
             return false;
         }
+    }
+
+    /**
+     * Keep enough of a number to trace a delivery, not enough to identify the
+     * recipient. Logs keep only the tail.
+     */
+    private static function maskMsisdn(?string $msisdn): ?string
+    {
+        $digits = preg_replace('/\D/', '', (string) $msisdn);
+
+        if ($digits === null || $digits === '') {
+            return null;
+        }
+
+        return str_repeat('*', max(0, \strlen($digits) - 4)) . substr($digits, -4);
     }
 
     /**
